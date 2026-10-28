@@ -26,7 +26,7 @@ This builds on [pipeline_reference.md](pipeline_reference.md), which describes t
 Browser connects ─▶ _call_gen += 1 ─▶ clear history ─▶ drain queues ─▶ greeting
    [NEW] greeting offers languages (Option A) or starts in hi-IN (Option B)
    [NEW] start an empty order for this call_id
-Browser disconnects (debounced) ─▶ stop playback ─▶ [NEW] write orders/<call_id>.json/.txt
+Browser disconnects (debounced) ─▶ stop playback ─▶ [NEW] write orders/<shop>/order_<call_id>.json/.txt
    ─▶ clear history ─▶ drain queues
 ```
 

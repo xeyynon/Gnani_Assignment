@@ -42,7 +42,8 @@ Settings you may want (all optional):
 | Variable | Default | Meaning |
 |---|---|---|
 | `SHOP_NAME` | `dukaan_dost` | Which folder under `shops/` to run ([shops/README.md](shops/README.md)) |
-| `SHOP_DISPLAY_NAME` | derived from `SHOP_NAME` | The name the greeting speaks |
+| `SHOP_DISPLAY_NAME` | `display_name` in the shop's config.yaml, else the folder name | Overrides the name the greeting speaks for the default shop |
+| `ADMIN_PASSWORD` | unset | Password for user `admin` on every shop's dashboard; unset means no admin sign-in |
 | `AUDIO_HOST`, `AUDIO_PORT` | `127.0.0.1`, `8765` | Where the call server listens |
 | `AUDIO_TRANSPORT` | `websocket` | Where call audio comes from and goes to |
 | `CALL_DATA_ENABLED` | `0` | Call recording; leave off (synthetic data only) |
@@ -50,6 +51,18 @@ Settings you may want (all optional):
 
 Every other tuning setting (VAD, barge-in, timeouts, providers) is an env var, listed with its
 default and reasoning in the CONFIG section at the top of `dukaan_dost/app.py`.
+
+## Shops and the shopkeeper dashboard
+Each shop is a folder under `shops/` ([shops/README.md](shops/README.md)). One running agent serves all of them, and the **call link picks the shop**: `/s/<shop>/` for the call page, `/` for the default shop.
+
+Each shop's owner gets a dashboard at `/s/<shop>/dashboard`, protected by a PIN:
+```bash
+python -m dukaan_dost.auth set-pin <shop>             # asks for a PIN twice; stored hashed in data/auth.json
+python -m dukaan_dost.demo_data <shop>                # optional: made-up orders, loans and credit balances to look at
+```
+Open `http://127.0.0.1:8765/s/<shop>/dashboard`; the browser asks for a password, which is the PIN (the user name is ignored). To oversee any shop, set `ADMIN_PASSWORD` in `local_config.py` and sign in as user `admin`. Wrong guesses lock a shop for a minute after five. Sign-in is HTTP Basic auth, so use `localhost` or `https`.
+
+The agent does not write real orders yet, so until it does the dashboard shows only the demo data, marked as made up.
 
 ## Tests (no call needed)
 ```bash

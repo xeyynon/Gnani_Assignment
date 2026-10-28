@@ -22,8 +22,20 @@ test("the page script is valid JavaScript", () => {
   new Function(script);           // parses without running
 });
 
-test("the page talks to the path the server listens on", () => {
-  assert.match(script, /'\/ws'/);
+test("the page connects to /ws under its own address, so a shop's link calls that shop", () => {
+  assert.match(script, /base \+ 'ws'/);
+  // Run the page's own expression for the base address, not a copy of it.
+  const expr = script.match(/const base = (location\.pathname[^;]*);/)[1];
+  const baseFor = (pathname) => new Function("location", `return ${expr};`)({ pathname });
+  assert.equal(baseFor("/s/ram_kirana/") + "ws", "/s/ram_kirana/ws");
+  assert.equal(baseFor("/s/ram_kirana") + "ws", "/s/ram_kirana/ws");
+  assert.equal(baseFor("/") + "ws", "/ws");
+  assert.equal(baseFor("/index.html") + "ws", "/ws");
+});
+
+test("the shop name is a placeholder the server fills in", () => {
+  assert.match(html, /<title>\{\{SHOP\}\}/);
+  assert.match(html, /<h1>\{\{SHOP\}\}<\/h1>/);
 });
 
 test("the controls the user needs exist", () => {

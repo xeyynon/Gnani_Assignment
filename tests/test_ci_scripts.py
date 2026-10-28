@@ -60,7 +60,7 @@ def test_placeholders_and_lookups_are_not_flagged(tmp_path, monkeypatch, fine):
 # ---- check_repo: files that must stay local --------------------------------
 
 @pytest.mark.parametrize("path", [
-    "local_config.py", ".env", "dukaan_dost.log", "logs/vad_metrics.csv", "call_data/x/a.wav",
+    "local_config.py", ".env", "dukaan_dost.log", "logs/vad_metrics.csv", "call_data/x/a.wav", "data/auth.json",
     "orders/20261101-1.json", "evaluation/audio/clean/a.wav",
 ])
 def test_local_only_files_are_rejected(path):

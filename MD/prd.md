@@ -16,7 +16,7 @@
 5. **Read-back.** When the caller is done, the agent reads back each item and the total **in words**, in the caller's language.
 6. **Delivery and payment.** It confirms delivery or pickup and payment by UPI or cash on delivery, using the shop's (synthetic) details.
 7. **Close.** It thanks the caller and says when to expect delivery.
-8. **Summary.** At hang-up, the agent writes `orders/<call_id>.json` and `orders/<call_id>.txt`.
+8. **Summary.** At hang-up, the agent writes `orders/<shop>/order_<call_id>.json` and `orders/<shop>/order_<call_id>.txt`.
 
 ## Must handle
 | Situation | Expected behaviour |
@@ -68,10 +68,10 @@ Rules:
 - **Unknown name:** the agent doesn't create a credit account. It says the shopkeeper will confirm, and marks the order "credit pending" in the summary.
 - **A credit limit** per customer (e.g. ₹2,000). Over the limit, the agent politely says the shopkeeper has to approve.
 - **Never shames or pressures** a caller about dues. A neutral, friendly tone.
-- The order summary gains `payment: "udhaar"`, `customer`, `balance_before` and `balance_after`. A ledger file (`orders/ledger.json`) holds the running balances, plus a readable `ledger.txt`.
+- The order summary gains `payment: "udhaar"`, `customer`, `balance_before` and `balance_after`. A ledger file (`orders/<shop>/ledger.json`) holds the running balances, plus a readable `ledger.txt`.
 
 ## Order summary format
-`orders/<call_id>.json`:
+`orders/<shop>/order_<call_id>.json`:
 ```json
 {
   "call_id": "20261101-153012",
@@ -88,7 +88,7 @@ Rules:
 ```
 (Prices are placeholders here. The real values come from `products_pricing.md`.)
 
-`orders/<call_id>.txt` holds the same information as a readable bill, for the shopkeeper.
+`orders/<shop>/order_<call_id>.txt` holds the same information as a readable bill, for the shopkeeper.
 
 ## Non-functional requirements
 - **Time to first audio:** as low as we can make it. Measure it; don't promise a number before the eval.

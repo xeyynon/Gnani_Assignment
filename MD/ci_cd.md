@@ -10,7 +10,7 @@ GitHub Actions, in `.github/workflows/`. **None of it has run on GitHub yet** (i
 | Tests (3 runs) | `pip install -r requirements.txt`, then `python -m pytest` on Ubuntu with Python 3.10 and 3.12, and Windows with 3.12 | A test fails, or the pinned requirements no longer install |
 | Lint | `ruff check .` for real errors only (syntax errors, undefined names; see `ruff.toml`) | A genuine code error |
 | Repo hygiene | `scripts/check_repo.py` and `scripts/check_docs.py` | A key or secret-looking string is committed; a local-only file (`local_config.py`, `.env`, logs, recordings, orders) is tracked; a name from `BANNED_TERMS` appears in a file, file name or commit message; a commit title says "(Build N)"; a relative Markdown link points nowhere |
-| Call page | `node --test tests/web/`: the page script parses, its resampler is accurate at 48, 44.1, 32 and 16 kHz, clipping works, the controls exist | The page breaks |
+| Call page | `node --test tests/web/` (20 tests): the call page's script parses, its resampler is accurate at 48, 44.1, 32 and 16 kHz and it builds the right shop address; the dashboard's helpers format rupees, dates and times correctly and the page never builds HTML from data | The page breaks |
 | Container image | Builds the `Dockerfile` (not pushed) and imports the app inside it | The image doesn't build |
 
 `BANNED_TERMS` is an optional **repository variable** (Settings > Secrets and variables > Actions > Variables): a comma-separated list of names that must never be in the repo. It lives in the settings so the names are never committed. The check skips itself, and says so, when it isn't set.
@@ -62,5 +62,5 @@ BANNED_TERMS="name1,name2" python scripts/check_repo.py     # with the name chec
 ```
 
 ## What is verified, and what is not
-- **Verified here:** the pinned requirements install in a clean environment on Python 3.12 / Windows and all 124 tests pass; ruff is clean; the Node tests, `check_repo.py`, `check_docs.py` and `release_notes.py` run; the workflow files parse, their jobs are wired correctly and the scripts they call exist; the scripts' tests include bad input, so the checks are shown to fail when they should.
+- **Verified here:** the pinned requirements install in a clean environment on Python 3.12 / Windows and all Python tests pass (219 now); ruff is clean; the Node tests, `check_repo.py`, `check_docs.py` and `release_notes.py` run; the workflow files parse, their jobs are wired correctly and the scripts they call exist; the scripts' tests include bad input, so the checks are shown to fail when they should.
 - **Not verified:** nothing has run on GitHub. In particular the Docker image has never been built (no Docker engine here), Python 3.10 and Ubuntu were not tried, and `gh release create`, the image push and the Dependabot config are untested. Expect to fix a red job or two on the first run.

@@ -2,6 +2,9 @@
 local_config.py
 .env
 
+# Runtime state, including the hashed shop PINs
+data/
+
 # Runtime output. Logs contain call transcripts, so none of it is committed.
 *.log
 *.log.*

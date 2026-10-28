@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1002 · **Latest InBul:** InBul12
+**Last updated:** 2026-10-28 · **Latest build:** 1003 · **Latest InBul:** InBul12
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -30,6 +30,8 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
 | Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
+| Shopkeeper dashboard | ✅ Built and checked in a real browser (Build 1003); shows demo data only until the agent writes orders (B-11). Admin dashboard next (DEC-034) |
+| Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
 | Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
 | Shop data (`shops/dukaan_dost/`) | ❌ Not started |
 | Order summary output | ❌ Not started |
@@ -83,5 +85,5 @@ The live checklist is in [tasks.md](tasks.md).
 ```
 Browser tab (microphone) ──WebSocket, 16 kHz mono──▶ webrtcvad endpointing
    ▶ Gnani Prisma STT (streaming WS) ▶ Gemini (streamed, with the shop's stock list)
-   ▶ Gnani Timbre TTS (streaming WS) ▶ back to the browser   …and at hang-up: orders/<call_id>.json + .txt
+   ▶ Gnani Timbre TTS (streaming WS) ▶ back to the browser   …and at hang-up: orders/<shop>/order_<call_id>.json + .txt
 ```

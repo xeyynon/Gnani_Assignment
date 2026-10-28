@@ -71,6 +71,8 @@ from dukaan_dost.tts_google import (
 )
 from dukaan_dost import llm_gemini as _llm_gemini
 from dukaan_dost import transport as _transport_mod
+from dukaan_dost import dashboard as _dashboard
+from dukaan_dost import shops as _shops
 from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from dukaan_dost.validator import validate_reply
@@ -124,7 +126,7 @@ try:
     import local_config as _local_config
 except ImportError:
     _local_config = None
-for _key_name in ("GNANI_API_KEY", "GEMINI_API_KEY"):
+for _key_name in ("GNANI_API_KEY", "GEMINI_API_KEY", "ADMIN_PASSWORD"):
     _key_value = getattr(_local_config, _key_name, "") if _local_config else ""
     if _key_value and not _key_value.startswith("your-"):
         os.environ.setdefault(_key_name, _key_value)
@@ -135,7 +137,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Which shop's knowledge base + rules to use: a folder under shops/ (see
 # shops/README.md for the layout). Defaults to this project's own shop.
 SHOP_NAME = os.getenv("SHOP_NAME", "dukaan_dost")
-SHOP_DISPLAY_NAME = os.getenv("SHOP_DISPLAY_NAME") or SHOP_NAME.replace("_", " ").title()
 SHOP_DIR = PROJECT_ROOT / "shops" / SHOP_NAME
 
 # LLM (Gemini). With GEMINI_API_KEY set it goes through the Gemini
@@ -188,10 +189,13 @@ USER_LOCATION = "India"
 # Greeting — spoken in English at the start of every call (per the
 # always-on language rules: always start in English, switch only
 # after the caller uses another language).
-GREETING = (
-    f"Hello! Welcome to {SHOP_DISPLAY_NAME}. I might take a few seconds "
-    "to answer, so please bear with me. How can I help you today?"
-)
+def _greeting() -> str:
+    """The greeting for the call's shop (DEC-034). SHOP_DISPLAY_NAME renames the default shop only."""
+    shop = _active_shop
+    override = os.getenv("SHOP_DISPLAY_NAME") if shop == SHOP_NAME else None
+    name = override or _shops.display_name(shop)
+    return (f"Hello! Welcome to {name}. I might take a few seconds "
+            "to answer, so please bear with me. How can I help you today?")
 
 # Spoken only when Google Speech-to-Text itself fails (network/auth
 # error, distinct from normal silence/noise) — English only, since the
@@ -857,7 +861,9 @@ _playback_key   = None
 _call_key  = None   # node that opened current stream
 
 _history    = []
-_conv_mgr   = None   # ConversationManager instance, set in main()
+_conv_mgrs  = {}     # shop name -> ConversationManager, built the first time a call needs it
+_conv_lock  = threading.Lock()
+_active_shop = SHOP_NAME   # the shop of the call in progress (one call at a time); the default between calls
 _vad        = webrtcvad.Vad(VAD_MODE)
 # A SEPARATE, stricter VAD instance used only for the mid-sentence
 # barge-in candidate check, deliberately decoupled from VAD_MODE above.
@@ -909,6 +915,33 @@ def _next_reply_id() -> int:
 # ─────────────────────────────────────────────────────
 # CALL DETECTION — the transport says whether a call is up
 # ─────────────────────────────────────────────────────
+
+def _get_conv_mgr(shop: str | None = None) -> ConversationManager:
+    """The conversation manager for a shop (the active call's by default); built on first use."""
+    shop = shop or _active_shop
+    with _conv_lock:
+        mgr = _conv_mgrs.get(shop)
+        if mgr is None:
+            mgr = ConversationManager(
+                shop_dir=_shops.shop_dir(shop),
+                llm_model=LLM_MODEL,
+                max_tokens=LLM_TOKENS,
+                temperature=LLM_TEMP,
+            )
+            _conv_mgrs[shop] = mgr
+        return mgr
+
+
+def _set_active_shop() -> None:
+    """Called when a call starts: the call link decided which shop it is for."""
+    global _active_shop
+    shop = _transport.call_shop() or SHOP_NAME
+    if not _shops.exists(shop):
+        log.warning(f"[SHOP] Call asked for unknown shop {shop!r}; using {SHOP_NAME!r}")
+        shop = SHOP_NAME
+    _active_shop = shop
+    log.info(f"[SHOP] Call is for {shop!r}")
+
 
 def _find_call():
     return _transport.find_call()
@@ -1021,6 +1054,7 @@ def watchdog_thread():
                 _drain_queues("call ended (node changed)")
                 _clear_history("new call")
                 _drain_queues("new call")
+                _set_active_shop()
                 _play_greeting()
                 active_input_node = inp
                 missing_polls = 0
@@ -1029,6 +1063,7 @@ def watchdog_thread():
                 log.info(f"Call detected — device: {_device_name()}")
                 _clear_history("new call")
                 _drain_queues("new call")
+                _set_active_shop()
                 _play_greeting()
                 had_call = True
                 active_input_node = inp
@@ -1540,7 +1575,7 @@ def _ask(transcript: str, language_code: str) -> tuple[str, str]:
     with _hist_lock:
         recent = list(_history[-(LLM_HISTORY * 2):])
 
-    reply, reply_language = _conv_mgr.handle_turn(transcript, recent, context, language_code)
+    reply, reply_language = _get_conv_mgr().handle_turn(transcript, recent, context, language_code)
 
     if reply:
         with _hist_lock:
@@ -1562,7 +1597,7 @@ def _ask_streaming(transcript: str, language_code: str):
     with _hist_lock:
         recent = list(_history[-(LLM_HISTORY * 2):])
 
-    yield from _conv_mgr.handle_turn_streaming(transcript, recent, context, language_code)
+    yield from _get_conv_mgr().handle_turn_streaming(transcript, recent, context, language_code)
 
 
 # ─────────────────────────────────────────────────────
@@ -1831,7 +1866,7 @@ def _play_greeting():
         # now, so it's not repeated here.
         try:
             time.sleep(GREETING_DELAY_SEC)
-            chunks, _ = _tts_and_enqueue(GREETING, "en-IN", gen, _next_reply_id())
+            chunks, _ = _tts_and_enqueue(_greeting(), "en-IN", gen, _next_reply_id())
         except Exception:
             _greeting_guard.clear()
             raise
@@ -1867,7 +1902,7 @@ def _maybe_prefetch_rag(session, last_speculated: str) -> str:
         return last_speculated
 
     threading.Thread(
-        target=_prefetch_rag, args=(SHOP_DIR, partial), daemon=True
+        target=_prefetch_rag, args=(_shops.shop_dir(_active_shop), partial), daemon=True
     ).start()
     return partial
 
@@ -2682,7 +2717,7 @@ def processor_thread():
             log.info(f"Caller ({language_code}): '{transcript}'")
 
             is_first_turn = not bool(_history)
-            fallback_message = _conv_mgr._fallback_for(language_code)
+            fallback_message = _get_conv_mgr()._fallback_for(language_code)
 
             full_reply_parts = []
             wav_chunks = []
@@ -3116,7 +3151,6 @@ def _gemini_credentials_ok() -> bool:
 
 
 def main():
-    global _conv_mgr
 
     # The Gemini Developer API (GEMINI_API_KEY) needs no Google Cloud
     # project; only the Vertex path does. "your-project-id" matches both
@@ -3172,14 +3206,11 @@ def main():
             f"pipeline runs at {SAMPLE_RATE} Hz; the transport has to convert at its own edge."
         )
     log.info(f"STT={_STT_PROVIDER} | TTS=google | transport={_transport.name} | echo_tail={ECHO_TAIL_SEC}s")
-    log.info(f"Shop knowledge base: {SHOP_DIR}")
+    log.info(f"Shop knowledge base: {SHOP_DIR}  (shops available: {', '.join(_shops.list_shops()) or 'none'})")
 
-    _conv_mgr = ConversationManager(
-        shop_dir=SHOP_DIR,
-        llm_model=LLM_MODEL,
-        max_tokens=LLM_TOKENS,
-        temperature=LLM_TEMP,
-    )
+    _get_conv_mgr(SHOP_NAME)      # fail now, not on the first call, if the default shop is broken
+    _transport.configure(default_shop=SHOP_NAME, shop_exists=_shops.exists, shop_title=_shops.display_name)
+    _transport.add_http_handler(lambda path, headers, remote: _dashboard.handle(path, headers, remote))
 
     # Pays the cold-start cost (credential loading, gRPC/HTTP channel
     # setup, TTS voice-cache lookups) once at boot instead of on the

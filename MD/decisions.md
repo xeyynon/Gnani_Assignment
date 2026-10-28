@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-033.**
+**Latest: DEC-034.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the earlier voice-agent codebase (2026-10-26)
@@ -152,3 +152,13 @@ Details in [ci_cd.md](ci_cd.md).
 - **Banned names live in a repository variable**, never in a committed file, because the list itself would be the thing we must not commit (R-3).
 - **Lint is deliberately narrow** (syntax errors and undefined names). The code base has long explanatory comments and a history of style choices, so wide style rules would bury real errors.
 - **Not yet proven on GitHub.** The first run may need fixes (B-10).
+
+### DEC-034 · Dashboards: shopkeeper first, many shops per agent, one admin password plus a PIN per shop (2026-10-28)
+Surya asked for two dashboards: an **admin** dashboard (oversee everything, add shops, fix their errors) and a **shopkeeper** dashboard. Chosen order: shopkeeper first, then admin. Chosen shape: the call link picks the shop, and sign-in is one admin password plus a PIN per shop.
+- **Many shops, one agent.** The call link is `/s/<shop>/` and a call arrives on `/s/<shop>/ws`; `/` and `/ws` are the default shop. Each call loads that shop's prompt, knowledge and greeting (`_active_shop`, `_get_conv_mgr`). One call at a time still holds across all shops.
+- **Sign-in.** HTTP Basic auth: the shop's PIN as the password (any user name), or user `admin` with `ADMIN_PASSWORD`. PINs are stored hashed (scrypt) in `data/auth.json` (gitignored). A shop with no PIN can't be opened. Five wrong guesses lock that shop for that address for a minute. Basic auth is only safe over `localhost` or `https`.
+- **Data contract.** Plain JSON under `orders/<shop>/` (`order_<id>.json`, `loan_<id>.json`, `ledger.json`), documented in `store.py`. The agent will write them; the dashboards read them. Files that can't be read are reported, never fatal.
+- **Read-only first.** The shopkeeper dashboard is `GET` only and polls `/s/<shop>/dashboard/data` every 3 seconds. The page builds everything from text nodes (order data contains caller-chosen text) and runs under a strict content security policy.
+- **The admin dashboard needs writes** (add a shop, resolve an error). The server's HTTP layer can't read request bodies, so the plan is to drive the admin page over a WebSocket with JSON commands, which needs no new dependency. Not built yet.
+- **Not built:** the agent doesn't write orders yet (DEC-027 build steps 7 and 8), so until it does the dashboard shows only demo data (`python -m dukaan_dost.demo_data <shop>`), clearly marked as made up (B-11).
+- **Risk to the schedule:** the dashboards and multi-shop support compete with the Gnani integration and the evaluation, which is what the contest judges.

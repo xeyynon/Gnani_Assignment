@@ -9,7 +9,7 @@
 | No Gnani STT or TTS backend | `stt_gnani.py`, `tts_gnani.py`, `tts_provider.py` | Build steps 3–4 |
 | Gemini needs a Google Cloud project | Add the API-key path | Build step 5 |
 | No shop | `shops/dukaan_dost/` with ~60 items | Build step 7 |
-| No order output | `orders/<call_id>.json` and `.txt` | Build step 8 |
+| No order output | `orders/<shop>/order_<call_id>.json` and `.txt` | Build step 8 |
 | No git | `git init`, after moving the upstream clone out (see [rules.md](rules.md)) | Build step 1 |
 
 ## Loan guidance gaps (DEC-027)

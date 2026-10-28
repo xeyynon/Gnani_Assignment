@@ -86,12 +86,12 @@ When you tick something, add the date and the build or InBul that carried it.
 ### Step 8: Order summary
 - [ ] Decide how the order state is updated (structured output vs extraction at hang-up) → DEC-006
 - [ ] Raise or rework `LLM_HISTORY=3` so long orders aren't forgotten (B-02)
-- [ ] Write `orders/<call_id>.json` and `.txt`; check against the stock list
+- [ ] Write `orders/<shop>/order_<call_id>.json` and `.txt`; check against the stock list
 - [ ] Optional: a small order viewer page
 
 ### Step 8b: Udhaar ledger (DEC-026; the first thing cut if time runs short)
 - [ ] Synthetic customer list (~15 names, credit limits, opening balances) in the knowledge files
-- [ ] `orders/ledger.json` and `ledger.txt`: add to a balance, read a balance, record a promise-to-pay date
+- [ ] `orders/<shop>/ledger.json` and `ledger.txt`: add to a balance, read a balance, record a promise-to-pay date
 - [ ] Prompt rules: confirm the name, the credit limit, unknown names become "credit pending", a neutral tone
 - [ ] The order summary carries payment type, customer and balances
 - [ ] 4–5 of the 20 eval scripts cover udhaar (add, balance enquiry, over the limit, unknown name)
@@ -105,6 +105,15 @@ When you tick something, add the date and the build or InBul that carried it.
 
 ### Step 10: README
 - [ ] Problem, diagram, Gnani usage, results, how to run, synthetic-data note
+
+### Step 12: Dashboards (DEC-034)
+- [x] Shop registry, PIN sign-in with lock-out, order/loan/ledger file format, demo data (2026-10-28, Build 1003)
+- [x] Many shops, one agent: the call link `/s/<shop>/` picks the shop (2026-10-28, Build 1003)
+- [x] Shopkeeper dashboard: orders, credit book, loan enquiries, live; checked in a real browser at desktop and phone widths (2026-10-28, Build 1003)
+- [ ] The agent writes orders, loan summaries and credit balances at hang-up, so the dashboard shows real calls (B-11; with build steps 7 and 8)
+- [ ] Shopkeeper labels in Hindi and Telugu
+- [ ] Try the dashboard on a real phone
+- [ ] Admin dashboard (next): list shops and their status; add a shop from a template and set its PIN; see errors per shop (failed turns, unreadable files, missing knowledge) and mark them solved; edit a shop's prompt and stock list. Needs writes, so it runs over a WebSocket with JSON commands
 
 ### Step 11: CI/CD (DEC-033; see [ci_cd.md](ci_cd.md))
 - [x] GitHub Actions: CI (tests, lint, repo hygiene, call page, container build), release on `build-*` tags, Dependabot (2026-10-28, InBul12)

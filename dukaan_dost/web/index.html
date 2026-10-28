@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dukaan Dost: place a test call</title>
+<title>{{SHOP}}: place a test call</title>
 <style>
   :root{--bg:#F5F6FB;--surface:#fff;--ink:#14173A;--muted:#575C82;--line:#D9DCEE;--indigo:#3A3FC8;--teal:#0B7F6F;--warn:#C43D27;--turmeric:#C98400}
   @media (prefers-color-scheme:dark){:root{--bg:#0F1226;--surface:#171B38;--ink:#ECEEFB;--muted:#A0A6CE;--line:#2C3262;--indigo:#9396FF;--teal:#3FD0B8;--warn:#FF8068;--turmeric:#F2B53A}}
@@ -30,7 +30,7 @@
 </head>
 <body>
 <main>
-  <h1>Dukaan Dost</h1>
+  <h1>{{SHOP}}</h1>
   <p class="sub">A test call to the agent, from this browser.</p>
   <p id="status" role="status">Ready. Press Start call.</p>
   <div class="meter" aria-hidden="true"><div id="level"></div></div>
@@ -160,7 +160,8 @@ async function startCall() {
     node.port.onmessage = e => sendAudio(e.data);
 
     status('Connecting...');
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    const base = location.pathname.replace(/index\.html$/, '').replace(/\/?$/, '/');   // /s/<shop>/ or /
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + base + 'ws');
     ws.binaryType = 'arraybuffer';
     ws.onmessage = onMessage;
     ws.onclose = () => endCall(ready ? 'Call ended.' : null);

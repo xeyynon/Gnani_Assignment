@@ -41,3 +41,6 @@ Everything named for the earlier project was renamed before the first push (DEC-
 
 ## Software only (Build 1002)
 The Raspberry Pi and Bluetooth are removed (DEC-032). `python -m dukaan_dost` serves a call page; a browser tab is the caller. New: `transport_websocket.py`, `web/index.html`, 21 new tests (87 in total). Removed: `transport_pipewire.py`, `deploy/`. The default speech providers still need keys (Sarvam STT and Google TTS credentials) until the Gnani backends exist, so a full call cannot run yet without them. Open: try the page in a real browser (B-08), possible gaps between sentence clips (B-09).
+
+## Dashboards (Build 1003)
+Surya asked for an admin dashboard and a shopkeeper dashboard. Chosen (DEC-034): shopkeeper first, the call link picks the shop, one admin password plus a PIN per shop. Built: shop registry, PIN sign-in with lock-out, the order/loan/ledger file format, demo data, the per-call shop in the agent, and the shopkeeper dashboard, checked in headless Chrome at desktop and phone widths. 219 Python tests and 20 Node tests pass. Not built: the agent writing real orders (so the dashboard shows demo data, B-11), and the whole admin dashboard. A screenshot check caught a real bug the tests missed (the page could not fetch its data when opened with the PIN in the URL, and sat on "Loading...").

@@ -26,13 +26,13 @@ Use made-up shop names and IDs. Brand names (Amul, Maggi, Aashirvaad) are fine a
 
 ## 3. Order summary (build step 8)
 - A per-call order state, held next to the conversation history and reset on the same call boundaries (`_clear_history`).
-- At call end, write `orders/<call_id>.json` and `.txt`. `call_id` is a timestamp like `20261101-153012`.
+- At call end, write `orders/<shop>/order_<call_id>.json` and `.txt`. `call_id` is a timestamp like `20261101-153012`.
 - Check every line against the stock list before writing (the SKU exists and the price matches the knowledge file).
 - Optional: a tiny web page (`orders/index.html` or a small Flask app) listing the orders, for the demo video.
 
 ## 3b. Udhaar ledger (DEC-026)
 - `knowledge/customers.md` isn't one of the retriever's fixed file names, so the customer list goes in `knowledge/payment_issues.md` (a credit is a payment arrangement) or in `always_on.md` if it's short. Decide when building.
-- `orders/ledger.json`: `{customer: {balance, credit_limit, last_purchase, promise_date, entries: [...]}}`, updated only after the order is confirmed; checked against the stock list like the order itself.
+- `orders/<shop>/ledger.json`: `{customer: {balance, credit_limit, last_purchase, promise_date, entries: [...]}}`, updated only after the order is confirmed; checked against the stock list like the order itself.
 - In the demo: the order viewer shows the customer's balance before and after.
 
 ## 4. Evaluation assets (build step 9)

@@ -14,11 +14,12 @@ Caller ──browser microphone──▶ WebSocket (16 kHz mono)
    ▶ voice activity detection (webrtcvad) ▶ Gnani Prisma, streaming STT
    ▶ Gemini, streamed, grounded in the shop's stock list ▶ Gnani Timbre, streaming TTS
    ▶ back to the caller's browser
-   at hang-up ▶ orders/<call_id>.json and .txt
+   at hang-up ▶ orders/<shop>/order_<call_id>.json and .txt
 ```
 - **Barge-in:** the caller can interrupt; the agent stops and listens.
 - **Languages:** the call's language is locked once it's clear, and follows a real switch (for example, the caller starts speaking Telugu script).
 - **Call isolation:** nothing from one call can leak into the next.
+- **Many shops, one agent:** the call link `/s/<shop>/` picks the shop; each shop's owner has a PIN-protected dashboard at `/s/<shop>/dashboard` showing orders, credit balances and loan enquiries (demo data only until the agent writes real orders).
 
 The full architecture is in [MD/architecture.md](MD/architecture.md).
 
