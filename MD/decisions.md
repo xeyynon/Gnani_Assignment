@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-031.**
+**Latest: DEC-032.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the earlier voice-agent codebase (2026-10-26)
@@ -112,8 +112,8 @@ SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, t
 
 **Every figure is indicative** and the agent says so. **Revisit:** when the official scheme documents are checked (task in [tasks.md](tasks.md)); if they define the instalment differently, change `monthly_instalment()` and its tests.
 
-### DEC-029 · Run without the Raspberry Pi: a transport interface, browser first, phone number as stretch (2026-10-28)
-Chosen by Surya from [pi_free_plan.md](pi_free_plan.md). The pipeline takes audio in and out through a small `Transport` interface (`dukaan_dost/transport.py`), selected with `AUDIO_TRANSPORT` (default `pipewire`).
+### DEC-029 · Run without the Raspberry Pi: a transport interface, browser first, phone number as stretch (2026-10-28; the Pi transport it kept was removed by DEC-032)
+Chosen by Surya from [transport_plan.md](transport_plan.md). The pipeline takes audio in and out through a small `Transport` interface (`dukaan_dost/transport.py`), selected with `AUDIO_TRANSPORT` (default `pipewire`).
 - **Order:** (1) the interface with today's Pi code moved behind it, behaviour unchanged (InBul09); (2) a laptop mic and speaker transport for development; (3) a browser WebSocket transport and page, the Pi-free "call"; (4) re-tune the settings that were set for Bluetooth, one at a time, against the evaluation harness; (5) stretch: a cloud phone number on the same WebSocket transport.
 - **Why:** the Pi-specific code was a small, bounded part of the file (call detection, loopback cutting, `pw-play`, `pw-record`, `espeak`); the logic is transport-independent. A browser transport is free and works in days, and without Bluetooth echo it allows real speak-over barge-in. A phone number needs Indian-number paperwork we can't count on in 12 days.
 - **Honesty rule:** the README and posts say "browser call" or "simulated phone line" unless a real number is wired up and tested (R-5). The Pi transport stays, as the only one proven on real calls, and as a comparison.
@@ -132,7 +132,15 @@ Before the first push, everything named for the earlier project was renamed (InB
 ### DEC-031 · Python first; Cython only for a measured hotspot (2026-10-28)
 Surya's plan: develop in Python, and move to Cython later. Recorded with the evidence so the later step is a decision, not a reflex.
 - **Measured on a laptop, not the Pi** (`python -m evaluation.profile_frame_cost`): the work done on every 30 ms frame (energy plus both VAD checks) costs about 0.03 ms, which is 0.1% of the frame. The heaviest function is `_learn_caller_pitch`, about 2.4 ms once per utterance. Even 10× slower on the Pi, per-frame work stays around 1%.
-- **So Cython wouldn't make a call feel faster.** What makes a reply slow is waiting: the speech, language-model and text-to-speech network calls, and the 650 ms end-of-speech wait. Those are tuned through the settings and the Gnani integration (DEC-023, [pi_free_plan.md](pi_free_plan.md) section 4), not by compiling.
+- **So Cython wouldn't make a call feel faster.** What makes a reply slow is waiting: the speech, language-model and text-to-speech network calls, and the 650 ms end-of-speech wait. Those are tuned through the settings and the Gnani integration (DEC-023, [transport_plan.md](transport_plan.md) section 4), not by compiling.
 - **When Cython becomes worth it:** a measured hotspot on the target machine, most likely 8 kHz to 16 kHz resampling and mu-law conversion if a phone-number transport is added (`audioop` is gone from newer Python), or pitch learning if the Pi is slow. Try vectorising with numpy first.
 - **How, if it happens:** move only that function into its own small module with a plain-Python version that stays the reference. Add the compiled version with the same signature as an *optional* extra, import it with a fallback to the Python one, and add a test that both give the same answers. A compiled build must never be required to run the agent; the Pi would need a C compiler and the Windows laptops a build toolchain.
 - **Not done now:** no `.pyx` files, no build step, no new module. Premature until the profile on the Pi shows a hotspot.
+
+### DEC-032 · Software only: the Raspberry Pi and Bluetooth are removed (2026-10-28)
+Surya's instruction: remove the Pi dependency completely and make the project software based. Done in Build 1002.
+- **What went:** `transport_pipewire.py`, the loopback-cutting thread and its helpers, the `deploy/` folder (Pi install script, systemd unit, run guides), and the Pi/Bluetooth wording in the docs. `webrtcvad-wheels` replaces `webrtcvad` so installs work on Windows, macOS and Linux.
+- **What replaced it:** `transport_websocket.py` and `dukaan_dost/web/index.html`. `python -m dukaan_dost` serves a call page; a browser tab is the caller. The audio protocol is documented in [transport_plan.md](transport_plan.md). The `Transport` interface stays, so a phone-number transport or an offline replay transport can be added.
+- **What we give up:** the "answers a real phone call" claim. The README, videos and posts say "browser call" and call phone-line audio "simulated" unless a real number is wired up and tested (R-5). The Pi transport was also the only one proven on real calls; the browser one has only been tested offline so far (B-08).
+- **What we gain:** it runs from one command on any laptop, anyone can try it, the tests exercise a real transport, and the browser's echo cancellation removes the main reason for the long mic mute (to be tuned with measurements).
+- **Revisit:** a phone-number transport, if a provider's paperwork turns out to be quick (DEC-029 stretch).

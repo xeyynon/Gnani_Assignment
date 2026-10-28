@@ -27,7 +27,7 @@ empty transcript — a non-empty result there is exactly the
 hallucination failure mode found in production.
 
 Usage:
-    cd "/home/pi/dukaan-dost"
+    cd <the project root>
     python3 -m evaluation.stt_regression_test                       # uses current STT_PROVIDER
     STT_PROVIDER=google python3 -m evaluation.stt_regression_test
     STT_PROVIDER=sarvam python3 -m evaluation.stt_regression_test

@@ -1,21 +1,22 @@
 # System design and boundaries
 
 ## In scope
-- One inbound call at a time, on one phone paired to one Raspberry Pi.
+- One call at a time, from a browser tab on the same machine (or behind TLS).
 - Telugu, Hindi, English and Hinglish.
 - Taking an order against a fixed, synthetic stock list.
 - Writing an order summary per call.
 - An offline evaluation harness.
 
 ## Out of scope
+- A real phone number or telephone line. A provider-backed transport could be added later (see [transport_plan.md](transport_plan.md)).
 - Payments (we only *say* the UPI ID or "cash on delivery").
 - Stock levels and live inventory.
-- Multiple lines or simultaneous calls. Upstream researched cloud telephony (Twilio, Exotel, Plivo) and parked it.
+- Multiple lines or simultaneous calls. A second browser is told the line is busy.
 - Outbound calls.
 - Recording calls (turned off for the contest, see [decisions.md](decisions.md) DEC-007).
 
 ## Where data goes
-| Data | Leaves the Pi to | Kept on the Pi |
+| Data | Leaves this machine to | Kept on this machine |
 |---|---|---|
 | Caller audio | Gnani Prisma (WSS) | Not stored (`CALL_DATA_ENABLED=0`) |
 | Transcript and history | Google Gemini | `dukaan_dost.log` (gitignored, rotated) |
@@ -41,4 +42,4 @@ The language model never does arithmetic that the caller will act on. Loan figur
 | Timbre normalises numbers itself, but `auto` reads Latin-only text as English, and Telugu coverage is still being refined | Gnani docs, 2026-10-28 | Pass the language explicitly; thin pre-pass for units (DEC-024) |
 | The account may allow only one active request; the concurrent-session cap is per organisation | Gnani docs, 2026-10-28 | Check on app.gnani.ai; fall back to one STT session per call (B-07) |
 | 5,000 free credits | Gnani registration | Budget the eval; see [problem_statement-gap-plan.md](problem_statement-gap-plan.md) |
-| Bluetooth HFP is 16 kHz mono | Hardware | Request 16 kHz everywhere; no resampling |
+| The browser microphone runs at 44.1 or 48 kHz | Browser | The call page resamples to 16 kHz mono before sending |

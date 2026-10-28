@@ -17,7 +17,7 @@ Most live in `MD/`. A few sit at the repo root. `CHANGELOG.md` is generated, nev
 | `MD/intent.md`, `MD/prd.md`, `MD/readme.md` | Why we're building it, the product requirements, how this folder works |
 
 ### Design and architecture
-`architecture.md` (components), `system_design_and_boundary.md` (scope, data flow, trust boundaries), `flow.md` (the runtime, step by step), `agents.md` (the pipeline's threads and models, plus notes for AI coding agents), `integration_handoff.md` (backend interfaces), `deployment.md` (the Pi, keys, running), `frontend.md` (the order viewer; planned).
+`architecture.md` (components), `system_design_and_boundary.md` (scope, data flow, trust boundaries), `flow.md` (the runtime, step by step), `agents.md` (the pipeline's threads and models, plus notes for AI coding agents), `integration_handoff.md` (backend interfaces), `deployment.md` (keys, running, settings), `frontend.md` (the order viewer; planned).
 
 ### Models
 `ml.md` (the models in the stack, choices, the evaluation plan), `ml_model_integration.md` (wiring in Prisma and Timbre), `failmlmodel.md` (models tried and ruled out).

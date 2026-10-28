@@ -24,7 +24,7 @@
 |---|---|---|---|
 | **Mixed Vibes** | Per-call language lock; native-script detection; romanized keyword hints | Prisma v3.0's `detected_language_code` and `codemix` format (DEC-023). Check whether Timbre v3.0 reads Hinglish naturally with `language: hi-IN` | Hinglish demo call; per-language rows in the eval table |
 | **Real Deal** | A working phone agent | The order domain: stock list, item and quantity confirmation, total in words, order summary; **the udhaar ledger (DEC-026)** | The summary and the updated credit balance on screen in the demo |
-| **Noise Canceller** | VAD tuned on a real noisy Bluetooth line; onset debounce; barge-in echo margin | Noisy eval set (~10 dB SNR mixes); Prisma VAD headers tuned | Clean vs noisy WER and order accuracy, side by side |
+| **Noise Canceller** | VAD, onset debounce and barge-in logic tuned on real noisy calls | Noisy eval set (~10 dB SNR mixes) on simulated phone-line audio (8 kHz, µ-law); Prisma VAD headers tuned | Clean vs noisy WER and order accuracy, side by side, labelled as simulated phone audio |
 | **Solo Ninja** | Solo project | Nothing to build. Say it in the submission | Submission text |
 | **Main Character** | Telugu worked in the upstream deployment (with Sarvam) | Telugu on Prisma and Timbre, Telugu product names in the stock list, Telugu fallback messages | A Telugu clip in the walkthrough; Telugu rows in the eval |
 | **Demo Day Drop** | — | The 60-second video: real call, Hinglish order, one interruption, total read back, summary on screen | The video |

@@ -18,7 +18,7 @@ Two layers of knowledge:
    "product price and delivery time") can still pull sections from
    both products_pricing.md and delivery_shipping.md.
 
-No vector DB here on purpose: on a Pi 4B, spinning up a
+No vector DB here on purpose: on a small machine, spinning up a
 sentence-transformer model just to search a handful of small markdown
 files is unnecessary weight. Section-level keyword matching is fast
 and good enough for structured docs (pricing tables, FAQ entries). If

@@ -2,42 +2,44 @@
 
 ## Today, and after the Gnani work
 ```
-                         ┌──────────────── Raspberry Pi ──────────────────────────────┐
- Caller's phone          │                                                            │
-   │ GSM call            │  pw-record (16 kHz mono s16)                               │
-   ▼                     │     │                                                      │
- Shop phone ─Bluetooth──▶│  recorder_thread ── webrtcvad, onset confirm, hangover     │
-  (HFP/SCO)              │     │ streams frames                                       │
-                         │     ▼                                                      │
-                         │  stt_provider ──▶ stt_gnani  (Prisma, WSS)   [NEW]         │
-                         │                └─▶ stt_sarvam / stt_google   (kept)        │
-                         │     │ (transcript, lang)                                   │
-                         │     ▼                                                      │
-                         │  processor_thread                                          │
-                         │     ├─ filters: hallucination, ack, stop, repeat           │
-                         │     ├─ language lock                                       │
-                         │     ├─ ConversationManager                                 │
-                         │     │    ├─ knowledge_retriever (stock list, policies)     │
-                         │     │    └─ llm_gemini (API key [NEW] or Vertex)           │
-                         │     ├─ validator                                           │
-                         │     └─ tts_provider ─▶ tts_gnani  (Timbre, WSS)  [NEW]     │
-                         │                     └▶ tts_google               (kept)     │
-                         │     │ PCM chunks                                           │
-                         │     ▼                                                      │
-                         │  playback_thread ── pw-play, echo-tail mute, barge-in      │
-                         │                                                            │
-                         │  watchdog_thread ── call start/end via wpctl               │
-                         │     └─ at hang-up: order_writer ─▶ orders/*.json, *.txt [NEW]
-                         └────────────────────────────────────────────────────────────┘
+ Browser tab (call page)
+   │ microphone, resampled to 16 kHz mono s16
+   ▼ WebSocket /ws                   ┌────────── python -m dukaan_dost ───────────────────────┐
+ ──────────────────────────────────▶ │  transport_websocket (own thread: serves the page)     │
+                                     │     │ capture                                          │
+                                     │     ▼                                                  │
+                                     │  recorder_thread ── webrtcvad, onset confirm, hangover │
+                                     │     │ streams frames                                   │
+                                     │     ▼                                                  │
+                                     │  stt_provider ──▶ stt_gnani  (Prisma, WSS)   [NEW]     │
+                                     │               └─▶ stt_sarvam / stt_google   (kept)     │
+                                     │     │ (transcript, lang)                               │
+                                     │     ▼                                                  │
+                                     │  processor_thread                                      │
+                                     │     ├─ filters: hallucination, ack, stop, repeat       │
+                                     │     ├─ language lock                                   │
+                                     │     ├─ ConversationManager                             │
+                                     │     │    ├─ knowledge_retriever (stock list, policies) │
+                                     │     │    └─ llm_gemini (API key or Vertex)             │
+                                     │     ├─ validator                                       │
+                                     │     └─ tts_provider ─▶ tts_gnani  (Timbre, WSS) [NEW]  │
+                                     │                     └▶ tts_google               (kept) │
+                                     │     │ PCM chunks                                       │
+                                     │     ▼                                                  │
+ ◀────────────────────────────────── │  playback_thread ── transport.play, echo tail, barge-in│
+   WAV clips, one per sentence       │                                                        │
+                                     │  watchdog_thread ── call start/end via the transport   │
+                                     │     └─ at hang-up: order_writer ─▶ orders/*  [NEW]     │
+                                     └────────────────────────────────────────────────────────┘
 ```
 
-## Audio transport (DEC-029)
-Everything between the diagram's Bluetooth box and the pipeline goes through `dukaan_dost/transport.py`. `AUDIO_TRANSPORT` picks the implementation: `pipewire` (the Pi and Bluetooth phone, today's code in `transport_pipewire.py`); a laptop transport, a browser WebSocket transport and a phone-number transport are planned ([pi_free_plan.md](pi_free_plan.md)). The pipeline never calls `pw-record`, `pw-play` or `wpctl` directly. The loopback-cutting thread runs only for transports that need it.
+## Audio transport (DEC-029, DEC-032)
+Everything between the browser and the pipeline goes through `dukaan_dost/transport.py`. `AUDIO_TRANSPORT` picks the implementation; today there is one, `websocket` (`transport_websocket.py`): it serves the call page at `/` and the call at `/ws`. The pipeline only knows the interface, so a phone-number transport or an offline replay transport (for the evaluation) can be added without touching it. Details and the protocol are in [transport_plan.md](transport_plan.md).
 
 ## Components
 | Component | File | Status |
 |---|---|---|
-| Main process, six threads | `dukaan_dost/app.py` | Existing; small edits (TTS import, key loading, startup check, order hook) |
+| Main process, five threads plus the transport's server thread | `dukaan_dost/app.py` | Existing; small edits (TTS import, key loading, startup check, order hook) |
 | STT dispatcher | `dukaan_dost/stt_provider.py` | Existing; add `gnani` |
 | Gnani STT | `dukaan_dost/stt_gnani.py` | **New** |
 | TTS dispatcher | `dukaan_dost/tts_provider.py` | **New** |

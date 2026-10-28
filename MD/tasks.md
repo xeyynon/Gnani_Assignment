@@ -38,18 +38,18 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] 8–10 of the eval scripts cover loan guidance (clean and noisy), with exact expected numbers
 - [ ] Check the scheme figures against the official scheme documents before the README states them
 
-### Step 2c: Pi-free transport (DEC-029; see [pi_free_plan.md](pi_free_plan.md))
-- [x] `Transport` interface; Pipewire code moved behind it, behaviour unchanged (2026-10-28, InBul09). **Not yet run on the Pi**
-- [ ] Run the refactored build on the Pi: a call, the greeting, an interruption, a hang-up and a call-back
-- [ ] `LocalAudioTransport` (laptop mic and speaker) for development
-- [ ] `WebSocketTransport` plus a small browser page: the Pi-free call
-- [ ] Re-tune per [pi_free_plan.md](pi_free_plan.md) section 4, one setting at a time, measured: echo tail and mic-mute off, speak-over barge-in, hangover, VAD thresholds, greeting delay
-- [ ] Stretch: a cloud phone number on the WebSocket transport (8 kHz handling, the provider's barge-in signal)
-- [ ] Update README, SETUP, deployment and architecture to say "browser call" (not "phone call") wherever that is what we tested
+### Step 2c: Software-only transport (DEC-029, DEC-032; see [transport_plan.md](transport_plan.md))
+- [x] `Transport` interface (2026-10-28, InBul09)
+- [x] Browser call page, WebSocket server, Raspberry Pi code and `deploy/` removed (2026-10-28, Build 1002)
+- [ ] Try the call page in a real browser (Chrome and Firefox): microphone, a clip playing, hang up, call again (B-08)
+- [ ] Measure and close the gap between sentence clips in the browser (B-09)
+- [ ] Re-tune per [transport_plan.md](transport_plan.md), one setting at a time, measured: mic mute while the agent speaks, speak-over barge-in, hangover, VAD thresholds
+- [ ] `ReplayTransport`: feed recorded or synthetic caller audio through the whole pipeline with no browser, and capture the reply audio and timings (the backbone of the evaluation)
+- [ ] Stretch: a phone-number transport on the same WebSocket interface (8 kHz µ-law handling, the provider's barge-in signal)
 
 ### Step 2d: Performance (DEC-031)
 - [x] Profile the per-frame audio work on a laptop (2026-10-28, `python -m evaluation.profile_frame_cost`): 0.1% of a frame
-- [ ] Run the same profile on the Pi, and again once a phone-number transport (8 kHz) exists
+- [ ] Run the same profile on the machine that will run the demo
 - [ ] Only if a function is a visible share of the frame: vectorise it, then consider an optional Cython version with a Python fallback and a parity test
 
 ### Step 3: `stt_gnani.py`
@@ -115,5 +115,5 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] The submission form **by Nov 9**
 
 ## Inherited from upstream (lower priority)
-- [ ] The edge-case audit upstream never finished (greeting interruption, Bluetooth reconnect mid-call, empty LLM or TTS response, long replies, a hallucinated transcript re-locking the language)
+- [ ] The edge-case audit upstream never finished (greeting interruption, reconnect mid-call, empty LLM or TTS response, long replies, a hallucinated transcript re-locking the language)
 - [ ] The full edge-case re-check (stop mid-reply, repeat in another language, a fresh call starting in Telugu, rapid hang-up and call-back, several interrupts in one call)

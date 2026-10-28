@@ -1,5 +1,5 @@
 # Direct dependencies actually imported by this application, pinned to
-# the versions verified working on the deployed Pi as of 2026-07-31.
+# the versions verified working as of 2026-07-31.
 #
 # google-cloud-aiplatform is listed even though no file imports it
 # directly: llm_gemini.py uses genai.Client(vertexai=True, ...), and
@@ -31,4 +31,6 @@ websockets>=13
 numpy==2.2.4
 pytz==2026.2
 PyYAML==6.0.2
-webrtcvad==2.0.10
+# webrtcvad-wheels ships prebuilt wheels for Windows, macOS and Linux (the plain webrtcvad
+# package has to be compiled); it installs the same `webrtcvad` module.
+webrtcvad-wheels==2.0.14.post1

@@ -36,11 +36,11 @@ Plus, from our own plan:
 |---|---|
 | Mixed Vibes | Code-mixed Hinglish and Telugu-English speech |
 | Real Deal | A real kirana-shop problem |
-| Noise Canceller | Phone audio over Bluetooth, evaluated with shop, traffic and fan noise at ~10 dB SNR |
+| Noise Canceller | Simulated phone-line audio, evaluated with shop, traffic and fan noise at ~10 dB SNR |
 | Solo Ninja | Built by one person |
 | Main Character | Telugu as a first-class language |
 | Demo Day Drop | The 60-second video |
-| Jugaad Genius (stretch) | A spare phone plus a Raspberry Pi as the whole telephony stack |
+| Jugaad Genius (stretch) | A whole phone-order agent that runs from one Python command and a browser tab |
 | Crowd Favourite (stretch) | Public votes on the same posts |
 
 There are ten awards in all (₹50,000 each, at most one per entry). Two-Person Army doesn't apply, and Small Town, Big Build depends on the college. See [external_research.md](external_research.md).

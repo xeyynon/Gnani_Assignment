@@ -1,17 +1,17 @@
 # Dukaan Dost
 
-A phone-order voice agent for a neighbourhood kirana store. A customer calls the shop's phone and orders in **Telugu, Hindi, English or Hinglish**. The agent matches each item to the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper.
+A phone-order voice agent for a neighbourhood kirana store. A customer calls the agent and orders in **Telugu, Hindi, English or Hinglish**. The agent matches each item to the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper.
 
 Built for Gnani.ai's **Great Indian AI Internship Challenge**, on Gnani's **Prisma** (speech-to-text) and **Timbre** (text-to-speech) models, with Gemini for reasoning.
 
-> **Status: in development.** The phone pipeline works (built in an earlier project, see [MD/origin.md](MD/origin.md)). The Gnani integration, the shop's stock list, order summaries and the evaluation are being built now. See [CHANGELOG.md](CHANGELOG.md) for what's shipped.
+> **Status: in development.** The call pipeline works (built in an earlier project, see [MD/origin.md](MD/origin.md)) and now runs entirely in software: you place a test call from a browser tab. A real phone number is a later option, not built. The Gnani integration, the shop's stock list, order summaries and the evaluation are being built now. See [CHANGELOG.md](CHANGELOG.md) for what's shipped.
 
 ## How it works
 ```
-Caller ──GSM──▶ shop phone ──Bluetooth HFP──▶ Raspberry Pi (16 kHz mono)
+Caller ──browser microphone──▶ WebSocket (16 kHz mono)
    ▶ voice activity detection (webrtcvad) ▶ Gnani Prisma, streaming STT
    ▶ Gemini, streamed, grounded in the shop's stock list ▶ Gnani Timbre, streaming TTS
-   ▶ back over Bluetooth to the caller
+   ▶ back to the caller's browser
    at hang-up ▶ orders/<call_id>.json and .txt
 ```
 - **Barge-in:** the caller can interrupt; the agent stops and listens.
@@ -29,7 +29,6 @@ dukaan_dost/   the agent: run with `python -m dukaan_dost`
 shops/         one folder per shop (config.yaml + knowledge/), see shops/README.md
 evaluation/    benchmark and accuracy tools; committed results
 tests/         offline tests (tests/manual needs cloud credentials)
-deploy/        Raspberry Pi install and run guides, systemd unit
 scripts/       changelog.mjs, the build and InBul bookkeeping
 MD/            project documentation, start at MD/DukaanDost_MASTER.md
 ```

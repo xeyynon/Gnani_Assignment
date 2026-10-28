@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul11
+**Last updated:** 2026-10-28 · **Latest build:** 1002 · **Latest InBul:** InBul11
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -30,7 +30,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
 | Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
-| Pi-free transport | 🟡 Interface done and tested offline (InBul09); the laptop and browser transports are next; not yet run on the Pi (DEC-029) |
+| Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
 | Shop data (`shops/dukaan_dost/`) | ❌ Not started |
 | Order summary output | ❌ Not started |
 | Evaluation | ❌ Not started |
@@ -51,7 +51,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [intent.md](intent.md) | You need the "why" in one page |
 | [idea_research.md](idea_research.md) | You want to know why this idea, what the competing entries do, and the alternatives considered |
 | [problem_research.md](problem_research.md) | You want the SIH 2026 and other problem statements mined for voice problems, the evidence for each, and the scored alternatives |
-| [pi_free_plan.md](pi_free_plan.md) | You want to run without the Raspberry Pi: what is tied to it, the options, and what to re-tune |
+| [transport_plan.md](transport_plan.md) | You want to know how the call reaches the agent without any special hardware, the protocol, and what is left to tune |
 | [problem_statement.md](problem_statement.md) | You need the contest's rules, awards and judging |
 | [problem_statement-gap-plan.md](problem_statement-gap-plan.md) | You want to know what's missing for each award we target |
 | [prd.md](prd.md) | You need the product requirements: what the agent must do on a call |
@@ -70,7 +70,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [agents.md](agents.md) | You want the pipeline's agents (threads), or you're an AI coding agent working here |
 | [bugs.md](bugs.md) | Known bugs and risks |
 | [pain.md](pain.md) | The user's pain and ours |
-| [deployment.md](deployment.md) | Setting up the Pi, keys and running |
+| [deployment.md](deployment.md) | Running it, keys and settings |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
 | [origin.md](origin.md) | What we inherit from the upstream project |
 | [tried_and_failed.md](tried_and_failed.md) | Approaches that didn't work (not models) |
@@ -80,8 +80,7 @@ The live checklist is in [tasks.md](tasks.md).
 
 ## One-line architecture
 ```
-Phone ──Bluetooth HFP──▶ Raspberry Pi (PipeWire, 16 kHz mono)
-   ▶ webrtcvad endpointing ▶ Gnani Prisma STT (streaming WS)
-   ▶ Gemini (streamed, with the shop's stock list) ▶ Gnani Timbre TTS (streaming WS)
-   ▶ back over Bluetooth          …and at hang-up: orders/<call_id>.json + .txt
+Browser tab (microphone) ──WebSocket, 16 kHz mono──▶ webrtcvad endpointing
+   ▶ Gnani Prisma STT (streaming WS) ▶ Gemini (streamed, with the shop's stock list)
+   ▶ Gnani Timbre TTS (streaming WS) ▶ back to the browser   …and at hang-up: orders/<call_id>.json + .txt
 ```

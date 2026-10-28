@@ -23,6 +23,15 @@ After de-identification, `validator.py` strips any reply that starts "hello/hi/n
 Gnani's error docs show `429 RATE_LIMITED`, *"Only 1 active request is allowed at a time"*, for some accounts. The concurrent streaming-session cap is per organisation and only shown on app.gnani.ai. Our pipeline overlaps sessions in three ways: STT for the next utterance while TTS is still speaking, noise-triggered STT sessions (upstream needed 10 at once with Sarvam), and the TTS connection held open between turns.
 **Fix:** read the real limit as soon as the key exists. If it's 1–2: one persistent Prisma session per call (feed audio continuously, `commit` at our end of speech) instead of one per utterance; one TTS socket; and ask on Discord whether contest accounts can get more.
 
+
+### B-08 · Open (risk) · The call page has not been opened in a real browser
+The WebSocket server, the protocol and the page's resampler are tested offline, but the page itself (microphone permission, AudioWorklet, playing clips) has never run in a browser. Safari and older browsers may need changes.
+**Fix:** task in [tasks.md](tasks.md): try Chrome and Firefox first.
+
+### B-09 · Open (risk) · Possible gaps between sentence clips in the browser
+Each sentence is a separate clip, and the server sends the next one only after the page confirms the last one finished. That round trip may leave an audible gap between sentences.
+**Fix:** measure it. If audible, let the page queue the next clip while the last one plays.
+
 ## Fixed, uncommitted
 _None._
 

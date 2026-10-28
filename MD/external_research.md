@@ -110,7 +110,6 @@ Multipart `audio_file`, `language_code`, `model`, `format`. **Clips up to 30 s**
 - **Google STT:** `chirp` has no multi-language support in any region; `chirp_2` only in eu, global and us; `latest_long` with en, hi and te only in `global`.
 - **Gemini on Vertex:** `gemini-2.5-flash-lite` returned 404 in `asia-south1` for the upstream project.
 - **Telephony:** Twilio, Exotel and Plivo were compared for multi-line calling; parked (DEC-019).
-- **Pi:** `/tmp` is tmpfs (RAM-backed, ~1.9 GB cap on a ~3.7 GB Pi).
 
 ## Sources
 - Gnani docs index: https://docs.gnani.ai/llms.txt

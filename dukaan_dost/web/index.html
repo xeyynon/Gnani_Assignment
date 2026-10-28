@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dukaan Dost: place a test call</title>
+<style>
+  :root{--bg:#F5F6FB;--surface:#fff;--ink:#14173A;--muted:#575C82;--line:#D9DCEE;--indigo:#3A3FC8;--teal:#0B7F6F;--warn:#C43D27;--turmeric:#C98400}
+  @media (prefers-color-scheme:dark){:root{--bg:#0F1226;--surface:#171B38;--ink:#ECEEFB;--muted:#A0A6CE;--line:#2C3262;--indigo:#9396FF;--teal:#3FD0B8;--warn:#FF8068;--turmeric:#F2B53A}}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{width:min(100%,460px);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px}
+  h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+  p{margin:0}
+  .sub{color:var(--muted);font-size:15px}
+  #status{margin:22px 0 14px;font-weight:600}
+  #status.live{color:var(--teal)} #status.bad{color:var(--warn)}
+  .meter{height:10px;border-radius:5px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+  #level{height:100%;width:0;background:var(--teal);transition:width .06s linear}
+  .row{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+  button{font:600 16px system-ui,sans-serif;padding:10px 20px;border-radius:10px;border:1px solid var(--indigo);background:var(--indigo);color:#fff;cursor:pointer}
+  #hang{background:var(--surface);color:var(--warn);border-color:var(--warn)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button:focus-visible{outline:3px solid var(--turmeric);outline-offset:2px}
+  #speaking{font-size:13px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  #speaking.on{border-color:var(--teal);color:var(--teal)}
+  .tips{margin:22px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+  .tips li{margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Dukaan Dost</h1>
+  <p class="sub">A test call to the agent, from this browser.</p>
+  <p id="status" role="status">Ready. Press Start call.</p>
+  <div class="meter" aria-hidden="true"><div id="level"></div></div>
+  <div class="row">
+    <button id="start" type="button">Start call</button>
+    <button id="hang" type="button" disabled>Hang up</button>
+    <span id="speaking">agent silent</span>
+  </div>
+  <ul class="tips">
+    <li>Use headphones. Without them the agent can hear itself.</li>
+    <li>Speak Telugu, Hindi, English or a mix. Say whether you want to order or ask about a loan.</li>
+    <li>Use made-up details only. Your voice goes from this computer to the speech service the agent is set up with.</li>
+  </ul>
+</main>
+
+<script>
+'use strict';
+
+/* Turns microphone audio (any sample rate, floats) into 16 kHz signed 16-bit samples.
+   Averaging the input samples that fall into each output sample acts as a simple low-pass filter. */
+function makeResampler(inRate, outRate) {
+  const ratio = inRate / outRate;
+  let acc = 0, n = 0, phase = 0;
+  return function (input) {
+    const out = [];
+    for (let i = 0; i < input.length; i++) {
+      acc += input[i]; n++; phase += 1;
+      if (phase >= ratio) { out.push(acc / n); acc = 0; n = 0; phase -= ratio; }
+    }
+    const pcm = new Int16Array(out.length);
+    for (let i = 0; i < out.length; i++) {
+      const s = Math.max(-1, Math.min(1, out[i]));
+      pcm[i] = s < 0 ? s * 32768 : s * 32767;
+    }
+    return pcm;
+  };
+}
+
+const workletSource = `
+  const makeResampler = ${makeResampler.toString()};
+  class Capture extends AudioWorkletProcessor {
+    constructor() { super(); this.resample = makeResampler(sampleRate, 16000); }
+    process(inputs) {
+      const ch = inputs[0] && inputs[0][0];
+      if (ch && ch.length) {
+        const pcm = this.resample(ch);
+        if (pcm.length) this.port.postMessage(pcm, [pcm.buffer]);
+      }
+      return true;
+    }
+  }
+  registerProcessor('capture', Capture);`;
+
+const $ = id => document.getElementById(id);
+const SEND_SAMPLES = 480;            // 30 ms at 16 kHz
+let ws = null, ctx = null, stream = null, ready = false, gen = 0;
+let pending = [], pendingLen = 0, playChain = Promise.resolve(), current = null, queued = 0;
+
+function status(text, cls) { const s = $('status'); s.textContent = text; s.className = cls || ''; }
+function speaking(on) { const e = $('speaking'); e.textContent = on ? 'agent speaking' : 'agent silent'; e.className = on ? 'on' : ''; }
+
+function sendAudio(pcm) {
+  pending.push(pcm); pendingLen += pcm.length;
+  if (pendingLen < SEND_SAMPLES) return;
+  const joined = new Int16Array(pendingLen); let o = 0;
+  for (const p of pending) { joined.set(p, o); o += p.length; }
+  pending = []; pendingLen = 0;
+  let sum = 0; for (let i = 0; i < joined.length; i++) sum += joined[i] * joined[i];
+  $('level').style.width = Math.min(100, Math.sqrt(sum / joined.length) / 60) + '%';
+  if (ready && ws && ws.readyState === WebSocket.OPEN) ws.send(joined.buffer);
+}
+
+function ack(id) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'played', id })); }
+
+async function playOne(id, wav, myGen) {
+  if (myGen !== gen || !ctx) { ack(id); return; }
+  try {
+    const buf = await ctx.decodeAudioData(wav);
+    if (myGen !== gen) { ack(id); return; }
+    await new Promise(done => {
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination);
+      current = src;
+      src.onended = () => { if (current === src) current = null; done(); };
+      speaking(true); src.start();
+    });
+  } catch (e) { console.error('playback failed', e); }
+  ack(id);
+  if (--queued <= 0) { queued = 0; speaking(false); }
+}
+
+function stopPlayback() {
+  gen++;
+  if (current) { try { current.stop(); } catch (e) {} }
+}
+
+function onMessage(ev) {
+  if (typeof ev.data === 'string') {
+    const m = JSON.parse(ev.data);
+    if (m.type === 'ready') { ready = true; status('Connected. The agent will greet you.', 'live'); }
+    else if (m.type === 'busy') { status('Another call is already in progress.', 'bad'); }
+    else if (m.type === 'stop') { stopPlayback(); }
+    return;
+  }
+  const id = new DataView(ev.data).getUint32(0);
+  const wav = ev.data.slice(4);
+  queued++;
+  const myGen = gen;
+  playChain = playChain.then(() => playOne(id, wav, myGen));
+}
+
+async function startCall() {
+  $('start').disabled = true;
+  status('Asking for the microphone...');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await ctx.resume();
+    const url = URL.createObjectURL(new Blob([workletSource], { type: 'application/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    const source = ctx.createMediaStreamSource(stream);
+    const node = new AudioWorkletNode(ctx, 'capture');
+    const silent = ctx.createGain(); silent.gain.value = 0;     // keeps the graph running without playing the mic back
+    source.connect(node); node.connect(silent); silent.connect(ctx.destination);
+    node.port.onmessage = e => sendAudio(e.data);
+
+    status('Connecting...');
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws.binaryType = 'arraybuffer';
+    ws.onmessage = onMessage;
+    ws.onclose = () => endCall(ready ? 'Call ended.' : null);
+    ws.onerror = () => status('Could not reach the agent. Is it running?', 'bad');
+    $('hang').disabled = false;
+  } catch (e) {
+    console.error(e);
+    status(e && e.name === 'NotAllowedError' ? 'Microphone permission was denied.' : 'Could not start the call: ' + e.message, 'bad');
+    endCall(null);
+  }
+}
+
+function endCall(message) {
+  ready = false; stopPlayback(); queued = 0; speaking(false);
+  if (ws) { const w = ws; ws = null; w.onclose = null; try { w.close(); } catch (e) {} }
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (ctx) { ctx.close().catch(() => {}); ctx = null; }
+  pending = []; pendingLen = 0; $('level').style.width = '0';
+  $('start').disabled = false; $('hang').disabled = true;
+  if (message) status(message);
+}
+
+$('start').addEventListener('click', startCall);
+$('hang').addEventListener('click', () => endCall('Call ended.'));
+</script>
+</body>
+</html>

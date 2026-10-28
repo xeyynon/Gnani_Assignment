@@ -1,7 +1,5 @@
-# Keep line endings stable across Windows and the Pi. Shell scripts and the
-# systemd unit must be LF or they break on Linux.
+# Keep line endings stable across Windows, macOS and Linux.
 * text=auto
-*.sh text eol=lf
-*.service text eol=lf
 *.py text eol=lf
 *.mjs text eol=lf
+*.html text eol=lf

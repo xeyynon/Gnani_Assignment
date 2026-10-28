@@ -1,8 +1,7 @@
 """
 profile_frame_cost.py — how much CPU the per-frame audio work uses.
 
-Run it from the project root, on the machine you care about (the Raspberry Pi
-especially):
+Run it from the project root, on the machine that will run the demo:
 
     python -m evaluation.profile_frame_cost
 

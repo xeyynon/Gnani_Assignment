@@ -18,7 +18,6 @@ specific to its first customer removed (the customer is never named here, see
 | `tts_google.py` | The reference for `tts_gnani.py`: streaming class, `failed`, locks |
 | `conversation_manager.py`, `knowledge_retriever.py`, `validator.py` | Used as they are; the shop goes in `shops/dukaan_dost/` |
 | The benchmark harness | In `evaluation/`; extended for order and loan accuracy |
-| The Pi deploy scripts and systemd unit | In `deploy/` |
 | The lessons | [decisions.md](decisions.md), [failmlmodel.md](failmlmodel.md), [tried_and_failed.md](tried_and_failed.md), [tried_and_implemented.md](tried_and_implemented.md), [bugs.md](bugs.md) |
 
 ## What was left behind on purpose
@@ -35,6 +34,9 @@ The earlier project measured these on real calls with Sarvam STT and Google TTS:
 - an unexplained gap in time to first audio that dropped from 300–1,000 ms to 6–531 ms (the 2026-08-17 change)
 
 They show the pipeline is fast enough to build on. **They aren't Dukaan Dost numbers and must not appear in the README or the submission** (R-5).
+
+## The hardware was removed (2026-10-28, Build 1002, DEC-032)
+The earlier project ran on a Raspberry Pi with a Bluetooth-paired phone. All of that is gone from this repo: the PipeWire/Bluetooth transport, the Pi install scripts and the systemd unit. Calls now come from a browser tab over a WebSocket. Comments in `app.py` dated before that day still describe the Bluetooth setup, because its echo and interruption behaviour shaped the settings that are being re-tuned.
 
 ## What changed when it became Dukaan Dost (2026-10-28, InBul10)
 - `ai_caller_final3.py` became the `dukaan_dost/` package (`python -m dukaan_dost`), and `companies/` became `shops/`.

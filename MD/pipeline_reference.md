@@ -1,6 +1,6 @@
 # Pipeline reference (as built)
 
-The pipeline exactly as the code runs it, with the Raspberry Pi and Bluetooth transport. What changes for Dukaan Dost is in [flow.md](flow.md); the transport seam is in [pi_free_plan.md](pi_free_plan.md).
+The pipeline as the code runs it. This walkthrough was written when audio came from a phone paired to a Raspberry Pi; that hardware has been removed and the watchdog, recorder and playback now talk to a transport instead (see [transport_plan.md](transport_plan.md)). The Pi-specific lines below are kept as history. What changes for Dukaan Dost is in [flow.md](flow.md).
 
 ## Entry point
 

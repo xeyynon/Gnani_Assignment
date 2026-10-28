@@ -1,14 +1,21 @@
 # Frontend
 
-**Status: planned, not built.** Dukaan Dost's main interface is the phone call. The only screen is an optional order viewer for the shopkeeper, and for the demo video (build step 8).
+Two pages. The call page exists; the order viewer is planned.
+
+## The call page (built, Build 1002)
+`dukaan_dost/web/index.html`, served by the agent at `/`. It is the "phone".
+- **Start call** asks for the microphone (with the browser's echo cancellation, noise suppression and gain control switched on), opens the WebSocket, and streams the microphone as 16 kHz mono PCM. An AudioWorklet resamples from the browser's own rate (44.1 or 48 kHz).
+- It plays each sentence the agent sends, one clip at a time, and tells the server when a clip finished or was stopped.
+- **Hang up** closes the socket. A level bar shows the microphone, and a pill shows whether the agent is speaking.
+- It needs `localhost` or `https` for the microphone, no libraries, and no network access other than its own server.
+- **Untested in a real browser so far.** The server protocol and the resampler are tested; the page itself is not (B-08).
 
 ## Order viewer (planned)
-- **What it shows:** the orders in `orders/*.json`, newest first. Each one has the time, language, items with quantities and prices, the total, delivery and payment choices, and a status (confirmed or incomplete).
-- **Why it exists:** the 60-second demo has to end with the order summary on screen. A shopkeeper would glance at it between customers.
-- **Simplest version:** a static `orders/index.html` regenerated each time an order is written. No server, so nothing extra to run on the Pi.
-- **If time allows:** a tiny Flask page on the Pi's LAN address, auto-refreshing, so a new order appears while the call ends.
+- **What it shows:** the orders in `orders/*.json`, newest first. Each has the time, language, items with quantities and prices, the total, delivery and payment choices, and a status (confirmed or incomplete).
+- **Why it exists:** the 60-second demo has to end with the order summary on screen.
+- **Simplest version:** a static `orders/index.html` regenerated each time an order is written, so nothing extra runs. If time allows, a small page on the same server that refreshes while the call ends.
 
-## Rules for it
+## Rules for both
 - Synthetic orders only in screenshots and the video (R-2).
-- It's a build when it ships (a shopkeeper sees it). Record it in a build report.
-- Keep it readable on a phone: the shopkeeper's phone is the likely screen.
+- Anything a caller or shopkeeper sees ships as a build.
+- Keep them readable on a phone screen.

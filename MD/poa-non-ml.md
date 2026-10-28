@@ -38,7 +38,7 @@ Use made-up shop names and IDs. Brand names (Amul, Maggi, Aashirvaad) are fine a
 ## 4. Evaluation assets (build step 9)
 - 20 order scripts in `evaluation/scripts/*.json`: the expected items and quantities, plus the turns the caller says.
 - Audio in `evaluation/audio/clean/` and `evaluation/audio/noisy/`. Noise from a royalty-free source (credit it in the README), mixed at ~10 dB SNR.
-- An eval runner that plays each script through the pipeline offline (no Bluetooth) and logs WER, order match and time to first audio.
+- An eval runner that plays each script through the pipeline offline (a replay transport, no browser) and logs WER, order match and time to first audio.
 
 ## 5. README (build step 10)
 The problem; an architecture diagram; how Prisma and Timbre are used (Prisma v3.0 language detection, keyterms, `commit`; Timbre v3.0 voice); the results table (measured only); how to run; "all data is synthetic".

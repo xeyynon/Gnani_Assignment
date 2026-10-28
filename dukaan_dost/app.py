@@ -3,43 +3,36 @@
 Dukaan Dost — a phone-order and loan-guidance voice agent for a kirana shop
 --------------------------------------------------------------------------
 Run from the project root:  python -m dukaan_dost
+Then open the address it prints in a browser and press Start call.
 
-Bluetooth HFP/SCO -> WebRTC VAD -> STT (multi-language, Sarvam primary
-    / Google fallback — see stt_provider.py)
+Audio transport (browser, over a WebSocket; see transport.py)
+    -> WebRTC VAD -> STT (Sarvam primary / Google fallback; Gnani planned,
+       see stt_provider.py)
     -> Conversation Manager (knowledge retrieval + Gemini LLM + validator)
-    -> Google Text-to-Speech (language-matched voice) -> Bluetooth
-
-2026-08-17: a Sarvam Bulbul TTS backend (tts_sarvam.py/tts_provider.py)
-was built and verified working, but measured consistently ~40-70%
-slower to first audio than Google TTS across multiple real calls
-(Sarvam's SDK opens a fresh HTTP connection per sentence instead of
-reusing one warmed channel) — removed rather than left as an unused,
-slower-by-default option. Never committed, so it isn't in git history
-either; would need to be rebuilt from scratch (same interface as
-tts_google.py — synthesize/start_streaming_synthesis/needs_digit_
-spelling/warmup) if ever worth revisiting, ideally after a persistent-
-WebSocket rewrite to close the latency gap.
-
-See dukaan_dost/stt_provider.py, dukaan_dost/tts_google.py,
-dukaan_dost/llm_gemini.py for those pieces.
+    -> Text-to-Speech (language-matched voice) -> back through the transport
 
 Features:
-- Persistent pw-record (no Bluetooth crashes)
-- Dynamic Bluetooth (any device, no hardcoded MAC)
-- Echo cancellation (mic pauses during TTS playback) plus active
-  removal of PipeWire's Bluetooth HFP <-> onboard-audio loopback links
+- Software only: the call is a web page, no phone or special hardware
+- Echo handling: the browser cancels most echo; the mic is also held back
+  while the agent speaks (ECHO_TAIL_SEC), and a loudness check lets a caller
+  cut in. Both are being re-tuned for the browser transport
 - Multi-layer hallucination filter (energy, VAD, words/sec)
-- Per-call history reset (on connect, disconnect, device change)
-- Automatic language detection (English/Telugu/Hindi) via Google STT,
-  corrected by a local vocabulary heuristic where STT's tag is
-  unreliable, carried through to the LLM reply language and TTS voice
+- Per-call history reset (on connect and disconnect)
+- Automatic language detection (English/Telugu/Hindi), corrected by a local
+  vocabulary heuristic where STT's tag is unreliable, carried through to the
+  LLM reply language and TTS voice
 - Location + time context injected into every LLM call
 - Scoped knowledge retrieval (no separate intent-classification call)
   + reply validation
-- Greeting on call start, delayed to let the Bluetooth link stabilize
+- Greeting on call start
 - Continuous recording loop (doesn't stop after first utterance)
-- eSpeak fallback if Google TTS fails
+- eSpeak fallback if Google TTS fails (needs the espeak-ng program; optional)
 - Graceful shutdown on Ctrl+C
+
+Note on older comments: comments dated before 2026-10-28 describe the earlier
+hardware setup this code was first tuned on (a phone paired to a Raspberry Pi
+over Bluetooth). That setup has been removed, but the echo and barge-in
+settings it shaped are still here until they are re-tuned (MD/tasks.md).
 """
 
 import array
@@ -627,30 +620,17 @@ HALLUCINATION_PHRASES = (
 )
 
 # Timing
-GREETING_DELAY_SEC = float(os.getenv("GREETING_DELAY_SEC", "1.0"))
-                         # Was set to 0 at an earlier point in this project
-                         # ("removed per request"), which meant the greeting
-                         # fired the instant the Bluetooth SCO link came up —
-                         # before the caller had the phone at their ear or the
-                         # link had stabilized, clipping/pre-empting the start
-                         # of the call. Restored to 1.0s. Env-configurable so
-                         # this can be tuned (a real phone-in-hand test is the
-                         # only way to know the right value) without a
-                         # redeploy per attempt.
-WATCHDOG_SEC   = 3     # Bluetooth poll interval
+#
+# Where call audio comes from and goes to (AUDIO_TRANSPORT, default: a call
+# page in a browser). Created here, not started: main() starts it, so
+# importing this module never opens a port.
+_transport = _transport_mod.create()
 
-# _kill_loopback_links() itself was only ever being called once per
-# WATCHDOG_SEC (3s) — fine for node detection, but WirePlumber
-# recreates the alsa_output<->bluez monitor loopback far faster than
-# that on its own, so the link was live again for a real chunk of
-# each 3s window before the next poll cut it — a caller-audible
-# periodic echo/feedback for the entire call, reported as a
-# continuous rhythmic "beating" sound from start to end. Runs in its
-# own loop, independent of WATCHDOG_SEC and the call-detection/
-# debounce logic below, so this doesn't touch that already-tested
-# timing at all — just cuts the same already-existing link far more
-# often while a call is active.
-LOOPBACK_GUARD_SEC = 0.3
+# Pause between a call being detected and the greeting starting, so the
+# caller has the audio up before it begins. Per-transport default.
+GREETING_DELAY_SEC = float(os.getenv("GREETING_DELAY_SEC", str(_transport.default_greeting_delay_sec)))
+# How often the watchdog asks the transport whether a call is up.
+WATCHDOG_SEC   = float(os.getenv("WATCHDOG_SEC", str(_transport.poll_interval_sec)))
 
 CALL_END_DEBOUNCE_POLLS = 2  # consecutive missed polls (~2*WATCHDOG_SEC)
                               # before believing a call really ended, not
@@ -667,10 +647,9 @@ RECONNECT_SEC  = 2     # wait before reopening stream after call drop
 # this value. Reverted back to the known-good 1.2s.) Env-configurable
 # for the same reason the VAD constants are.
 #
-# 2026-10-28 (DEC-029): the 1.2s is the Bluetooth transport's default; a
-# transport whose far end already cancels echo defaults to 0
-# (transport.default_echo_tail_sec). The env var still wins.
-_transport = _transport_mod.create()
+# 2026-10-28 (DEC-029, DEC-032): the 1.2s above was tuned for the earlier
+# Bluetooth hardware. The default now comes from the transport (0 for the
+# browser, which cancels echo itself); the env var still wins.
 ECHO_TAIL_SEC = float(os.getenv("ECHO_TAIL_SEC", str(_transport.default_echo_tail_sec)))
 
 # Barge-in checkpoint window: how long, after each sentence-chunk's
@@ -778,10 +757,10 @@ BARGE_IN_FLOOR_FALL = float(os.getenv("BARGE_IN_FLOOR_FALL", "0.30"))
 # has a real estimate first — otherwise the bot's own opening syllable
 # is measured against an empty floor and interrupts itself.
 BARGE_IN_FLOOR_WARMUP_FRAMES = int(os.getenv("BARGE_IN_FLOOR_WARMUP_FRAMES", "5"))
-PW_PLAY_TIMEOUT_SEC  = 45  # bounds pw-play so a stalled Bluetooth link can't
+PLAY_TIMEOUT_SEC     = 45  # bounds one clip's playback so a stalled link can't
                            # hang playback forever (longest observed real
                            # reply playback was ~29s, so this leaves margin)
-READ_TIMEOUT_SEC     = 5   # bounds each pw-record read so a stalled stream
+READ_TIMEOUT_SEC     = 5   # bounds each capture read so a stalled stream
                            # can't hang the recorder forever mid-call
 
 # ─────────────────────────────────────────────────────
@@ -849,7 +828,7 @@ _abandoned_reply_id = None
 # since every millisecond matters for a "real-time interrupt" feel.
 _mid_play_interrupt = threading.Event()
 
-_node_lock  = threading.Lock()
+_call_lock  = threading.Lock()
 _hist_lock  = threading.Lock()
 
 # Bumped at every call boundary. Queued audio and queued replies carry
@@ -873,9 +852,9 @@ _call_gen   = 0
 # clobber it back to None.
 _locked_language_code: str | None = None
 
-_inp_node   = None
-_out_node   = None
-_call_node  = None   # node that opened current stream
+_capture_key   = None
+_playback_key   = None
+_call_key  = None   # node that opened current stream
 
 _history    = []
 _conv_mgr   = None   # ConversationManager instance, set in main()
@@ -928,16 +907,11 @@ def _next_reply_id() -> int:
         return _reply_id_counter
 
 # ─────────────────────────────────────────────────────
-# BLUETOOTH — dynamic, no hardcoded MAC
+# CALL DETECTION — the transport says whether a call is up
 # ─────────────────────────────────────────────────────
 
-def _find_nodes():
-    return _transport.find_nodes()
-
-
-def _kill_loopback_links():
-    """Per-poll echo housekeeping; only the Bluetooth transport has any (see transport_pipewire)."""
-    _transport.cut_echo_links()
+def _find_call():
+    return _transport.find_call()
 
 
 def _device_name():
@@ -1008,7 +982,7 @@ def _drain_queues(reason: str) -> None:
 
 
 def watchdog_thread():
-    global _inp_node, _out_node
+    global _capture_key, _playback_key
     had_call = False
     missing_polls = 0
     active_input_node = None
@@ -1016,15 +990,14 @@ def watchdog_thread():
 
     while not _shutdown.is_set():
         try:
-            inp, out = _find_nodes()
-            with _node_lock:
-                _inp_node = inp
-                _out_node = out
+            inp, out = _find_call()
+            with _call_lock:
+                _capture_key = inp
+                _playback_key = out
 
             call_now = bool(inp and out)
 
             if call_now:
-                _kill_loopback_links()
                 missing_polls = 0
 
             # 2026-08-01: a hangup followed by a new call within the
@@ -1036,11 +1009,11 @@ def watchdog_thread():
             # branch below ever fired for what is actually a brand-new
             # caller. Result: the new caller's turns got appended to
             # the OLD caller's _history, _locked_language_code carried
-            # over, and no greeting played. The node name (which
-            # encodes the Bluetooth MAC + a per-connection index) is
-            # the one reliable signal that a NEW connection came up,
-            # even from the same phone — compare it every poll while a
-            # call is believed active, independent of missing_polls.
+            # over, and no greeting played. The capture key (a fresh id
+            # for every connection) is the one reliable signal that a NEW
+            # call came up, even from the same caller — compare it every
+            # poll while a call is believed active, independent of
+            # missing_polls.
             if call_now and had_call and inp != active_input_node:
                 log.info(f"New call detected mid-debounce (node changed) — device: {_device_name()}")
                 _stop_playback("new call replaced previous one")
@@ -1061,9 +1034,10 @@ def watchdog_thread():
                 active_input_node = inp
 
             elif had_call and not call_now:
-                # Debounced: right as a Bluetooth SCO link comes up or
-                # tears down, wpctl can transiently miss one of the two
-                # nodes for a single poll. Treating that single miss as
+                # Debounced: right as a link comes up or tears down, the
+                # transport can transiently report no call for a single
+                # poll (this was a real problem on the earlier Bluetooth
+                # setup). Treating that single miss as
                 # "call ended" immediately made the very next poll look
                 # like a brand-new call, re-triggering the greeting —
                 # the repeated-greeting bug. Require the nodes to stay
@@ -1083,7 +1057,7 @@ def watchdog_thread():
             # Same failure mode as the processor_thread fix: a daemon
             # thread that raises unhandled just dies silently. Here
             # that would permanently stop call detection, greetings,
-            # and Bluetooth loopback cleanup for the rest of the
+            # and the greeting for the rest of the
             # process's life — worth guarding even though none of the
             # functions above are currently known to raise.
             log.error(f"[WATCHDOG] Unhandled error: {e}", exc_info=True)
@@ -1091,25 +1065,6 @@ def watchdog_thread():
         _shutdown.wait(WATCHDOG_SEC)
 
     log.info("Watchdog stopped.")
-
-
-def loopback_guard_thread():
-    """
-    Cuts the alsa_output<->bluez monitor loopback WirePlumber keeps
-    recreating, on a much tighter cadence than the main watchdog's
-    3s Bluetooth-node poll — see LOOPBACK_GUARD_SEC above for why.
-    Fully independent of watchdog_thread: reads _inp_node/_out_node
-    (already maintained by the watchdog) but doesn't touch call
-    detection, the greeting, or the debounce logic at all.
-    """
-    log.info("Loopback guard started.")
-    while not _shutdown.is_set():
-        with _node_lock:
-            active = bool(_inp_node and _out_node)
-        if active:
-            _kill_loopback_links()
-        _shutdown.wait(LOOPBACK_GUARD_SEC)
-    log.info("Loopback guard stopped.")
 
 
 # ─────────────────────────────────────────────────────
@@ -1334,7 +1289,7 @@ def _dump_utterance(pcm: bytes) -> None:
 # Consent/disclosure: this code does not add any spoken notice about
 # recording, so anyone turning it on must handle that outside the call
 # flow.
-CALL_DATA_DIR = os.environ.get("CALL_DATA_DIR", "/home/pi/call_data")
+CALL_DATA_DIR = os.environ.get("CALL_DATA_DIR", str(PROJECT_ROOT / "call_data"))
 CALL_DATA_ENABLED = os.environ.get("CALL_DATA_ENABLED", "0").lower() in ("1", "true", "yes")
 _boot_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # + gen below disambiguates calls within one process run
 _call_data_seq = 0  # processor_thread only — no lock needed, same reasoning as _dump_seq
@@ -1815,22 +1770,22 @@ def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True):
     applies the echo tail once at the end, rather than once per sentence.
     Defaults keep the original single-clip behaviour for any other caller.
     """
-    with _node_lock:
-        node = _out_node
+    with _call_lock:
+        node = _playback_key
     if not node:
         log.warning("[PLAY] No output node.")
         return
     if set_playing:
         _playing.set()
     try:
-        _transport.play(node, wav_bytes, PW_PLAY_TIMEOUT_SEC)
+        _transport.play(node, wav_bytes, PLAY_TIMEOUT_SEC)
         if echo_tail:
             time.sleep(ECHO_TAIL_SEC)
     except _transport_mod.PlaybackTimeout:
         # Without a timeout, a stalled link would block this call
         # forever, a silent, permanent loss of all further replies for
         # the rest of the call.
-        log.error(f"[PLAY] playback timed out after {PW_PLAY_TIMEOUT_SEC}s — killed.")
+        log.error(f"[PLAY] playback timed out after {PLAY_TIMEOUT_SEC}s — killed.")
     finally:
         if set_playing:
             _playing.clear()
@@ -1861,10 +1816,9 @@ def _play_greeting():
     _greeting_guard.set()
 
     def _go():
-        # Wait for the Bluetooth SCO link to stabilize before playing —
-        # sending audio the instant the call is detected risks the
-        # start of the greeting getting clipped while the link is
-        # still coming up.
+        # Wait GREETING_DELAY_SEC before playing: sending audio the
+        # instant the call is detected risks the start of the greeting
+        # being clipped while the audio path is still coming up.
         #
         # 2026-08-17: switched from a blocking _synthesize() (wait for
         # the ENTIRE clip, then enqueue once) to _tts_and_enqueue()
@@ -1889,7 +1843,7 @@ def _play_greeting():
 
 # ─────────────────────────────────────────────────────
 # RECORDER THREAD
-# One persistent pw-record per call session
+# One capture stream per call, opened through the transport
 # Resets after each utterance — never closes mid-call
 # ─────────────────────────────────────────────────────
 
@@ -1919,20 +1873,20 @@ def _maybe_prefetch_rag(session, last_speculated: str) -> str:
 
 
 def recorder_thread():
-    global _call_node
+    global _call_key
     log.info("Recorder started.")
     consecutive_failures = 0
 
     while not _shutdown.is_set():
         try:
-            with _node_lock:
-                node = _inp_node
+            with _call_lock:
+                node = _capture_key
             if not node:
                 time.sleep(1)
                 continue
 
-            if node != _call_node:
-                _call_node = node
+            if node != _call_key:
+                _call_key = node
                 _clear_history(f"new node {node}")
 
             capture = _transport.open_capture(node)
@@ -1976,8 +1930,8 @@ def recorder_thread():
                 last_speculated_partial = ""
 
                 while not _shutdown.is_set():
-                    with _node_lock:
-                        if _inp_node != node:
+                    with _call_lock:
+                        if _capture_key != node:
                             log.info("Node changed — reopening stream.")
                             break
 
@@ -3205,7 +3159,7 @@ def main():
         BARGE_IN_FLOOR_WARMUP_FRAMES, BARGE_IN_VAD_MODE,
     )
 
-    log.info("Dukaan Dost — Final (Google Cloud edition)")
+    log.info("Dukaan Dost")
     if _llm_gemini.api_key():
         log.info(f"LLM={LLM_MODEL} (Gemini API key) | User location={USER_LOCATION}")
     else:
@@ -3237,6 +3191,9 @@ def main():
     _llm_warmup(LLM_MODEL)
     log.info(f"[WARMUP] All clients warmed in {time.time() - t_warmup:.2f}s")
 
+    _transport.start()
+    log.info(f"Ready: {_transport.describe()}")
+
     def _stop(sig, _):
         log.info("Shutting down...")
         _shutdown.set()
@@ -3251,8 +3208,6 @@ def main():
         threading.Thread(target=playback_thread,  daemon=True, name="playback"),
         threading.Thread(target=vad_metrics_writer_thread, daemon=True, name="vad_metrics_writer"),
     ]
-    if _transport.needs_echo_link_guard:
-        threads.append(threading.Thread(target=loopback_guard_thread, daemon=True, name="loopback_guard"))
     for t in threads:
         t.start()
 
@@ -3261,7 +3216,7 @@ def main():
         time.sleep(0.5)
 
     # A playback in flight blocks playback_thread inside communicate()
-    # for up to PW_PLAY_TIMEOUT_SEC, so it cannot observe _shutdown,
+    # for up to PLAY_TIMEOUT_SEC, so it cannot observe _shutdown,
     # join(timeout=3) below gives up, and the interpreter exits while
     # pw-play is still streaming. Verified: the child was reparented to
     # PPID 1 and kept playing audio to the caller after the service had

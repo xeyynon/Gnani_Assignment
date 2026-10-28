@@ -1,6 +1,6 @@
 # Dukaan Dost
 
-A voice agent for a neighbourhood kirana shop, built for Gnani.ai's Great Indian AI
+A software-only voice agent (you call it from a browser tab) for a neighbourhood kirana shop, built for Gnani.ai's Great Indian AI
 Internship Challenge on Gnani's Prisma (speech-to-text) and Timbre (text-to-speech), with
 Gemini for reasoning. It answers calls in Telugu, Hindi, English and Hinglish, takes shop
 orders (with an udhaar credit book), and gives loan guidance from computed figures.
@@ -19,7 +19,6 @@ dukaan_dost/   the agent (`python -m dukaan_dost`); app.py is the main process
 shops/         one folder per shop: config.yaml + knowledge/ (file names are fixed)
 evaluation/    benchmarks and accuracy tools; results/ is committed
 tests/         offline tests; tests/manual needs real cloud credentials
-deploy/        Raspberry Pi install and run guides
 scripts/       changelog.mjs
 MD/            project documentation
 ```
@@ -27,7 +26,7 @@ MD/            project documentation
 ## Commands
 ```bash
 python -m pytest                         # offline tests (run before every commit)
-python -m dukaan_dost                    # run the agent, from the project root
+python -m dukaan_dost                    # run the agent, then open the printed address in a browser
 node scripts/changelog.mjs --next-internal
 ```
 
@@ -51,7 +50,7 @@ Batch about 10 fixes per build. Never put "(Build N)" in a title and never hand-
 `CHANGELOG.md`. The full flow is in `MD/project_docs_guide.md`.
 
 ## Architecture in one breath
-Audio comes in through a `Transport` (`AUDIO_TRANSPORT`; Pi/Bluetooth today, browser next),
+Audio comes in through a `Transport` (`AUDIO_TRANSPORT`; a call page in a browser over a WebSocket),
 through webrtcvad endpointing, to a streaming STT provider (`STT_PROVIDER`), to Gemini with the
 shop's knowledge, to a streaming TTS provider, and back out. Providers sit behind fixed
 interfaces (`MD/integration_handoff.md`). Threads communicate only through queues and events,
