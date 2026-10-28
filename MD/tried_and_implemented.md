@@ -8,6 +8,7 @@ Approaches that worked and are in the code. Upstream items are already in this f
 | 2026-10-26 | Checked that this folder equals the latest upstream code with the client removed | `diff --strip-trailing-cr` against a fresh clone; see [helpfromsmartcaller.md](helpfromsmartcaller.md) |
 | 2026-10-26 | The `MD/` knowledge folder | — |
 | 2026-10-28 | Git, with builds and InBuls (`scripts/changelog.mjs`); Build 1000 is the baseline | Ran `--pending` twice (hand-written part kept) and `--tag`; InBul01 |
+| 2026-10-28 | `loan_calculator.py`: project cost, loan, scheme choice, instalment, Indian digit grouping (InBul07) | 38 tests, including the PS's worked example, both scheme boundaries, the cap case, and a month-by-month simulation that the instalment clears the loan. The tests caught a real bug (`NaN` input crashed with the wrong error) before it was committed |
 | 2026-10-28 | Gemini through an API key (no Google Cloud project), model-aware thinking config, Gnani and Gemini keys, recording off by default (Build 1001) | 13 offline tests in `tests/test_llm_client.py`; the new startup logic run in isolation against six config cases. **Not yet run against a live Gemini or Gnani key** |
 
 ## Inherited from upstream (all verified on real calls)

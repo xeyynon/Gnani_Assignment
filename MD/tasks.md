@@ -27,8 +27,8 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Note the credits used per minute of audio
 
 ### Step 2b: Udyami loan guidance (DEC-027; build right after the Gnani integration)
-- [ ] `loan_calculator.py`: project cost, loan, scheme selection, instalment (pure functions) **with unit tests** for the scheme boundaries (₹1.40 lakh, ₹50 lakh) and the PS's worked example
-- [ ] Decide and document the instalment formula (reducing balance, moratorium handling)
+- [x] `loan_calculator.py`: project cost, loan, scheme selection, instalment (pure functions) **with unit tests** for the scheme boundaries (₹1.40 lakh, ₹50 lakh) and the PS's worked example (2026-10-28, InBul07; 38 tests)
+- [x] Decide and document the instalment formula (reducing balance, moratorium handling) (2026-10-28, DEC-028)
 - [ ] Slot filling: margin money, business, place, each confirmed back
 - [ ] Call-type detection in the first turn (order vs loan guidance), and switching
 - [ ] Prompt rules: speak only what the calculator returns; amounts in words; "indicative"

@@ -28,6 +28,9 @@
 - **Model output is untrusted until validated.** `validator.py` strips banned patterns. Any order JSON from the LLM must be checked against the stock list (SKU exists, price matches) before it's written.
 - **Vendor APIs can fail.** Every network call has a timeout and a spoken fallback. STT failure plays an apology; TTS failure falls back to eSpeak today (English only; a Google TTS failover for Gnani is a possible addition); LLM failure plays `fallback_messages[lang]`.
 
+## Model output versus code
+The language model never does arithmetic that the caller will act on. Loan figures come from `loan_calculator.py`; order totals will come from code over the stock list. The model only speaks what code returns, and everything it says about money is checked against it.
+
 ## Limits we design around
 | Limit | Source | Effect |
 |---|---|---|

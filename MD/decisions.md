@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-027.**
+**Latest: DEC-028.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
@@ -102,3 +102,12 @@ Chosen by Surya from [problem_research.md](problem_research.md). One agent, one 
   4. **Udhaar ledger:** cut first if time runs short.
 - **If time runs out:** ship whichever of 2 or 3 is complete and measured, and describe the other as future work. Don't ship two half-built flows.
 - **Scheme figures are indicative.** They come from an SIH problem statement, not the scheme documents. The agent says so ("andaaz se"), and the README labels them the same way, until checked against the official scheme documents.
+
+### DEC-028 · Loan instalment assumptions (2026-10-28)
+SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, tenures, moratoria, caps) but **not the instalment formula**. `companies/core/loan_calculator.py` assumes:
+- **Monthly reducing-balance instalments (an EMI)** at annual rate ÷ 12. The PS also mentions a "quarterly repayment schedule"; monthly is clearer to say on a phone call, and the code can be extended.
+- **Interest accrues during the moratorium and is capitalised** (added to the loan), then the loan is repaid over the remaining months (36−3 = 33 for Micro Finance, 84−6 = 78 for Term Loan). This is the conservative reading: it gives a higher instalment than serving the interest during the moratorium.
+- **The loan cap can bind just under the scheme boundary.** At a ₹1.40 lakh project cost, 90% is ₹1,26,000 but the Micro Finance cap is ₹1,25,000, so the caller's own share becomes ₹15,000, not ₹14,000. The calculator reports `own_contribution` and the agent must say it.
+- Amounts are rounded to the nearest rupee.
+
+**Every figure is indicative** and the agent says so. **Revisit:** when the official scheme documents are checked (task in [tasks.md](tasks.md)); if they define the instalment differently, change `monthly_instalment()` and its tests.

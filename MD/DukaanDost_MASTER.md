@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul06
+**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul07
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -28,6 +28,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Smoke test (Prisma and Timbre) | ❌ Not started |
 | `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
+| Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
 | Shop data (`companies/dukaan_dost/`) | ❌ Not started |
 | Order summary output | ❌ Not started |
 | Evaluation | ❌ Not started |
