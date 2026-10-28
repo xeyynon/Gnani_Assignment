@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 FORBIDDEN_TRACKED = [
     "local_config.py", ".env", ".env.*", "*.log", "*.log.*",
-    "call_data/*", "stt_dumps/*", "logs/*", "evaluation/audio/*",
+    "call_data/*", "stt_dumps/*", "logs/*", "evaluation/audio/*", "data/*",
 ]
 ALLOWED_TRACKED = [".env.example"]
 ORDERS_GLOB = "orders/*"

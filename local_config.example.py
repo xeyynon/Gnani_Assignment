@@ -17,6 +17,11 @@ GNANI_API_KEY = "your-gnani-api-key-here"
 # Check your key's rate limits in AI Studio before running the evaluation.
 GEMINI_API_KEY = "your-gemini-api-key-here"
 
+# Password for the admin dashboard (user name "admin"). Leave it as the placeholder and
+# nobody can sign in as admin. Shop PINs are set separately:
+#   python -m dukaan_dost.auth set-pin <shop>
+ADMIN_PASSWORD = "your-admin-password-here"
+
 # --- Optional: Gemini through Vertex AI, and the Google STT/TTS providers ---
 # Used when GEMINI_API_KEY is not set, or when STT_PROVIDER=google or
 # TTS_PROVIDER=google. Setup:

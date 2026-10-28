@@ -5,7 +5,8 @@ One folder per shop. The agent runs the folder named by `SHOP_NAME` (default
 
 ```
 shops/<name>/
-  config.yaml              system_prompt (a string) and fallback_messages (language code -> text)
+  config.yaml              system_prompt (a string), fallback_messages (language code -> text),
+                           and optionally display_name (what the greeting and pages call the shop)
   knowledge/
     core/always_on.md      sent on every turn
     products_pricing.md    ┐
@@ -24,3 +25,6 @@ own `##` heading, with its English, Hindi and Telugu names in the same section.
 
 **All data here is synthetic**: made-up products, prices, shop details and
 customers. No real phone numbers, IDs or addresses.
+
+**Adding a shop:** copy a shop folder, rename it (lower case letters, digits, `_` and `-`, 2 to 40 characters), edit `config.yaml` and the knowledge files, and set its dashboard PIN with
+`python -m dukaan_dost.auth set-pin <name>`. Its call link is `/s/<name>/` and its dashboard `/s/<name>/dashboard`.

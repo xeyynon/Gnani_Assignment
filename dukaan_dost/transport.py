@@ -64,6 +64,16 @@ class Transport:
     def start(self) -> None:
         """Begin listening for calls. Called once from main()."""
 
+    def configure(self, default_shop=None, shop_exists=None, shop_title=None) -> None:
+        """Tell the transport which shops exist (only transports that serve several need this)."""
+
+    def add_http_handler(self, handler) -> None:
+        """Serve extra HTTP routes (the dashboards). Transports without a web server ignore it."""
+
+    def call_shop(self):
+        """The shop the current call is for, or None (use the default shop)."""
+        return None
+
     def describe(self) -> str:
         """One line telling the operator how to place a call."""
         return self.name

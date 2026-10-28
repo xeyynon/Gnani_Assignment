@@ -6,9 +6,12 @@ the microphone, resamples it to 16 kHz and streams it over a WebSocket; the
 agent's replies come back the same way and the page plays them. Nothing but
 Python and a browser is needed (DEC-032).
 
-One small server (the `websockets` package) does both jobs on one port:
-    GET /      the call page (dukaan_dost/web/index.html)
-    WS  /ws    the call itself
+One small server (the `websockets` package) does both jobs on one port. Several
+shops share it (DEC-034): the call link picks the shop.
+    GET /s/<shop>/      the call page for that shop (dukaan_dost/web/index.html)
+    WS  /s/<shop>/ws    a call for that shop
+    GET /, WS /ws       the same for the default shop
+Other HTTP routes (the dashboards) are added with add_http_handler().
 
 Protocol (one call at a time; a second visitor is told "busy"):
     page -> server   binary: 16 kHz mono s16le PCM, any chunk size
@@ -25,9 +28,11 @@ this to another machine needs TLS in front of it.
 
 import asyncio
 import io
+from html import escape as html_escape
 import json
 import logging
 import os
+import re
 import struct
 import threading
 import time
@@ -38,11 +43,13 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from .shops import valid_name
 from .transport import Capture, PlaybackTimeout, Transport
 
 log = logging.getLogger("transport.websocket")
 
 PAGE_PATH = Path(__file__).parent / "web" / "index.html"
+SHOP_ROUTE = re.compile(r"^/s/(?P<shop>[^/]+)(?P<rest>/ws|/)?$")
 
 # If nothing is reading the audio (no call detected yet), keep only the most
 # recent 10 seconds rather than growing without bound.
@@ -63,9 +70,10 @@ def _wav_seconds(wav_bytes: bytes) -> float:
 class _Session:
     """One browser call: the audio it has sent and the clips it still owes us."""
 
-    def __init__(self, sid, ws):
+    def __init__(self, sid, ws, shop=None):
         self.id = sid
         self.ws = ws
+        self.shop = shop
         self.closed = threading.Event()
         self.lock = threading.Lock()
         self.pending = {}            # clip id -> Event set when the page confirms it
@@ -133,6 +141,20 @@ class WebSocketTransport(Transport):
         self._error = None
         self._session = None
         self._session_lock = threading.Lock()
+        self._default_shop = None
+        self._shop_exists = None        # callable(name) -> bool; None accepts any valid name
+        self._shop_title = None         # callable(name) -> str shown on the call page
+        self._http_handlers = []
+
+    def configure(self, default_shop=None, shop_exists=None, shop_title=None) -> None:
+        """Tell the server which shops exist and what to call them."""
+        self._default_shop = default_shop
+        self._shop_exists = shop_exists
+        self._shop_title = shop_title
+
+    def add_http_handler(self, handler) -> None:
+        """handler(path, headers, remote_address) -> a Reply-like object, or None to pass."""
+        self._http_handlers.append(handler)
 
     # -- lifecycle --------------------------------------------------------
 
@@ -141,7 +163,16 @@ class WebSocketTransport(Transport):
         return f"http://{self.host}:{self.port}"
 
     def describe(self) -> str:
-        return f"open {self.url} in a browser and press Start call"
+        shop = self._default_shop
+        base = f"{self.url}/s/{shop}/" if shop else f"{self.url}/"
+        text = f"open {base} in a browser and press Start call"
+        if shop and self._http_handlers:
+            text += f" (shopkeeper dashboard: {base}dashboard)"
+        return text
+
+    def call_shop(self):
+        s = self._session
+        return (s.shop or self._default_shop) if s is not None and not s.closed.is_set() else None
 
     def start(self) -> None:
         if self._thread is not None:
@@ -181,37 +212,80 @@ class WebSocketTransport(Transport):
 
     # -- the server (runs on its own thread) ------------------------------
 
+    def _shop_ok(self, name) -> bool:
+        if name is None:
+            return True
+        return valid_name(name) and (self._shop_exists is None or bool(self._shop_exists(name)))
+
+    def _title(self, name) -> str:
+        name = name or self._default_shop or "Dukaan Dost"
+        if self._shop_title is not None:
+            try:
+                return self._shop_title(name)
+            except Exception:
+                pass
+        return name.replace("_", " ").replace("-", " ").title()
+
+    @staticmethod
+    def _html(connection, status, text, content_type="text/html; charset=utf-8", extra=None):
+        response = connection.respond(HTTPStatus(status), text)
+        del response.headers["Content-Type"]
+        response.headers["Content-Type"] = content_type
+        response.headers["Cache-Control"] = "no-store"
+        for key, value in (extra or {}).items():
+            if key in response.headers:
+                del response.headers[key]
+            response.headers[key] = value
+        return response
+
     def _process_request(self, connection, request):
         path = request.path.split("?", 1)[0]
+        address = getattr(connection, "remote_address", None)
+        remote = str(address[0]) if address else ""
+
+        for handler in self._http_handlers:
+            reply = handler(path, request.headers, remote)
+            if reply is not None:
+                return self._html(connection, reply.status, reply.body.decode("utf-8"),
+                                  reply.content_type, reply.headers)
+
+        shop, is_ws = None, False
         if path == "/ws":
-            return None                                   # carry on with the WebSocket handshake
-        if path in ("/", "/index.html"):
-            try:
-                body = PAGE_PATH.read_text(encoding="utf-8")
-            except OSError:
-                return connection.respond(HTTPStatus.INTERNAL_SERVER_ERROR, "The call page is missing.\n")
-            response = connection.respond(HTTPStatus.OK, body)
-            del response.headers["Content-Type"]
-            response.headers["Content-Type"] = "text/html; charset=utf-8"
-            response.headers["Cache-Control"] = "no-store"
-            return response
-        return connection.respond(HTTPStatus.NOT_FOUND, "Not found.\n")
+            is_ws = True
+        elif path in ("/", "/index.html"):
+            pass
+        else:
+            m = SHOP_ROUTE.match(path)
+            if m is None:
+                return connection.respond(HTTPStatus.NOT_FOUND, "Not found.\n")
+            shop, is_ws = m.group("shop"), m.group("rest") == "/ws"
+        if not self._shop_ok(shop):
+            return connection.respond(HTTPStatus.NOT_FOUND, "No such shop.\n")
+        if is_ws:
+            return None                                       # carry on with the WebSocket handshake
+        try:
+            body = PAGE_PATH.read_text(encoding="utf-8")
+        except OSError:
+            return connection.respond(HTTPStatus.INTERNAL_SERVER_ERROR, "The call page is missing.\n")
+        return self._html(connection, 200, body.replace("{{SHOP}}", html_escape(self._title(shop))))
 
     async def _handle(self, ws) -> None:
+        m = SHOP_ROUTE.match(ws.request.path.split("?", 1)[0])
+        shop = m.group("shop") if m else None
         with self._session_lock:
             current = self._session
             if current is not None and not current.closed.is_set():
                 busy = True
             else:
                 busy = False
-                session = _Session(f"web-{uuid.uuid4().hex[:8]}", ws)
+                session = _Session(f"web-{uuid.uuid4().hex[:8]}", ws, shop or self._default_shop)
                 self._session = session
         if busy:
             await ws.send(json.dumps({"type": "busy"}))
             await ws.close(1013, "a call is already in progress")
             return
 
-        log.info(f"[CALL] browser connected: {session.id}")
+        log.info(f"[CALL] browser connected: {session.id} (shop: {session.shop or 'default'})")
         try:
             await ws.send(json.dumps({"type": "ready", "sample_rate": self.sample_rate}))
             async for message in ws:
