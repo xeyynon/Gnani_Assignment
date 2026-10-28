@@ -10,10 +10,10 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Versioning: `scripts/changelog.mjs`, `MD/builds/`, `CHANGELOG.md` (2026-10-28, InBul01)
 - [ ] `.gitignore`: add `orders/`, `eval/audio/`, `.env`
 - [ ] Take the client name out of CLAUDE.md, then commit it (DEC-022)
-- [ ] `GNANI_API_KEY` and `GEMINI_API_KEY` in `local_config.example.py` and the key-loading block (`ai_caller_final3.py` ~93–120)
-- [ ] `gnani-vachana` and `websockets` in `requirements.txt`
-- [ ] Default `CALL_DATA_ENABLED` to `0` (DEC-007)
-- [ ] Fix B-01 (the placeholder project check)
+- [x] `GNANI_API_KEY` and `GEMINI_API_KEY` in `local_config.example.py` and the key-loading block (2026-10-28, Build 1001)
+- [x] `gnani-vachana==0.9.0` and `websockets>=13` in `requirements.txt` (2026-10-28, Build 1001)
+- [x] Default `CALL_DATA_ENABLED` to `0` (DEC-007) (2026-10-28, Build 1001)
+- [x] Fix B-01 (the placeholder project check) (2026-10-28, Build 1001)
 
 ### Step 2: Smoke test
 - [ ] Read the account's concurrent-session and request limits on app.gnani.ai (B-07)
@@ -50,9 +50,10 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] `tts_provider.py` (`TTS_PROVIDER`); switch the import in `ai_caller_final3.py`
 
 ### Step 5: Gemini with an API key
-- [ ] `genai.Client(api_key=…)` when `GEMINI_API_KEY` is set
-- [ ] Make the startup project check conditional (line ~3289)
-- [ ] `LLM_MODEL` as an env var; default to `gemini-3.5-flash-lite` or `gemini-3.8-flash` (DEC-025, B-06)
+- [x] `genai.Client(api_key=…)` when `GEMINI_API_KEY` is set (2026-10-28, Build 1001)
+- [x] Make the startup project check conditional (2026-10-28, Build 1001)
+- [x] `LLM_MODEL` as an env var; default `gemini-3.5-flash-lite` on the API-key path (DEC-025, B-06) (2026-10-28, Build 1001)
+- [ ] Run a streamed reply on a live 3.x model; confirm the `thinking_level` setting is accepted (B-06)
 - [ ] Read our key's rate limits in AI Studio; size the eval to fit
 
 ### Step 6: Language selection

@@ -1,8 +1,11 @@
 """
 llm_gemini.py
 
-Thin wrapper around Gemini (via Vertex AI) that exposes both blocking
-and streaming chat-completion style functions.
+Thin wrapper around Gemini that exposes both blocking and streaming
+chat-completion style functions. Two ways to reach Gemini:
+  - GEMINI_API_KEY set  -> the Gemini Developer API (no Google Cloud
+                           project needed)
+  - otherwise           -> Vertex AI (GOOGLE_CLOUD_PROJECT + ADC)
 
 ask()    — blocking, returns full reply (used by repeat/translate paths)
 stream() — yields text chunks as they arrive from Gemini (used by the
@@ -31,15 +34,52 @@ _client = None
 _client_lock = threading.Lock()
 
 
+def api_key() -> str:
+    """
+    The Gemini Developer API key, or "" when unset. A value still shaped
+    like the placeholder in local_config.example.py ("your-...") counts
+    as unset, so an unedited copy falls through to the Vertex path (and
+    its clear startup error) instead of failing at the first request.
+    """
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    return "" if key.startswith("your-") else key
+
+
 def _get_client():
     global _client
     if _client is None:
         with _client_lock:
             if _client is None:
-                project = os.environ.get("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
-                location = os.environ.get("GOOGLE_CLOUD_LOCATION", "asia-south1")
-                _client = genai.Client(vertexai=True, project=project, location=location)
+                key = api_key()
+                if key:
+                    _client = genai.Client(api_key=key)
+                else:
+                    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
+                    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "asia-south1")
+                    _client = genai.Client(vertexai=True, project=project, location=location)
     return _client
+
+
+def _thinking_config(model: str) -> types.ThinkingConfig:
+    """
+    Keep thinking as low as the model allows: this is a phone call, and
+    every thinking token is latency before the first spoken word.
+
+    gemini-2.5-* take a budget (0 switches thinking off). Google's docs
+    (read 2026-10-28) describe only `thinking_level` for gemini-3.x, with
+    "minimal" as the lowest level on 3.5 Flash-Lite and 3.6 Flash and
+    "low" on 3.8 Flash, so a 3.x model gets a level instead of a budget.
+    LLM_THINKING_LEVEL (minimal|low|medium|high) overrides it. Not yet
+    tested against a live 3.x model: the smoke test covers it.
+    """
+    if model.startswith("gemini-2.5"):
+        return types.ThinkingConfig(thinking_budget=0)
+    default = "low" if model.startswith("gemini-3.8") else "minimal"
+    level = os.environ.get("LLM_THINKING_LEVEL", default).strip().upper()
+    if level not in ("MINIMAL", "LOW", "MEDIUM", "HIGH"):
+        log.warning(f"[GEMINI] LLM_THINKING_LEVEL={level!r} is not valid; using {default}")
+        level = default.upper()
+    return types.ThinkingConfig(thinking_level=level)
 
 
 def warmup(model: str):
@@ -59,7 +99,7 @@ def warmup(model: str):
             contents=[types.Content(role="user", parts=[types.Part(text="hi")])],
             config=types.GenerateContentConfig(
                 max_output_tokens=1,
-                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                thinking_config=_thinking_config(model),
                 http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS),
             ),
         )
@@ -85,12 +125,12 @@ def _split_system_and_turns(messages: list[dict]) -> tuple[str, list[types.Conte
     return "\n\n".join(system_parts), turns
 
 
-def _make_config(max_tokens: int, temperature: float) -> types.GenerateContentConfig:
+def _make_config(model: str, max_tokens: int, temperature: float) -> types.GenerateContentConfig:
     return types.GenerateContentConfig(
         system_instruction=None,  # set per-call
         max_output_tokens=max_tokens,
         temperature=temperature,
-        thinking_config=types.ThinkingConfig(thinking_budget=0),
+        thinking_config=_thinking_config(model),
         http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS),
     )
 
@@ -100,7 +140,7 @@ def ask(model: str, messages: list[dict], max_tokens: int, temperature: float) -
     client = _get_client()
     system_instruction, turns = _split_system_and_turns(messages)
 
-    config = _make_config(max_tokens, temperature)
+    config = _make_config(model, max_tokens, temperature)
     config.system_instruction = system_instruction
 
     try:
@@ -131,7 +171,7 @@ def stream(model: str, messages: list[dict], max_tokens: int, temperature: float
     client = _get_client()
     system_instruction, turns = _split_system_and_turns(messages)
 
-    config = _make_config(max_tokens, temperature)
+    config = _make_config(model, max_tokens, temperature)
     config.system_instruction = system_instruction
 
     attempts = 2

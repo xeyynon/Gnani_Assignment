@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1000 · **Latest InBul:** InBul06
+**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul06
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -24,10 +24,10 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Git and versioning | ✅ `main`, with Build 1000 (the baseline) and InBul01 (these docs and the changelog script). See [project_docs_guide.md](project_docs_guide.md) |
 | Upstream clone out of the folder | ⚠️ The move failed (permission denied); excluded locally meanwhile (DEC-021) |
 | CLAUDE.md in git | ⚠️ Untracked until the client name is taken out (DEC-022) |
-| Gnani API key | ❌ Not registered yet |
+| Gnani API key | ❌ Not registered yet (the config and requirements are ready for it) |
 | Smoke test (Prisma and Timbre) | ❌ Not started |
 | `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
-| Gemini via API key | ❌ Not started (Vertex only today) |
+| Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
 | Shop data (`companies/dukaan_dost/`) | ❌ Not started |
 | Order summary output | ❌ Not started |
 | Evaluation | ❌ Not started |
