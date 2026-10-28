@@ -31,6 +31,9 @@
                          └────────────────────────────────────────────────────────────┘
 ```
 
+## Audio transport (DEC-029)
+Everything between the diagram's Bluetooth box and the pipeline goes through `companies/core/transport.py`. `AUDIO_TRANSPORT` picks the implementation: `pipewire` (the Pi and Bluetooth phone, today's code in `transport_pipewire.py`); a laptop transport, a browser WebSocket transport and a phone-number transport are planned ([pi_free_plan.md](pi_free_plan.md)). The pipeline never calls `pw-record`, `pw-play` or `wpctl` directly. The loopback-cutting thread runs only for transports that need it.
+
 ## Components
 | Component | File | Status |
 |---|---|---|

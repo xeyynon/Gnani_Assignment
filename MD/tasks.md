@@ -36,6 +36,15 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] 8–10 of the eval scripts cover loan guidance (clean and noisy), with exact expected numbers
 - [ ] Check the scheme figures against the official scheme documents before the README states them
 
+### Step 2c: Pi-free transport (DEC-029; see [pi_free_plan.md](pi_free_plan.md))
+- [x] `Transport` interface; Pipewire code moved behind it, behaviour unchanged (2026-10-28, InBul09). **Not yet run on the Pi**
+- [ ] Run the refactored build on the Pi: a call, the greeting, an interruption, a hang-up and a call-back
+- [ ] `LocalAudioTransport` (laptop mic and speaker) for development
+- [ ] `WebSocketTransport` plus a small browser page: the Pi-free call
+- [ ] Re-tune per [pi_free_plan.md](pi_free_plan.md) section 4, one setting at a time, measured: echo tail and mic-mute off, speak-over barge-in, hangover, VAD thresholds, greeting delay
+- [ ] Stretch: a cloud phone number on the WebSocket transport (8 kHz handling, the provider's barge-in signal)
+- [ ] Update README, SETUP, deployment and architecture to say "browser call" (not "phone call") wherever that is what we tested
+
 ### Step 3: `stt_gnani.py`
 - [ ] Session thread with its own asyncio loop; headers (`x-model: prisma-v3.0`, `lang_code: hi-IN,en-IN,te-IN`); 1,024-byte framing (DEC-023)
 - [ ] `finish()` sends `commit`, collects segments, times out; returns `detected_language_code`

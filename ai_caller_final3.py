@@ -50,7 +50,6 @@ import os
 import numpy as np
 import queue
 import re
-import select
 import shutil
 import signal
 import subprocess
@@ -76,6 +75,7 @@ from companies.core.tts_google import (
     needs_digit_spelling as _needs_digit_spelling,
 )
 from companies.core import llm_gemini as _llm_gemini
+from companies.core import transport as _transport_mod
 from companies.core.conversation_manager import ConversationManager
 from companies.core.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from companies.core.validator import validate_reply
@@ -666,7 +666,12 @@ RECONNECT_SEC  = 2     # wait before reopening stream after call drop
 # processes both alive and both answering the same call, unrelated to
 # this value. Reverted back to the known-good 1.2s.) Env-configurable
 # for the same reason the VAD constants are.
-ECHO_TAIL_SEC = float(os.getenv("ECHO_TAIL_SEC", "1.2"))
+#
+# 2026-10-28 (DEC-029): the 1.2s is the Bluetooth transport's default; a
+# transport whose far end already cancels echo defaults to 0
+# (transport.default_echo_tail_sec). The env var still wins.
+_transport = _transport_mod.create()
+ECHO_TAIL_SEC = float(os.getenv("ECHO_TAIL_SEC", str(_transport.default_echo_tail_sec)))
 
 # Barge-in checkpoint window: how long, after each sentence-chunk's
 # mandatory ECHO_TAIL_SEC mute, the recorder stays genuinely live
@@ -846,8 +851,6 @@ _mid_play_interrupt = threading.Event()
 
 _node_lock  = threading.Lock()
 _hist_lock  = threading.Lock()
-_play_lock  = threading.Lock()
-_play_proc  = None   # in-flight pw-play, so a hangup can stop it
 
 # Bumped at every call boundary. Queued audio and queued replies carry
 # the generation they belong to, so work that began during one call can
@@ -929,78 +932,16 @@ def _next_reply_id() -> int:
 # ─────────────────────────────────────────────────────
 
 def _find_nodes():
-    try:
-        out = subprocess.run(
-            ["wpctl", "status"], capture_output=True, text=True, timeout=5
-        ).stdout
-        i = re.search(r"(bluez_input\.[0-9A-Fa-f_]+\.\d+)", out)
-        o = re.search(r"(bluez_output\.[0-9A-Fa-f_]+\.\d+)", out)
-        return (i.group(1) if i else None, o.group(1) if o else None)
-    except Exception:
-        return None, None
+    return _transport.find_nodes()
 
 
 def _kill_loopback_links():
-    """
-    WirePlumber treats the Bluetooth HFP link as a normal "phone call
-    through your laptop" device and auto-routes it through the Pi's
-    onboard ALSA output ("mailbox") for local monitoring — which
-    creates a loop: bluez_input (caller's incoming voice) -> onboard
-    speaker -> onboard speaker's monitor port -> bluez_output (back
-    out to the caller), so the caller hears their own voice echoed
-    back. Our script never wants that pass-through (we only want our
-    own pw-record/pw-play talking to the bluez nodes directly), so
-    every poll we find and cut any alsa_output<->bluez_ link.
-    """
-    try:
-        out = subprocess.run(
-            ["pw-link", "-l"], capture_output=True, text=True, timeout=5
-        ).stdout
-    except Exception:
-        return
-
-    current = None
-    for line in out.splitlines():
-        m = re.match(r"\s*\|(->|<-)\s*(.+)$", line)
-        if m is None:
-            current = line.strip()
-            continue
-        if current is None:
-            continue
-        arrow, other = m.group(1), m.group(2).strip()
-
-        # "|->" means current is the output/source, other is the input/dest.
-        # "|<-" means the reverse: other is the source, current is the dest.
-        src, dst = (current, other) if arrow == "->" else (other, current)
-
-        if ("alsa_output" in src and "bluez_" in dst) or \
-           ("alsa_output" in dst and "bluez_" in src):
-            try:
-                subprocess.run(
-                    ["pw-link", "-d", src, dst],
-                    capture_output=True, timeout=5
-                )
-                # 2026-07-31: downgraded from INFO — fires in bursts of
-                # 4-8 lines at every single call boundary (confirmed in
-                # every real-call test this session), genuinely
-                # voluminous at the default log level. Still real
-                # diagnostic value if a loopback/echo bug ever
-                # recurs, so kept at DEBUG rather than removed.
-                log.debug(f"[AUDIO] Cut loopback link: {src} -> {dst}")
-            except Exception as e:
-                log.debug(f"[AUDIO] Failed to cut link {src} -> {dst}: {e}")
+    """Per-poll echo housekeeping; only the Bluetooth transport has any (see transport_pipewire)."""
+    _transport.cut_echo_links()
 
 
 def _device_name():
-    try:
-        out = subprocess.run(
-            ["bluetoothctl", "devices", "Connected"],
-            capture_output=True, text=True, timeout=5
-        ).stdout
-        names = [" ".join(l.split()[2:]) for l in out.splitlines() if len(l.split()) > 2]
-        return ", ".join(names) or "unknown"
-    except Exception:
-        return "unknown"
+    return _transport.device_name()
 
 
 def _clear_history(reason=""):
@@ -1353,37 +1294,6 @@ def _estimate_pitch_hz(chunk: bytes) -> float | None:
 # call once the root cause is proven.
 _DUMP_DIR = os.environ.get("AI_CALLER_DUMP_DIR")
 _dump_seq = 0  # recorder thread only — no lock needed
-
-# pw-record's stderr is normally discarded, which means SCO packet loss,
-# resampler xruns and node errors leave no trace anywhere — one of the
-# remaining F3 hypotheses (Bluetooth transient corruption) cannot be
-# tested without it. Set AI_CALLER_PW_STDERR=<path> to capture it.
-# A FILE, never a PIPE: nothing in this process reads pw-record's stderr,
-# so a pipe could fill its 64KB buffer and block the recorder outright.
-# REMOVE with the rest of the F3 instrumentation.
-_pw_err = None
-if os.environ.get("AI_CALLER_PW_STDERR"):
-    try:
-        _pw_err = open(os.environ["AI_CALLER_PW_STDERR"], "ab", buffering=0)
-    except OSError as _e:
-        log.warning(f"[DIAG] Could not open pw-record stderr log: {_e}")
-
-# 2026-08-18: same gap as pw-record above, but on the PLAYBACK side —
-# pw-play's stderr was hardcoded to DEVNULL, so a real symptom (caller-
-# reported audio fading/crackling during playback) had nowhere to leave
-# a trace: buffer underruns, SCO packet loss, or resampler xruns on the
-# OUTPUT side are exactly what would cause that, and none of it was
-# ever captured. Same opt-in-file pattern as _pw_err, not always-on,
-# since there's no confirmed root cause yet to justify making this
-# permanent — set AI_CALLER_PW_PLAY_STDERR=<path> to capture it on the
-# next real call where the fading happens.
-_pw_play_err = None
-if os.environ.get("AI_CALLER_PW_PLAY_STDERR"):
-    try:
-        _pw_play_err = open(os.environ["AI_CALLER_PW_PLAY_STDERR"], "ab", buffering=0)
-    except OSError as _e:
-        log.warning(f"[DIAG] Could not open pw-play stderr log: {_e}")
-
 
 def _dump_utterance(pcm: bytes) -> None:
     global _dump_seq
@@ -1897,7 +1807,7 @@ def _concat_wav_chunks(chunks: list[bytes]) -> bytes | None:
 
 def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True):
     """
-    Plays one WAV clip to the Bluetooth output node.
+    Plays one WAV clip through the transport.
 
     set_playing/echo_tail exist because a streamed reply arrives as one
     clip PER SENTENCE: the caller must hear those as a single continuous
@@ -1910,58 +1820,29 @@ def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True):
     if not node:
         log.warning("[PLAY] No output node.")
         return
-    global _play_proc
     if set_playing:
         _playing.set()
-    proc = None
     try:
-        # Popen + communicate() instead of subprocess.run(): run() gives
-        # no handle, so an in-flight reply could not be stopped at
-        # hangup and kept streaming into the next call. The Bluetooth
-        # OUTPUT node id is stable across calls (bluez_output.<MAC>.1 in
-        # every call in the logs), so that audio really does reach the
-        # next caller. This is the same call shape run() performs
-        # internally; only the handle is new.
-        proc = subprocess.Popen(
-            ["pw-play", "--target", node, "-"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=(_pw_play_err or subprocess.DEVNULL),
-        )
-        with _play_lock:
-            _play_proc = proc
-        proc.communicate(input=wav_bytes, timeout=PW_PLAY_TIMEOUT_SEC)
+        _transport.play(node, wav_bytes, PW_PLAY_TIMEOUT_SEC)
         if echo_tail:
             time.sleep(ECHO_TAIL_SEC)
-    except subprocess.TimeoutExpired:
-        # Without a timeout here, a stalled Bluetooth link would block
-        # this call forever — and since nothing else in the pipeline
-        # can un-stick a hung subprocess.run(), that's a silent,
-        # permanent loss of all further replies for the rest of the
-        # call (a hang, not an exception, so earlier try/except
-        # guards elsewhere don't help against this specific failure).
-        log.error(f"[PLAY] pw-play timed out after {PW_PLAY_TIMEOUT_SEC}s — killed.")
-        # subprocess.run() killed the child itself on timeout; with an
-        # explicit Popen that cleanup is ours to do.
-        proc.kill()
-        proc.communicate()
+    except _transport_mod.PlaybackTimeout:
+        # Without a timeout, a stalled link would block this call
+        # forever, a silent, permanent loss of all further replies for
+        # the rest of the call.
+        log.error(f"[PLAY] playback timed out after {PW_PLAY_TIMEOUT_SEC}s — killed.")
     finally:
-        with _play_lock:
-            _play_proc = None
         if set_playing:
             _playing.clear()
 
 
 def _stop_playback(reason: str) -> None:
     """
-    Kills any in-flight pw-play so a reply cannot keep streaming into
-    the next call. _play()'s finally clears _play_proc and _playing, so
-    this only has to end the process — the owning thread unwinds itself.
+    Ends any in-flight clip so a reply cannot keep streaming into the
+    next call. _play()'s finally clears _playing, so this only has to
+    end the playback: the owning thread unwinds itself.
     """
-    with _play_lock:
-        proc = _play_proc
-    if proc is not None and proc.poll() is None:
-        proc.kill()
+    if _transport.stop_playback():
         log.info(f"[ISOLATION] Stopped in-flight playback: {reason}")
 
 
@@ -2012,33 +1893,6 @@ def _play_greeting():
 # Resets after each utterance — never closes mid-call
 # ─────────────────────────────────────────────────────
 
-def _read_frame(proc, size: int, timeout_sec: float) -> bytes:
-    """
-    Reads exactly `size` bytes from proc.stdout, bounded by
-    `timeout_sec`. A plain blocking .read() has no timeout — if
-    pw-record ever stalls mid-call without closing its pipe, that
-    would hang this thread forever with no way to recover (same class
-    of hang as the unbounded pw-play call in _play()). Returns fewer
-    than `size` bytes (possibly empty) on timeout or EOF, so the
-    existing "len(chunk) < FRAME_BYTES" check already treats either
-    case as a stream to be reopened.
-    """
-    buf = bytearray()
-    deadline = time.time() + timeout_sec
-    while len(buf) < size:
-        remaining = deadline - time.time()
-        if remaining <= 0:
-            return bytes(buf)
-        ready, _, _ = select.select([proc.stdout], [], [], remaining)
-        if not ready:
-            return bytes(buf)
-        chunk = os.read(proc.stdout.fileno(), size - len(buf))
-        if not chunk:
-            return bytes(buf)
-        buf += chunk
-    return bytes(buf)
-
-
 def _maybe_prefetch_rag(session, last_speculated: str) -> str:
     """
     Checks a streaming STT session's latest interim transcript and, if
@@ -2081,14 +1935,9 @@ def recorder_thread():
                 _call_node = node
                 _clear_history(f"new node {node}")
 
-            proc = subprocess.Popen(
-                ["pw-record", "--target", node, "-",
-                 "--rate", str(SAMPLE_RATE), "--channels", "1", "--format", "s16"],
-                stdout=subprocess.PIPE,
-                stderr=(_pw_err or subprocess.DEVNULL),
-            )
-            # Everything after Popen must live inside the try whose
-            # finally terminates proc. The "Stream open" log used to sit
+            capture = _transport.open_capture(node)
+            # Everything after open_capture must live inside the try whose
+            # finally closes it. The "Stream open" log used to sit
             # between the two, so a raise there (rotating-log write
             # failure, SD card full) skipped the finally and left
             # pw-record running and holding the Bluetooth capture node —
@@ -2132,7 +1981,7 @@ def recorder_thread():
                             log.info("Node changed — reopening stream.")
                             break
 
-                    chunk = _read_frame(proc, FRAME_BYTES, READ_TIMEOUT_SEC)
+                    chunk = capture.read_frame(FRAME_BYTES, READ_TIMEOUT_SEC)
                     if len(chunk) < FRAME_BYTES:
                         log.warning("Stream ended unexpectedly.")
                         break
@@ -2579,11 +2428,7 @@ def recorder_thread():
                                 pending_frames, pending_buf, pending_misses = 0, bytearray(), 0
 
             finally:
-                proc.terminate()
-                try:
-                    proc.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
+                capture.close()
                 log.info("Stream closed.")
 
             if not _shutdown.is_set():
@@ -3352,7 +3197,12 @@ def main():
         log.info(f"LLM={LLM_MODEL} (Vertex AI) | Project={os.environ['GOOGLE_CLOUD_PROJECT']} | "
                   f"Location={os.environ['GOOGLE_CLOUD_LOCATION']} | User location={USER_LOCATION}")
     log.info(f"Call recording: {'ON' if CALL_DATA_ENABLED else 'off'}")
-    log.info(f"STT={_STT_PROVIDER} | TTS=google")
+    if _transport.sample_rate != SAMPLE_RATE:
+        sys.exit(
+            f"Transport {_transport.name!r} carries {_transport.sample_rate} Hz audio but the "
+            f"pipeline runs at {SAMPLE_RATE} Hz; the transport has to convert at its own edge."
+        )
+    log.info(f"STT={_STT_PROVIDER} | TTS=google | transport={_transport.name} | echo_tail={ECHO_TAIL_SEC}s")
     log.info(f"Company knowledge base: {COMPANY_DIR}")
 
     _conv_mgr = ConversationManager(
@@ -3381,12 +3231,13 @@ def main():
 
     threads = [
         threading.Thread(target=watchdog_thread,  daemon=True, name="watchdog"),
-        threading.Thread(target=loopback_guard_thread, daemon=True, name="loopback_guard"),
         threading.Thread(target=recorder_thread,  daemon=True, name="recorder"),
         threading.Thread(target=processor_thread, daemon=True, name="processor"),
         threading.Thread(target=playback_thread,  daemon=True, name="playback"),
         threading.Thread(target=vad_metrics_writer_thread, daemon=True, name="vad_metrics_writer"),
     ]
+    if _transport.needs_echo_link_guard:
+        threads.append(threading.Thread(target=loopback_guard_thread, daemon=True, name="loopback_guard"))
     for t in threads:
         t.start()
 
@@ -3402,6 +3253,7 @@ def main():
     # stopped, holding the Bluetooth output node. Ending it first lets
     # communicate() return so the thread exits and the join succeeds.
     _stop_playback("shutting down")
+    _transport.close()
     for t in threads:
         t.join(timeout=3)
     log.info("Done.")

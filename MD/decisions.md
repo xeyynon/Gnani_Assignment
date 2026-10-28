@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-028.**
+**Latest: DEC-029.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
@@ -111,3 +111,10 @@ SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, t
 - Amounts are rounded to the nearest rupee.
 
 **Every figure is indicative** and the agent says so. **Revisit:** when the official scheme documents are checked (task in [tasks.md](tasks.md)); if they define the instalment differently, change `monthly_instalment()` and its tests.
+
+### DEC-029 · Run without the Raspberry Pi: a transport interface, browser first, phone number as stretch (2026-10-28)
+Chosen by Surya from [pi_free_plan.md](pi_free_plan.md). The pipeline takes audio in and out through a small `Transport` interface (`companies/core/transport.py`), selected with `AUDIO_TRANSPORT` (default `pipewire`).
+- **Order:** (1) the interface with today's Pi code moved behind it, behaviour unchanged (InBul09); (2) a laptop mic and speaker transport for development; (3) a browser WebSocket transport and page, the Pi-free "call"; (4) re-tune the settings that were set for Bluetooth, one at a time, against the evaluation harness; (5) stretch: a cloud phone number on the same WebSocket transport.
+- **Why:** the Pi-specific code was a small, bounded part of the file (call detection, loopback cutting, `pw-play`, `pw-record`, `espeak`); the logic is transport-independent. A browser transport is free and works in days, and without Bluetooth echo it allows real speak-over barge-in. A phone number needs Indian-number paperwork we can't count on in 12 days.
+- **Honesty rule:** the README and posts say "browser call" or "simulated phone line" unless a real number is wired up and tested (R-5). The Pi transport stays, as the only one proven on real calls, and as a comparison.
+- **Revisit:** if a phone number turns out to be quick to get, move step 5 earlier.
