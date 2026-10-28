@@ -30,6 +30,21 @@
 | Caller switches language mid-call | Follows a clear switch (native-script detection), not one stray word |
 | Caller hangs up mid-order | Writes a summary marked incomplete |
 
+## Udhaar (credit) ledger (DEC-026)
+Regulars buy on credit and settle at the month's end. The agent handles three things by phone:
+| Caller says | Agent does |
+|---|---|
+| "Isko udhaar mein likh dena" / "khate mein daal do" (with their name) | Confirms the name against the shop's customer list, adds the order total to their balance, and reads back the new balance |
+| "Mera kitna baaki hai?" / "నా బాకీ ఎంత?" | Reads out the outstanding balance in words, and the date of the last purchase |
+| "Saturday ko de dunga" | Records the promise-to-pay date and confirms it back |
+
+Rules:
+- **Customers are identified by the name they say, matched against a synthetic customer list** in the knowledge files. No phone numbers or caller ID (rule R-2).
+- **Unknown name:** the agent doesn't create a credit account. It says the shopkeeper will confirm, and marks the order "credit pending" in the summary.
+- **A credit limit** per customer (e.g. ₹2,000). Over the limit, the agent politely says the shopkeeper has to approve.
+- **Never shames or pressures** a caller about dues. A neutral, friendly tone.
+- The order summary gains `payment: "udhaar"`, `customer`, `balance_before` and `balance_after`. A ledger file (`orders/ledger.json`) holds the running balances, plus a readable `ledger.txt`.
+
 ## Order summary format
 `orders/<call_id>.json`:
 ```json

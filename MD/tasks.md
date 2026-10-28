@@ -62,6 +62,13 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Write `orders/<call_id>.json` and `.txt`; check against the stock list
 - [ ] Optional: a small order viewer page
 
+### Step 8b: Udhaar ledger (DEC-026; the first thing cut if time runs short)
+- [ ] Synthetic customer list (~15 names, credit limits, opening balances) in the knowledge files
+- [ ] `orders/ledger.json` and `ledger.txt`: add to a balance, read a balance, record a promise-to-pay date
+- [ ] Prompt rules: confirm the name, the credit limit, unknown names become "credit pending", a neutral tone
+- [ ] The order summary carries payment type, customer and balances
+- [ ] 4–5 of the 20 eval scripts cover udhaar (add, balance enquiry, over the limit, unknown name)
+
 ### Step 9: Evaluation
 - [ ] 20 order scripts
 - [ ] Clean and noisy audio (~10 dB SNR)

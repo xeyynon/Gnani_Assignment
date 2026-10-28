@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-025.**
+**Latest: DEC-026.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
@@ -82,3 +82,9 @@ Timbre now normalises numbers, ₹, units, dates and times on every request. We 
 
 ### DEC-025 · Gemini model chosen by env var; default to a current model (2026-10-28)
 `LLM_MODEL` becomes an env var. The default moves off `gemini-2.5-flash`, which Google now serves only to users who used it before. Candidates are `gemini-3.5-flash-lite` (fastest) and `gemini-3.8-flash`, picked by time to first sentence and order accuracy in the eval. **Why:** a new AI Studio key may be refused 2.5 Flash outright.
+
+### DEC-026 · The entry is kirana orders plus an udhaar (credit) ledger (2026-10-28)
+Chosen by Surya from the options in [idea_research.md](idea_research.md). The agent takes phone orders as planned, and also keeps the shop's credit book by phone: it records an order as udhaar when the caller asks, tells a regular customer their outstanding balance, and records a promise to pay.
+- **Why:** kirana ordering is one of Gnani's own example ideas, and a competing entry is already public. The credit ledger is how real kiranas run, no visible entry does it, and balance enquiries and promises to pay are what Gnani's collections customers buy.
+- **Scope guard:** the ledger is the first thing cut if time runs short. Without it, the entry is still the kirana order agent.
+- **Alternatives rejected:** an outbound EMI-reminder caller (outbound dialling from the Pi is too risky for the deadline) and a clinic appointment line (a full re-plan).

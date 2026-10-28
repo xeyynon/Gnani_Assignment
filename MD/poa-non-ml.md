@@ -30,6 +30,11 @@ Use made-up shop names and IDs. Brand names (Amul, Maggi, Aashirvaad) are fine a
 - Check every line against the stock list before writing (the SKU exists and the price matches the knowledge file).
 - Optional: a tiny web page (`orders/index.html` or a small Flask app) listing the orders, for the demo video.
 
+## 3b. Udhaar ledger (DEC-026)
+- `knowledge/customers.md` isn't one of the retriever's fixed file names, so the customer list goes in `knowledge/payment_issues.md` (a credit is a payment arrangement) or in `always_on.md` if it's short. Decide when building.
+- `orders/ledger.json`: `{customer: {balance, credit_limit, last_purchase, promise_date, entries: [...]}}`, updated only after the order is confirmed; checked against the stock list like the order itself.
+- In the demo: the order viewer shows the customer's balance before and after.
+
 ## 4. Evaluation assets (build step 9)
 - 20 order scripts in `eval/scripts/*.json`: the expected items and quantities, plus the turns the caller says.
 - Audio in `eval/audio/clean/` and `eval/audio/noisy/`. Noise from a royalty-free source (credit it in the README), mixed at ~10 dB SNR.

@@ -2,10 +2,10 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1000 · **Latest InBul:** InBul03
+**Last updated:** 2026-10-28 · **Latest build:** 1000 · **Latest InBul:** InBul04
 
 ## What it is
-Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper.
+Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone: it records credit orders, tells regulars their balance and records promises to pay (DEC-026).
 
 It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-to-text and text-to-speech run on Gnani's models (Prisma and Timbre). Reasoning stays on Gemini, because Gnani's own LLM (Evon) isn't on the public API.
 
