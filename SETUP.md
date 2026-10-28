@@ -1,19 +1,16 @@
 # Setup and run
 
-The agent can run on a Raspberry Pi paired with a phone over Bluetooth (the only
-transport so far). Module-level tests run on any laptop. The Pi guides are
-[deploy/INSTALL.md](deploy/INSTALL.md) (new Pi, autostart) and
-[deploy/RUNNING.md](deploy/RUNNING.md) (run, stop, troubleshooting).
+Dukaan Dost is software only. It runs on any laptop (Windows, macOS or Linux), and you
+place a test call from a browser tab. No phone, Raspberry Pi or special hardware is used.
 
 ## 1. Install
-On the Pi:
+Python 3.10 or newer, then from the project root:
 ```bash
-git clone <this repo> ~/projects/dukaan-dost
-cd ~/projects/dukaan-dost
-bash deploy/setup_pi.sh        # PipeWire, WirePlumber, BlueZ, a .venv with requirements.txt
+python -m venv .venv
+.venv/Scripts/activate            # Windows. On macOS or Linux: source .venv/bin/activate
+pip install -r requirements.txt
 ```
-On a laptop (tests only): Python 3.10+, then `pip install -r requirements.txt`. On Windows
-`webrtcvad` needs the prebuilt `webrtcvad-wheels` package instead.
+`webrtcvad-wheels` in the requirements installs prebuilt on all three systems.
 
 ## 2. Keys
 ```bash
@@ -28,27 +25,26 @@ Fill in the keys you need:
 | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | Gemini on Vertex AI, Google STT or TTS (today's default speech providers) | A Google Cloud project with Speech-to-Text, Text-to-Speech and Vertex AI enabled; then `gcloud auth application-default login` |
 | `SARVAM_API_KEY` | `STT_PROVIDER=sarvam` (today's default) | https://dashboard.sarvam.ai |
 
-## 3. Pair the phone (Pi transport)
-```bash
-bluetoothctl     # pair, trust and connect the phone that receives the shop's calls
-```
-
-## 4. Run
+## 3. Run and place a call
 From the project root:
 ```bash
-ps aux | grep dukaan_dost            # make sure it isn't already running
-setsid nohup .venv/bin/python3 -m dukaan_dost > /dev/null 2>&1 < /dev/null &
-disown
-tail -f dukaan_dost.log              # watch it
-pkill -f dukaan_dost                 # stop it (under a second)
+python -m dukaan_dost
 ```
-Use the `setsid` form exactly ([MD/decisions.md](MD/decisions.md) DEC-016). Settings you may want:
+It prints `Ready: open http://127.0.0.1:8765 in a browser and press Start call`. Open that
+address, allow the microphone, and press **Start call**. Use headphones, or the agent hears
+itself. Press **Hang up** to end the call. Stop the agent with Ctrl+C.
+
+The microphone only works on `localhost` or over `https`, so to call from another machine put
+TLS in front of the server (or use an https tunnel).
+
+Settings you may want (all optional):
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `SHOP_NAME` | `dukaan_dost` | Which folder under `shops/` to run ([shops/README.md](shops/README.md)) |
 | `SHOP_DISPLAY_NAME` | derived from `SHOP_NAME` | The name the greeting speaks |
-| `AUDIO_TRANSPORT` | `pipewire` | Where call audio comes from and goes to |
+| `AUDIO_HOST`, `AUDIO_PORT` | `127.0.0.1`, `8765` | Where the call server listens |
+| `AUDIO_TRANSPORT` | `websocket` | Where call audio comes from and goes to |
 | `CALL_DATA_ENABLED` | `0` | Call recording; leave off (synthetic data only) |
 | `LLM_MODEL` | `gemini-3.5-flash-lite` with a Gemini key, else `gemini-2.5-flash` | The language model |
 

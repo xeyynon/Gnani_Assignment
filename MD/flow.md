@@ -10,24 +10,23 @@ This file adds what changes for Dukaan Dost. Lines marked **[NEW]** or **[CHANGE
    - **[NEW]** Gnani warmup should open, and keep, the Timbre WebSocket so the first sentence doesn't pay for a TLS handshake.
 5. Register SIGINT and SIGTERM, then start the threads.
 
-## Threads (six)
+## Threads (five, plus the transport's server thread)
 | Thread | Job |
 |---|---|
-| watchdog | Detects call start and end from the Bluetooth nodes (`wpctl status`). Bumps `_call_gen`, plays the greeting, resets history |
-| loopback_guard | Cuts the ALSA↔BlueZ loopback that WirePlumber keeps recreating (echo prevention) |
+| watchdog | Asks the transport every 0.25 s whether a call is up. Bumps `_call_gen`, plays the greeting, resets history |
 | recorder | Reads 30 ms frames, runs webrtcvad, confirms onset (2 frames), streams to STT, detects the end of speech (650 ms hangover) |
 | processor | Filters, picks the language, runs the LLM, streams TTS, queues audio |
-| playback | Plays with `pw-play`, mutes the echo tail, listens for barge-in between sentences |
+| playback | Plays one clip per sentence through the transport, mutes the echo tail, listens for barge-in between sentences |
 | vad_metrics_writer | Writes VAD metrics to CSV off the hot path |
 
-(The sixth, vad_metrics_writer, was added in the earlier project on 2026-08-17.)
+(vad_metrics_writer was added in the earlier project on 2026-08-17.)
 
 ## Per call
 ```
-Bluetooth nodes appear ─▶ _call_gen += 1 ─▶ clear history ─▶ drain queues ─▶ greeting
+Browser connects ─▶ _call_gen += 1 ─▶ clear history ─▶ drain queues ─▶ greeting
    [NEW] greeting offers languages (Option A) or starts in hi-IN (Option B)
    [NEW] start an empty order for this call_id
-Bluetooth nodes gone (debounced) ─▶ stop playback ─▶ [NEW] write orders/<call_id>.json/.txt
+Browser disconnects (debounced) ─▶ stop playback ─▶ [NEW] write orders/<call_id>.json/.txt
    ─▶ clear history ─▶ drain queues
 ```
 
@@ -59,7 +58,7 @@ processor
   └─ [NEW] update the order state from the turn ─▶ reply_q
 
 playback
-  ├─ pw-play each chunk; continuation chunks play back to back
+  ├─ transport.play each chunk; continuation chunks play back to back
   ├─ 1.2 s echo-tail mute, then a 0.5 s barge-in listening window between sentences
   └─ the caller talking ─▶ stop playback, drop the rest of the reply
 ```

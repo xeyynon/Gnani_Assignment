@@ -1,20 +1,17 @@
 """
-Offline tests for the audio transport seam (DEC-029).
+Offline tests for the audio transport seam (DEC-029, DEC-032).
 
-Part 1 checks the Pipewire transport issues exactly the commands the
-pipeline always ran. Part 2 runs the REAL recorder, _play and watchdog
-helpers from dukaan_dost.app against a fake transport, which proves the
-pipeline no longer needs the Pi. Nothing here touches PipeWire, a phone
-or the network.
+These run the REAL recorder, _play, _stop_playback and call-detection code from
+dukaan_dost.app against a fake transport, which proves the pipeline only needs
+the Transport interface. The WebSocket transport itself is tested in
+test_transport_websocket.py.
 
     python -m pytest tests/test_transport.py
 """
 
 import os
-import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 
 import pytest
@@ -22,141 +19,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dukaan_dost import transport as tp  # noqa: E402
-from dukaan_dost import transport_pipewire as pw  # noqa: E402
 
-
-# ---------------------------------------------------------------------------
-# Part 1: PipewireTransport issues the same commands as the original code
-# ---------------------------------------------------------------------------
-
-class FakeProc:
-    def __init__(self, timeout=False, killed_ok=True):
-        self.stdout = object()
-        self.stdin = object()
-        self._timeout = timeout
-        self.killed = False
-        self.terminated = False
-        self.input = None
-
-    def communicate(self, input=None, timeout=None):
-        if self._timeout and not self.killed:
-            raise subprocess.TimeoutExpired("pw-play", timeout)
-        self.input = input
-        return (b"", b"")
-
-    def poll(self):
-        return None if not self.killed else 0
-
-    def kill(self):
-        self.killed = True
-
-    def terminate(self):
-        self.terminated = True
-
-    def wait(self, timeout=None):
-        return 0
-
-
-@pytest.fixture
-def popen(monkeypatch):
-    calls = []
-    procs = []
-
-    def fake_popen(cmd, **kw):
-        calls.append((cmd, kw))
-        p = FakeProc()
-        procs.append(p)
-        return p
-
-    monkeypatch.setattr(pw.subprocess, "Popen", fake_popen)
-    return calls, procs
-
-
-def test_find_nodes_parses_wpctl_output(monkeypatch):
-    out = "  bluez_input.AA_BB_CC_DD_EE_FF.1\n  bluez_output.AA_BB_CC_DD_EE_FF.1\n"
-    monkeypatch.setattr(pw.subprocess, "run",
-                        lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout=out))
-    assert pw.PipewireTransport().find_nodes() == (
-        "bluez_input.AA_BB_CC_DD_EE_FF.1", "bluez_output.AA_BB_CC_DD_EE_FF.1")
-
-
-def test_find_nodes_with_no_call_or_no_wpctl(monkeypatch):
-    monkeypatch.setattr(pw.subprocess, "run",
-                        lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="nothing here"))
-    assert pw.PipewireTransport().find_nodes() == (None, None)
-
-    def boom(*a, **k):
-        raise FileNotFoundError("wpctl")
-    monkeypatch.setattr(pw.subprocess, "run", boom)
-    assert pw.PipewireTransport().find_nodes() == (None, None)
-
-
-def test_open_capture_runs_the_original_pw_record_command(popen):
-    calls, _ = popen
-    pw.PipewireTransport().open_capture("bluez_input.X.1")
-    cmd, kw = calls[0]
-    assert cmd == ["pw-record", "--target", "bluez_input.X.1", "-",
-                   "--rate", "16000", "--channels", "1", "--format", "s16"]
-    assert kw["stdout"] == subprocess.PIPE
-
-
-def test_play_runs_the_original_pw_play_command_and_sends_the_wav(popen):
-    calls, procs = popen
-    t = pw.PipewireTransport()
-    t.play("bluez_output.X.1", b"RIFFwav", 45)
-    assert calls[0][0] == ["pw-play", "--target", "bluez_output.X.1", "-"]
-    assert procs[0].input == b"RIFFwav"
-    assert t.stop_playback() is False       # nothing in flight afterwards
-
-
-def test_play_timeout_kills_the_process_and_raises(monkeypatch):
-    p = FakeProc(timeout=True)
-    monkeypatch.setattr(pw.subprocess, "Popen", lambda *a, **k: p)
-    with pytest.raises(tp.PlaybackTimeout):
-        pw.PipewireTransport().play("n", b"x", 1)
-    assert p.killed
-
-
-def test_stop_playback_kills_an_in_flight_clip(monkeypatch):
-    t = pw.PipewireTransport()
-    p = FakeProc()
-    t._play_proc = p
-    assert t.stop_playback() is True
-    assert p.killed
-
-
-def test_capture_close_terminates_the_process():
-    p = FakeProc()
-    pw.PipewireCapture(p).close()
-    assert p.terminated
-
-
-def test_capture_read_frame_returns_exact_bytes_and_short_reads_on_eof(monkeypatch):
-    data = [b"abc", b"def", b""]
-    monkeypatch.setattr(pw.select, "select", lambda r, w, x, t: (r, [], []))
-    monkeypatch.setattr(pw.os, "read", lambda fd, n: data.pop(0)[:n])
-    proc = FakeProc()
-    proc.stdout = type("Stdout", (), {"fileno": lambda self: 0})()
-    cap = pw.PipewireCapture(proc)
-    assert cap.read_frame(6, 1) == b"abcdef"    # two reads joined into one exact frame
-    assert cap.read_frame(6, 1) == b""          # EOF: short read, the recorder reopens
-
-
-def test_pipewire_transport_defaults_match_the_bluetooth_setup():
-    t = pw.PipewireTransport()
-    assert (t.sample_rate, t.default_echo_tail_sec, t.needs_echo_link_guard) == (16000, 1.2, True)
-
-
-def test_create_defaults_to_pipewire_and_rejects_unknown_names(monkeypatch):
-    monkeypatch.delenv("AUDIO_TRANSPORT", raising=False)
-    assert tp.create().name == "pipewire"
-    with pytest.raises(ValueError):
-        tp.create("carrier-pigeon")
-
-
-# ---------------------------------------------------------------------------
-# Part 2: the real pipeline code against a fake transport
-# ---------------------------------------------------------------------------
 
 class FakeCapture(tp.Capture):
     def __init__(self, shutdown, frames_before_stop=5):
@@ -178,30 +41,29 @@ class FakeCapture(tp.Capture):
 
 class FakeTransport(tp.Transport):
     name = "fake"
-    default_echo_tail_sec = 0.0
 
     def __init__(self):
-        self.nodes = ("fake-in", "fake-out")
+        self.call = ("fake-in", "fake-out")
         self.played = []
         self.stopped = 0
         self.capture = None
         self.raise_timeout = False
         self.opened_with = None
 
-    def find_nodes(self):
-        return self.nodes
+    def find_call(self):
+        return self.call
 
     def device_name(self):
-        return "fake phone"
+        return "fake caller"
 
-    def open_capture(self, node):
-        self.opened_with = node
+    def open_capture(self, key):
+        self.opened_with = key
         return self.capture
 
-    def play(self, node, wav_bytes, timeout_sec):
+    def play(self, key, wav_bytes, timeout_sec):
         if self.raise_timeout:
             raise tp.PlaybackTimeout("stalled")
-        self.played.append((node, wav_bytes, timeout_sec))
+        self.played.append((key, wav_bytes, timeout_sec))
 
     def stop_playback(self):
         self.stopped += 1
@@ -210,7 +72,6 @@ class FakeTransport(tp.Transport):
 
 @pytest.fixture(scope="module")
 def app():
-    os.environ.setdefault("SHOP_NAME", "transport_test")
     try:
         import dukaan_dost.app as m
     except Exception as e:                       # e.g. webrtcvad missing on this machine
@@ -223,8 +84,8 @@ def fake(app, monkeypatch):
     t = FakeTransport()
     monkeypatch.setattr(app, "_transport", t)
     monkeypatch.setattr(app, "ECHO_TAIL_SEC", 0)
-    monkeypatch.setattr(app, "_out_node", "fake-out")
-    monkeypatch.setattr(app, "_inp_node", "fake-in")
+    monkeypatch.setattr(app, "_playback_key", "fake-out")
+    monkeypatch.setattr(app, "_capture_key", "fake-in")
     app._playing.clear()
     app._shutdown.clear()
     yield t
@@ -232,27 +93,41 @@ def fake(app, monkeypatch):
     app._playing.clear()
 
 
+def test_importing_the_app_does_not_open_a_port(app):
+    # create() builds the transport but only main() starts it.
+    assert getattr(app._transport, "_thread", None) is None
+
+
+def test_default_transport_is_the_websocket_one(app):
+    assert app._transport.name == "websocket" or os.environ.get("AUDIO_TRANSPORT")
+
+
+def test_unknown_transport_names_are_rejected():
+    with pytest.raises(ValueError):
+        tp.create("carrier-pigeon")
+
+
 def test_main_module_delegates_call_detection_to_the_transport(app, fake):
-    assert app._find_nodes() == ("fake-in", "fake-out")
-    assert app._device_name() == "fake phone"
+    assert app._find_call() == ("fake-in", "fake-out")
+    assert app._device_name() == "fake caller"
 
 
 def test_play_goes_through_the_transport_and_toggles_playing(app, fake):
     seen = {}
 
-    def spy(node, wav, timeout):
+    def spy(key, wav, timeout):
         seen["playing_during"] = app._playing.is_set()
-        fake.played.append((node, wav, timeout))
+        fake.played.append((key, wav, timeout))
     fake.play = spy
 
     app._play(b"WAV")
-    assert fake.played == [("fake-out", b"WAV", app.PW_PLAY_TIMEOUT_SEC)]
+    assert fake.played == [("fake-out", b"WAV", app.PLAY_TIMEOUT_SEC)]
     assert seen["playing_during"] is True
     assert not app._playing.is_set()
 
 
-def test_play_with_no_output_node_plays_nothing(app, fake, monkeypatch):
-    monkeypatch.setattr(app, "_out_node", None)
+def test_play_with_no_playback_key_plays_nothing(app, fake, monkeypatch):
+    monkeypatch.setattr(app, "_playback_key", None)
     app._play(b"WAV")
     assert fake.played == []
 
@@ -280,5 +155,20 @@ def test_recorder_reads_frames_from_the_transport_and_closes_it(app, fake):
     assert fake.capture.closed
 
 
-def test_pipeline_sample_rate_is_what_the_pipewire_transport_carries(app):
-    assert app.SAMPLE_RATE == pw.PipewireTransport.sample_rate
+def test_pipeline_sample_rate_matches_the_default_transport(app):
+    from dukaan_dost.transport_websocket import WebSocketTransport
+    assert app.SAMPLE_RATE == WebSocketTransport.sample_rate
+
+
+def test_no_raspberry_pi_tools_are_left_in_the_code():
+    root = Path(__file__).resolve().parent.parent / "dukaan_dost"
+    banned = ("pw-record", "pw-play", "wpctl", "pw-link", "bluetoothctl")
+    hits = []
+    for py in root.glob("*.py"):
+        code = [l for l in py.read_text(encoding="utf-8").splitlines() if not l.lstrip().startswith("#")]
+        text = "\n".join(code)
+        # strings that are not comments or docstring prose: look for them as quoted command parts
+        for word in banned:
+            if f'"{word}"' in text or f"'{word}'" in text:
+                hits.append((py.name, word))
+    assert hits == [], f"Raspberry Pi tool calls remain: {hits}"

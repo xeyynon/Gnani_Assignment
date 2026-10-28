@@ -122,7 +122,7 @@ STREAMING_GRACE_SEC = float(os.getenv("SARVAM_STREAMING_GRACE_SEC", "1.5"))
 # produced a genuine, severe stall: one utterance's transcript took 53
 # SECONDS to arrive, and a separate one hit "Timed out waiting for
 # streaming result" after ~20s. Both are consistent with Sarvam (or the
-# Pi's own network stack under several concurrent async event loops)
+# the machine's own network stack under several concurrent async event loops)
 # queuing/throttling overlapping connections rather than truly running
 # them in parallel. Bounding concurrency here directly targets that —
 # a real caller's utterances are naturally sequential anyway (nobody

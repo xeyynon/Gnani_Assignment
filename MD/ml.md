@@ -5,7 +5,7 @@
 | Speech to text | **Prisma v3.0** (streaming; DEC-023) | Gnani | Contest requirement; detects the language from a hint list; `codemix` output for Hinglish; product names as `x-keyterms`; `commit` to end an utterance. v2.5 kept as a fallback |
 | Text to speech | **Timbre v3.0** | Gnani | Contest requirement; one voice covers all 10 languages, so the caller hears the same "person" when the language changes |
 | Reasoning | **Gemini** (`gemini-3.5-flash-lite` or `gemini-3.8-flash`; DEC-025) | Google | Evon (Gnani's LLM) isn't on the API. Gemini already streams in this codebase. 2.5 Flash is only served to users who used it before |
-| End-of-speech detection | **webrtcvad** (mode 2; mode 3 for barge-in) | Local | Already tuned on a real Bluetooth line |
+| End-of-speech detection | **webrtcvad** (mode 2; mode 3 for barge-in) | Local | Already tuned on real calls; being re-tuned for the browser transport |
 | Fallback STT | Sarvam `saaras:v3`, Google STT v2 `latest_long` (global) | Sarvam, Google | Kept as switchable comparisons for the eval |
 | Fallback TTS | Google Cloud TTS (streaming) | Google | Kept for A/B comparison and as a failover |
 

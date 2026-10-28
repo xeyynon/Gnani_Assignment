@@ -94,7 +94,7 @@ Rules:
 - **Time to first audio:** as low as we can make it. Measure it; don't promise a number before the eval.
 - **Languages:** te-IN, hi-IN, en-IN, plus Hinglish.
 - **Data:** synthetic only. No call recording during the contest.
-- **Runs on:** a Raspberry Pi with one phone paired over Bluetooth.
+- **Runs on:** any laptop, as software only. The caller is a browser tab.
 
 ## Out of scope
 Payments, stock sync, multiple simultaneous calls, outbound calls, customer accounts.

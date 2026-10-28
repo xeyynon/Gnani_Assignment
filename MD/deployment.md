@@ -1,52 +1,44 @@
 # Deployment
 
-The full Pi instructions are in [../deploy/RUNNING.md](../deploy/RUNNING.md) and [../deploy/INSTALL.md](../deploy/INSTALL.md). This page is the summary, plus what changes for Dukaan Dost.
+Dukaan Dost is software only. There is no hardware to set up: Python, the keys, and a browser.
 
-## Hardware
-- A Raspberry Pi with PipeWire, WirePlumber and BlueZ.
-- One Android phone with a SIM. It takes the real call and is paired and trusted with the Pi over Bluetooth HFP. The Pi captures and plays the call audio at 16 kHz mono.
-
-## First-time setup (Pi)
+## Run it
 ```bash
-git clone <this repo> ~/projects/dukaan-dost && cd ~/projects/dukaan-dost
-bash deploy/setup_pi.sh          # system packages, .venv, copies local_config.example.py
-nano local_config.py             # fill in keys (see below)
-bluetoothctl                     # pair and trust the phone
+python -m venv .venv && .venv/Scripts/activate      # macOS or Linux: source .venv/bin/activate
+pip install -r requirements.txt
+cp local_config.example.py local_config.py          # then put your keys in it
+python -m dukaan_dost
 ```
-For Dukaan Dost, **skip the `gcloud auth` steps** if you're using `GEMINI_API_KEY`. They're only needed on the Vertex path.
+Open the address it prints (`http://127.0.0.1:8765` by default), allow the microphone, press **Start call**. See [../SETUP.md](../SETUP.md) for every setting.
 
 ## Keys (`local_config.py`, gitignored)
 | Key | Needed when | Where to get it |
 |---|---|---|
 | `GNANI_API_KEY` | `STT_PROVIDER=gnani` or `TTS_PROVIDER=gnani` | https://app.gnani.ai/voice (5,000 credits on registration) |
-| `GEMINI_API_KEY` | Always, unless you're using Vertex | Google AI Studio |
+| `GEMINI_API_KEY` | Always, unless you use Vertex | Google AI Studio |
 | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | Vertex path, Google STT or Google TTS | A Google Cloud project with Speech, TTS and Vertex AI enabled |
 | `SARVAM_API_KEY` | `STT_PROVIDER=sarvam` (baseline only) | dashboard.sarvam.ai |
 
-Env vars override nothing that's already set: the code loads `local_config.py` values with `os.environ.setdefault`, so an env var set beforehand wins.
+Env vars set beforehand win: the code loads `local_config.py` values with `os.environ.setdefault`.
 
 ## Environment for the contest
 ```bash
-export SHOP_NAME=dukaan_dost
 export STT_PROVIDER=gnani
 export TTS_PROVIDER=gnani
 export CALL_DATA_ENABLED=0
 ```
 
-## Run, watch, stop (from RUNNING.md)
-```bash
-ps aux | grep dukaan_dost                      # make sure it isn't already running (two instances = bot talks over itself)
-setsid nohup .venv/bin/python3 -m dukaan_dost > /dev/null 2>&1 < /dev/null &
-disown
-tail -f dukaan_dost.log
-pkill -f dukaan_dost                        # clean stop, under 1 s
-```
-Use the `setsid` form exactly (DEC-016). For autostart on boot, see Stage 2 in `deploy/INSTALL.md` (a user systemd service plus `loginctl enable-linger`).
+## Running it somewhere else
+- The server listens on `127.0.0.1` only. To call from another machine, set `AUDIO_HOST`, and put TLS in front: browsers only give microphone access to `localhost` or `https` pages.
+- One call at a time. A second browser is told the line is busy.
+- The agent writes `dukaan_dost.log` (size-capped, rotating) in the project root. Calls are never recorded unless `CALL_DATA_ENABLED=1`.
 
-## Troubleshooting (inherited)
+## Troubleshooting
 | Symptom | Likely cause |
 |---|---|
-| The bot talks over itself | Two instances running |
-| Can't SSH to the Pi | Its DHCP address changed; check `hostname -I` on the Pi |
-| `ModuleNotFoundError` | Dependencies not installed in the interpreter you used; use the project's `.venv` |
-| No audio at call start | The Bluetooth nodes aren't up yet; the greeting waits `GREETING_DELAY_SEC` |
+| `Could not start the call server on 127.0.0.1:8765` | Another copy is running, or the port is taken. Set `AUDIO_PORT` |
+| The page says it cannot reach the agent | The agent isn't running, or you opened the page from a different address |
+| Microphone permission denied | Allow it in the browser's address bar; the page must be on `localhost` or `https` |
+| The agent talks over itself or answers its own voice | Use headphones |
+| `No Gemini credentials configured` | Set `GEMINI_API_KEY`, or a real `GOOGLE_CLOUD_PROJECT` |
+| `Shop folder not found` | `shops/dukaan_dost/` isn't written yet, or `SHOP_NAME` points at a missing folder |
