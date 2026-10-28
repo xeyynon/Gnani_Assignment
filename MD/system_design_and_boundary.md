@@ -1,0 +1,40 @@
+# System design and boundaries
+
+## In scope
+- One inbound call at a time, on one phone paired to one Raspberry Pi.
+- Telugu, Hindi, English and Hinglish.
+- Taking an order against a fixed, synthetic stock list.
+- Writing an order summary per call.
+- An offline evaluation harness.
+
+## Out of scope
+- Payments (we only *say* the UPI ID or "cash on delivery").
+- Stock levels and live inventory.
+- Multiple lines or simultaneous calls. Upstream researched cloud telephony (Twilio, Exotel, Plivo) and parked it.
+- Outbound calls.
+- Recording calls (turned off for the contest, see [decisions.md](decisions.md) DEC-007).
+
+## Where data goes
+| Data | Leaves the Pi to | Kept on the Pi |
+|---|---|---|
+| Caller audio | Gnani Prisma (WSS) | Not stored (`CALL_DATA_ENABLED=0`) |
+| Transcript and history | Google Gemini | `ai_caller.log` (gitignored, rotated) |
+| Reply text | Gnani Timbre (WSS) | `ai_caller.log` |
+| Order | — | `orders/` (gitignored, except synthetic samples) |
+| API keys | Sent as headers to their own vendor only | `local_config.py` (gitignored) |
+
+## Trust boundaries
+- **Caller speech is untrusted input.** A caller can say "ignore your instructions". The system prompt and the validator keep the agent on ordering, and prices come only from the knowledge files, never from the caller.
+- **Model output is untrusted until validated.** `validator.py` strips banned patterns. Any order JSON from the LLM must be checked against the stock list (SKU exists, price matches) before it's written.
+- **Vendor APIs can fail.** Every network call has a timeout and a spoken fallback. STT failure plays an apology; TTS failure falls back to eSpeak today (English only; a Google TTS failover for Gnani is a possible addition); LLM failure plays `fallback_messages[lang]`.
+
+## Limits we design around
+| Limit | Source | Effect |
+|---|---|---|
+| Prisma has no language auto-detect | Gnani docs | Language selection is our job (build step 6) |
+| Prisma wants exactly 1,024-byte frames at real-time pace | Gnani docs | `feed()` regroups frames; don't burst-send |
+| Prisma sessions are capped at 15 minutes | Gnani docs | A long call needs a reconnect. Calls are short, but guard it anyway |
+| Timbre handles one request per connection at a time | Gnani docs | Serialise synthesis per connection, or keep a small pool |
+| Timbre needs numbers as words | Gnani docs | Normaliser before every synthesis |
+| 5,000 free credits | Gnani registration | Budget the eval; see [problem_statement-gap-plan.md](problem_statement-gap-plan.md) |
+| Bluetooth HFP is 16 kHz mono | Hardware | Request 16 kHz everywhere; no resampling |
