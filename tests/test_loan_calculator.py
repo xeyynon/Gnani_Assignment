@@ -12,7 +12,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from companies.core.loan_calculator import (  # noqa: E402
+from dukaan_dost.loan_calculator import (  # noqa: E402
     MICRO_FINANCE, TERM_LOAN, format_inr, quote,
 )
 

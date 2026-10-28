@@ -4,7 +4,7 @@ A phone-order voice agent for a neighbourhood kirana store. A customer calls the
 
 Built for Gnani.ai's **Great Indian AI Internship Challenge**, on Gnani's **Prisma** (speech-to-text) and **Timbre** (text-to-speech) models, with Gemini for reasoning.
 
-> **Status: in development.** The phone pipeline works (inherited from the Smart Caller project). The Gnani integration, the shop's stock list, order summaries and the evaluation are being built now. See [CHANGELOG.md](CHANGELOG.md) for what's shipped.
+> **Status: in development.** The phone pipeline works (built in an earlier project, see [MD/origin.md](MD/origin.md)). The Gnani integration, the shop's stock list, order summaries and the evaluation are being built now. See [CHANGELOG.md](CHANGELOG.md) for what's shipped.
 
 ## How it works
 ```
@@ -22,6 +22,17 @@ The full architecture is in [MD/architecture.md](MD/architecture.md).
 
 ## Getting started
 Setup, keys and run commands are in **[SETUP.md](SETUP.md)**.
+
+## Repository layout
+```
+dukaan_dost/   the agent: run with `python -m dukaan_dost`
+shops/         one folder per shop (config.yaml + knowledge/), see shops/README.md
+evaluation/    benchmark and accuracy tools; committed results
+tests/         offline tests (tests/manual needs cloud credentials)
+deploy/        Raspberry Pi install and run guides, systemd unit
+scripts/       changelog.mjs, the build and InBul bookkeeping
+MD/            architecture, flow, product and phone-line notes, and the build reports
+```
 
 ## Documentation
 All project docs live in [MD/](MD/). Start with [MD/DukaanDost_MASTER.md](MD/DukaanDost_MASTER.md). How builds and internal changes are numbered is in [MD/project_docs_guide.md](MD/project_docs_guide.md).

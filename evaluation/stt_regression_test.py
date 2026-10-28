@@ -1,18 +1,18 @@
 """
-stt_regression_test.py — STT regression harness against real captured audio.
+evaluation/stt_regression_test.py — STT regression harness against real captured audio.
 
 Built 2026-07-30 as part of a stabilization pass, directly targeting
 the root cause behind every bug in that day's STT refactor: a new
 capability (phrase hints, then real Sarvam streaming) had no automated
 check and only got caught by a live phone call, sometimes after it had
 already shipped. This harness costs nothing new to run — it replays
-audio already captured in `/home/pi/stt_dumps/` (via
-AI_CALLER_DUMP_DIR) through the SAME code path a real call uses
-(`companies.core.stt_provider.start_streaming_session`, frame-by-frame,
+audio already captured in `stt_dumps/` (via
+DUKAAN_DUMP_DIR) through the SAME code path a real call uses
+(`dukaan_dost.stt_provider.start_streaming_session`, frame-by-frame,
 not a hand-rolled batch call), so it exercises whichever STT_PROVIDER
 is currently active — the exact thing that broke before.
 
-Reuses word_error_rate() from run_benchmark.py rather than
+Reuses word_error_rate() from evaluation/run_benchmark.py rather than
 reimplementing it — same reasoning as this session's earlier WER/CER
 dedup: one edit-distance implementation, not two.
 
@@ -27,12 +27,12 @@ empty transcript — a non-empty result there is exactly the
 hallucination failure mode found in production.
 
 Usage:
-    cd "/home/pi/ai-caller"
-    python3 stt_regression_test.py                       # uses current STT_PROVIDER
-    STT_PROVIDER=google python3 stt_regression_test.py
-    STT_PROVIDER=sarvam python3 stt_regression_test.py
-    STT_PROVIDER=google STT_MODEL=chirp_2 STT_LOCATION=asia-southeast1 python3 stt_regression_test.py
-    STT_PROVIDER=google STT_MODEL=chirp STT_LOCATION=asia-southeast1 python3 stt_regression_test.py
+    cd "/home/pi/dukaan-dost"
+    python3 -m evaluation.stt_regression_test                       # uses current STT_PROVIDER
+    STT_PROVIDER=google python3 -m evaluation.stt_regression_test
+    STT_PROVIDER=sarvam python3 -m evaluation.stt_regression_test
+    STT_PROVIDER=google STT_MODEL=chirp_2 STT_LOCATION=asia-southeast1 python3 -m evaluation.stt_regression_test
+    STT_PROVIDER=google STT_MODEL=chirp STT_LOCATION=asia-southeast1 python3 -m evaluation.stt_regression_test
 """
 
 import os
@@ -40,9 +40,9 @@ import sys
 import wave
 from pathlib import Path
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Same local_config.py fallback ai_caller_final3.py uses for
+# Same local_config.py fallback dukaan_dost/app.py uses for
 # SARVAM_API_KEY — without this, running this script standalone (not
 # through the main app) leaves the key unset and every Sarvam call
 # fails with "SARVAM_API_KEY is not set", which looks like a broken
@@ -54,10 +54,10 @@ except ImportError:
 if _LOCAL_SARVAM_KEY:
     os.environ.setdefault("SARVAM_API_KEY", _LOCAL_SARVAM_KEY)
 
-from run_benchmark import word_error_rate, PASS_WER_THRESHOLD
-from companies.core.stt_provider import start_streaming_session, STT_PROVIDER
+from evaluation.run_benchmark import word_error_rate, PASS_WER_THRESHOLD
+from dukaan_dost.stt_provider import start_streaming_session, STT_PROVIDER
 
-DUMP_DIR = Path(sys.argv[1] if len(sys.argv) > 1 else "/home/pi/stt_dumps")
+DUMP_DIR = Path(sys.argv[1] if len(sys.argv) > 1 else "stt_dumps")
 FRAME_BYTES = 960  # 30ms @ 16kHz s16 mono — matches recorder_thread's real frame size
 
 # Cross-confirmed across multiple real-call tests this session — see

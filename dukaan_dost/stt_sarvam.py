@@ -114,7 +114,7 @@ STREAMING_FINISH_TIMEOUT_SEC = 20
 # end of the buffer.
 STREAMING_GRACE_SEC = float(os.getenv("SARVAM_STREAMING_GRACE_SEC", "1.5"))
 
-# 2026-07-30: recorder_thread's async-finish fix (see ai_caller_final3.py)
+# 2026-07-30: recorder_thread's async-finish fix (see dukaan_dost/app.py)
 # correctly stopped blocking mic capture on a slow STT call, but it also
 # removed the one thing that used to guarantee only ONE Sarvam call was
 # ever in flight at a time — every utterance now spawns its own thread,
@@ -183,7 +183,7 @@ SUPPORTED_LANGUAGE_CODES = {"en-in", "hi-in", "te-in"}
 
 # 2026-07-30: the language-code filter above only catches
 # CROSS-language hallucinations. A regression test against real
-# captured audio (stt_regression_test.py) found a second failure mode
+# captured audio (evaluation/stt_regression_test.py) found a second failure mode
 # it can't touch: silence/noise hallucinated into a plausible-looking
 # phrase in a SUPPORTED language — e.g. 'इस तक कि।' (Hindi filler,
 # lang_probability=0.118) and a Malayalam-script hallucination tagged
@@ -214,7 +214,7 @@ _client = None
 def _get_client() -> SarvamAI:
     # Read fresh, not frozen at import time — matches stt_google.py's
     # _get_recognizer() pattern. SARVAM_API_KEY has a local_config.py
-    # fallback wired in ai_caller_final3.py that runs AFTER this
+    # fallback wired in dukaan_dost/app.py that runs AFTER this
     # module's own top-of-file imports; freezing it as a module-level
     # constant here (the original version of this file did) reads ""
     # every time, since the fallback hasn't landed in os.environ yet
@@ -338,7 +338,7 @@ class StreamingSession:
 
     def __init__(self, language_code: str | None = None, is_stale=None):
         # Defaults to "unknown" (auto-detect across all supported
-        # languages). A caller (ai_caller_final3.py, once a call's
+        # languages). A caller (dukaan_dost/app.py, once a call's
         # language is locked) can instead pass a specific BCP-47 code
         # (e.g. "hi-IN") to skip auto-detect for the rest of the call.
         self._language_code = language_code or SARVAM_STREAMING_LANGUAGE_CODE
@@ -561,7 +561,7 @@ def start_streaming_session(language_code: str | None = None, is_stale=None) -> 
 if __name__ == "__main__":
     # Quick end-to-end check against a real Sarvam API key, using one
     # of the WAV files already captured in the 2026-07-30 STT
-    # diagnostic (see stt_diagnose.py) — reuses real caller audio
+    # diagnostic (the old Google STT diagnostic tool, since removed) — reuses real caller audio
     # instead of needing a fresh call just to smoke-test this
     # integration. Usage:
     #   SARVAM_API_KEY=sk_... python3 stt_sarvam.py /path/to/utt.wav

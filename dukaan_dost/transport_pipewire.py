@@ -3,7 +3,7 @@ transport_pipewire.py
 
 The original transport: a phone paired to a Raspberry Pi over Bluetooth
 HFP/SCO, with the Pi capturing and playing the call through PipeWire
-(pw-record / pw-play). Moved here from ai_caller_final3.py unchanged in
+(pw-record / pw-play). Moved here from dukaan_dost/app.py unchanged in
 behaviour (DEC-029), so the pipeline can run on other transports and the
 Pi stays available for comparison.
 
@@ -85,10 +85,10 @@ class PipewireTransport(Transport):
         self._play_proc = None
         # pw-record's stderr normally leaves no trace, so SCO packet
         # loss, resampler xruns and node errors are invisible. Set
-        # AI_CALLER_PW_STDERR=<path> to capture it; the same for
-        # AI_CALLER_PW_PLAY_STDERR on the playback side.
-        self._rec_err = _open_diag_log("AI_CALLER_PW_STDERR", "pw-record")
-        self._play_err = _open_diag_log("AI_CALLER_PW_PLAY_STDERR", "pw-play")
+        # DUKAAN_PW_STDERR=<path> to capture it; the same for
+        # DUKAAN_PW_PLAY_STDERR on the playback side.
+        self._rec_err = _open_diag_log("DUKAAN_PW_STDERR", "pw-record")
+        self._play_err = _open_diag_log("DUKAAN_PW_PLAY_STDERR", "pw-play")
 
     # -- call detection ---------------------------------------------------
 

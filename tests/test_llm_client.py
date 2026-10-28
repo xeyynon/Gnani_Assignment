@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from companies.core import llm_gemini  # noqa: E402
+from dukaan_dost import llm_gemini  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

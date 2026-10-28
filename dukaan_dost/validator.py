@@ -14,7 +14,7 @@ log = logging.getLogger("validator")
 
 # The opening greeting the LLM is instructed not to repeat past the
 # first turn (see always_on.md). Despite that instruction, it's been
-# observed repeating a "Hello! Welcome to <company>..." style opener on
+# observed repeating a "Hello! Welcome to <shop>..." style opener on
 # nearly every reply, not just the first — this is the deterministic
 # backstop: strip it if the LLM says it anyway on a non-first turn,
 # rather than relying solely on prompt compliance.

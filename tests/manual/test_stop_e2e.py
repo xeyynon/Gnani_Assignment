@@ -5,7 +5,7 @@ End-to-end verification of the stop-word fix, without a live phone call.
 Synthesizes short stop-phrases via Google TTS, then replays them
 through the EXACT same frame-by-frame onset/hangover logic the
 recorder uses (same functions, same thresholds as currently deployed
-in ai_caller_final3.py), to see whether they now get captured as real
+in dukaan_dost/app.py), to see whether they now get captured as real
 utterances instead of being discarded — then runs the captured audio
 through the real STT and the real _is_stop_request() logic.
 
@@ -25,13 +25,13 @@ import wave
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "asia-south1")
 
-sys.path.insert(0, "/home/pi/ai-caller")
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent.parent))
 
 import webrtcvad
-from companies.core.stt_google import transcribe
-from companies.core.tts_google import synthesize as google_synthesize
+from dukaan_dost.stt_google import transcribe
+from dukaan_dost.tts_google import synthesize as google_synthesize
 
-# Exact current production values (ai_caller_final3.py, as deployed)
+# Exact current production values (dukaan_dost/app.py, as deployed)
 SAMPLE_RATE = 16000
 FRAME_MS = 30
 FRAME_BYTES = int(SAMPLE_RATE * FRAME_MS / 1000) * 2
@@ -58,7 +58,7 @@ def _is_speech(chunk: bytes) -> bool:
         return False
 
 
-# Reproduced from ai_caller_final3.py — kept in sync manually for this test
+# Reproduced from dukaan_dost/app.py — kept in sync manually for this test
 STOP_WORDS = {
     "stop", "hold", "pause", "chup",
     "ruk", "ruko", "rukja",

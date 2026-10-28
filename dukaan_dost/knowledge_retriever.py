@@ -100,16 +100,16 @@ def _score_section(section: str, query_words: set[str]) -> int:
     )
 
 
-def get_core_context(company_dir: Path) -> str:
+def get_core_context(shop_dir: Path) -> str:
     """Always-on core knowledge — loaded in full on every turn."""
-    core_path = company_dir / "knowledge" / CORE_FILENAME
+    core_path = shop_dir / "knowledge" / CORE_FILENAME
     if not core_path.exists():
         log.warning(f"[KNOWLEDGE] missing always-on core file: {core_path}")
         return ""
     return core_path.read_text(encoding="utf-8")
 
 
-def get_relevant_context(company_dir: Path, transcript: str) -> str:
+def get_relevant_context(shop_dir: Path, transcript: str) -> str:
     """
     Scores every section of every topic file in knowledge/ against the
     transcript and returns the top-matching sections, up to
@@ -120,7 +120,7 @@ def get_relevant_context(company_dir: Path, transcript: str) -> str:
         return ""
 
     scored_sections = []  # list of (score, section_text)
-    knowledge_dir = company_dir / "knowledge"
+    knowledge_dir = shop_dir / "knowledge"
 
     for filename in KNOWLEDGE_FILES:
         file_path = knowledge_dir / filename
@@ -167,7 +167,7 @@ _speculative_partial = ""
 _speculative_context: str | None = None
 
 
-def prefetch_relevant_context(company_dir: Path, partial_transcript: str) -> None:
+def prefetch_relevant_context(shop_dir: Path, partial_transcript: str) -> None:
     """
     Speculatively computes and caches the RAG context for a still-in-
     progress utterance's latest interim transcript. Call this from a
@@ -175,13 +175,13 @@ def prefetch_relevant_context(company_dir: Path, partial_transcript: str) -> Non
     does, just earlier, on a partial rather than the final transcript.
     """
     global _speculative_partial, _speculative_context
-    context = get_relevant_context(company_dir, partial_transcript)
+    context = get_relevant_context(shop_dir, partial_transcript)
     with _speculative_lock:
         _speculative_partial = partial_transcript
         _speculative_context = context
 
 
-def get_relevant_context_maybe_cached(company_dir: Path, final_transcript: str) -> str:
+def get_relevant_context_maybe_cached(shop_dir: Path, final_transcript: str) -> str:
     """
     Reuses a speculative result from prefetch_relevant_context() if the
     final transcript's words are a superset of what the speculative
@@ -202,4 +202,4 @@ def get_relevant_context_maybe_cached(company_dir: Path, final_transcript: str) 
             log.debug(f"[KNOWLEDGE] Reusing speculative context (partial: '{cached_partial}')")
             return cached_context
 
-    return get_relevant_context(company_dir, final_transcript)
+    return get_relevant_context(shop_dir, final_transcript)

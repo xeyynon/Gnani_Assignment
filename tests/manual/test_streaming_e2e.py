@@ -5,7 +5,7 @@ without needing a live phone call. Exercises:
   1. conversation_manager.handle_turn_streaming() against the real
      knowledge base (sentence splitting on real Gemini output)
   2. Per-sentence validate_reply() gating (mirrors the fixed
-     processor_thread logic in ai_caller_final3.py)
+     processor_thread logic in dukaan_dost/app.py)
   3. _synthesize() per sentence + _concat_wav_chunks() producing a
      single valid, playable WAV
 """
@@ -18,17 +18,17 @@ from pathlib import Path
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "asia-south1")
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from companies.core.conversation_manager import ConversationManager
-from companies.core.validator import validate_reply
-from companies.core.tts_google import synthesize as google_synthesize
+from dukaan_dost.conversation_manager import ConversationManager
+from dukaan_dost.validator import validate_reply
+from dukaan_dost.tts_google import synthesize as google_synthesize
 
-_COMPANY_NAME = os.environ["COMPANY_NAME"]  # set this to a folder under companies/ to run this test
-COMPANY_DIR = Path(__file__).resolve().parent.parent / "companies" / _COMPANY_NAME
+_SHOP_NAME = os.environ.get("SHOP_NAME", "dukaan_dost")  # a folder under shops/
+SHOP_DIR = Path(__file__).resolve().parent.parent.parent / "shops" / _SHOP_NAME
 
 cm = ConversationManager(
-    company_dir=COMPANY_DIR,
+    shop_dir=SHOP_DIR,
     llm_model="gemini-2.5-flash",
     max_tokens=150,
     temperature=0.5,

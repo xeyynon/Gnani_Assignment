@@ -1,4 +1,4 @@
-# Deploying AI Caller to a new Raspberry Pi
+# Deploying Dukaan Dost to a new Raspberry Pi
 
 Two separate stages, deliberately kept apart: get it running manually
 first, THEN wire up autostart. Don't skip straight to autostart on a
@@ -10,7 +10,7 @@ that fails loudly in your terminal.
 
 1. Copy this whole project directory onto the new Pi (git clone, or
    copy the folder over) — anywhere you like, e.g.
-   `/home/<user>/projects/ai-caller`.
+   `/home/<user>/projects/dukaan-dost`.
 
 2. From inside that directory, run:
    ```bash
@@ -28,7 +28,7 @@ that fails loudly in your terminal.
 4. Test manually — run it in the foreground so you can see everything
    live and kill it with Ctrl+C:
    ```bash
-   .venv/bin/python3 ai_caller_final3.py
+   .venv/bin/python3 -m dukaan_dost
    ```
    Make a real test call. Confirm the greeting plays, a normal Q&A
    turn works, and hangup is clean. **Don't move to Stage 2 until this
@@ -42,11 +42,11 @@ plugging the Pi in and connecting a phone over Bluetooth.
 1. Install the service file (as your normal user, not root):
    ```bash
    mkdir -p ~/.config/systemd/user
-   cp deploy/ai-caller.service ~/.config/systemd/user/ai-caller.service
+   cp deploy/dukaan-dost.service ~/.config/systemd/user/dukaan-dost.service
    ```
-   **Open `~/.config/systemd/user/ai-caller.service` and check the
+   **Open `~/.config/systemd/user/dukaan-dost.service` and check the
    `WorkingDirectory=`/`ExecStart=` paths match where you actually put
-   this project** — they default to `~/projects/ai-caller`, edit
+   this project** — they default to `~/projects/dukaan-dost`, edit
    them if yours lives somewhere else. This is the file you own and
    tune — nothing here runs until you enable it in the next step.
 
@@ -66,15 +66,15 @@ plugging the Pi in and connecting a phone over Bluetooth.
    instance):
    ```bash
    systemctl --user daemon-reload
-   systemctl --user enable --now ai-caller.service
+   systemctl --user enable --now dukaan-dost.service
    ```
    `--now` starts it immediately too, so you can verify right away
    without rebooting.
 
 4. Check it's actually running and watch its logs:
    ```bash
-   systemctl --user status ai-caller.service
-   journalctl --user -u ai-caller -f
+   systemctl --user status dukaan-dost.service
+   journalctl --user -u dukaan-dost -f
    ```
    You should see the same boot sequence as the manual run (client
    warmup, `Ready — waiting for a call`).
@@ -86,26 +86,26 @@ plugging the Pi in and connecting a phone over Bluetooth.
    sudo reboot
    ```
    Wait ~30-60s, then from another machine: `ssh` in and run
-   `systemctl --user status ai-caller.service` — should show
+   `systemctl --user status dukaan-dost.service` — should show
    `active (running)` with no manual intervention.
 
 ## Day-to-day commands, once installed
 
 ```bash
 # Stop it (e.g. to redeploy new code)
-systemctl --user stop ai-caller.service
+systemctl --user stop dukaan-dost.service
 
 # Start it again
-systemctl --user start ai-caller.service
+systemctl --user start dukaan-dost.service
 
 # Restart (stop + start in one step, after deploying new code)
-systemctl --user restart ai-caller.service
+systemctl --user restart dukaan-dost.service
 
 # Tail live logs
-journalctl --user -u ai-caller -f
+journalctl --user -u dukaan-dost -f
 
 # Disable autostart entirely (goes back to manual-only)
-systemctl --user disable ai-caller.service
+systemctl --user disable dukaan-dost.service
 ```
 
 ## Notes / things this deliberately does NOT automate
