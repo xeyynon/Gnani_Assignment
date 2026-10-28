@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul07
+**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul08
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -49,6 +49,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [intent.md](intent.md) | You need the "why" in one page |
 | [idea_research.md](idea_research.md) | You want to know why this idea, what the competing entries do, and the alternatives considered |
 | [problem_research.md](problem_research.md) | You want the SIH 2026 and other problem statements mined for voice problems, the evidence for each, and the scored alternatives |
+| [pi_free_plan.md](pi_free_plan.md) | You want to run without the Raspberry Pi: what is tied to it, the options, and what to re-tune |
 | [problem_statement.md](problem_statement.md) | You need the contest's rules, awards and judging |
 | [problem_statement-gap-plan.md](problem_statement-gap-plan.md) | You want to know what's missing for each award we target |
 | [prd.md](prd.md) | You need the product requirements: what the agent must do on a call |
