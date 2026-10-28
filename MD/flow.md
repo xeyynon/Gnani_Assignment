@@ -37,24 +37,24 @@ recorder
   30 ms frame (960 bytes at 16 kHz s16)
   ├─ webrtcvad + energy gate ─▶ onset confirmed (2 frames)
   ├─ start_streaming_session(language_code=<locked lang>, is_stale=…)
-  │     [NEW] stt_gnani: opens wss://api.vachana.ai/stt/v3/stream with lang_code
+  │     [NEW] stt_gnani: opens wss://api.vachana.ai/stt/v3/stream (Prisma v3.0, lang_code hi-IN,en-IN,te-IN, x-keyterms)
   ├─ session.feed(frame)  [NEW] stt_gnani regroups into exact 1,024-byte frames, sent at real-time pace
   ├─ interim text ─▶ speculative knowledge prefetch
   └─ 650 ms of silence ─▶ session.finish()
-        [NEW] stt_gnani: sends ~600 ms of silence frames, waits for `transcript`, joins segments
+        [NEW] stt_gnani: sends {"type":"commit"}, waits for `transcript`, joins segments, returns detected_language_code
         ─▶ (transcript, language_code) ─▶ audio_q
 
 processor
   ├─ drop if from an old call
   ├─ filters: too short, hallucination, acknowledgement, "stop", "repeat"
   ├─ language: native script ▶ romanized keywords ▶ the call's locked language
-  │     [NEW] a language change reconnects Prisma with the new lang_code on the next utterance
+  │     [NEW] Prisma v3.0 reports detected_language_code per utterance; the lock logic decides whether to follow it (DEC-023)
   ├─ ConversationManager.handle_turn_streaming
   │     knowledge: always_on.md + best-scoring sections of products_pricing.md etc.
   │     [NEW] prompt includes the current order so far
   │     Gemini streams sentences; the first sentence is flushed early at its first comma
   ├─ validator.validate_reply
-  ├─ [NEW] normalise numbers and ₹ amounts into words (Timbre needs this)
+  ├─ [NEW] thin pre-pass: explicit language, spoken units (Timbre reads numbers and ₹ itself; DEC-024)
   ├─ tts_provider.start_streaming_synthesis ─▶ raw 16 kHz s16 PCM chunks
   └─ [NEW] update the order state from the turn ─▶ reply_q
 

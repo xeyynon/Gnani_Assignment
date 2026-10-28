@@ -39,7 +39,7 @@
 | Gnani STT | `companies/core/stt_gnani.py` | **New** |
 | TTS dispatcher | `companies/core/tts_provider.py` | **New** |
 | Gnani TTS | `companies/core/tts_gnani.py` | **New** |
-| Number and currency normaliser | inside `tts_gnani.py` (or its own module) | **New** |
+| Text pre-pass (explicit language, spoken units; Timbre reads numbers itself) | inside `tts_gnani.py` | **New** (DEC-024) |
 | Gemini | `companies/core/llm_gemini.py` | Existing; add the API-key client |
 | Conversation | `companies/core/conversation_manager.py` | Existing |
 | Knowledge | `companies/core/knowledge_retriever.py` | Existing; fixed file names |
