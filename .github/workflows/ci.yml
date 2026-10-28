@@ -1,0 +1,105 @@
+name: CI
+
+# Runs on every push to main and on every pull request. Nothing here needs a
+# secret or a cloud key: the tests are offline (see pytest.ini).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:        # lets release.yml reuse these checks as its gate
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  python: "3.10" }   # oldest version the README promises
+          - { os: ubuntu-latest,  python: "3.12" }
+          - { os: windows-latest, python: "3.12" }   # where the project is developed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install the pinned requirements
+        run: python -m pip install -r requirements.txt pytest
+      - name: Offline tests
+        run: python -m pytest -q
+
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install ruff
+      - run: ruff check .
+
+  repo-hygiene:
+    name: Repo hygiene (secrets, docs links, commit titles)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Repository checks
+        run: python scripts/check_repo.py
+        env:
+          # Optional repository variable (Settings > Secrets and variables > Actions > Variables):
+          # a comma-separated list of names that must never appear in the repo.
+          # It lives in the repo settings so the names themselves are never committed.
+          BANNED_TERMS: ${{ vars.BANNED_TERMS }}
+      - name: Documentation links
+        run: python scripts/check_docs.py
+
+  web:
+    name: Call page (Node)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Call page tests
+        run: node --test tests/web/
+
+  docker:
+    name: Container image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build (not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: dukaan-dost:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: The app imports inside the image
+        run: docker run --rm dukaan-dost:ci python -c "import dukaan_dost.app"
