@@ -47,6 +47,11 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Stretch: a cloud phone number on the WebSocket transport (8 kHz handling, the provider's barge-in signal)
 - [ ] Update README, SETUP, deployment and architecture to say "browser call" (not "phone call") wherever that is what we tested
 
+### Step 2d: Performance (DEC-031)
+- [x] Profile the per-frame audio work on a laptop (2026-10-28, `python -m evaluation.profile_frame_cost`): 0.1% of a frame
+- [ ] Run the same profile on the Pi, and again once a phone-number transport (8 kHz) exists
+- [ ] Only if a function is a visible share of the frame: vectorise it, then consider an optional Cython version with a Python fallback and a parity test
+
 ### Step 3: `stt_gnani.py`
 - [ ] Session thread with its own asyncio loop; headers (`x-model: prisma-v3.0`, `lang_code: hi-IN,en-IN,te-IN`); 1,024-byte framing (DEC-023)
 - [ ] `finish()` sends `commit`, collects segments, times out; returns `detected_language_code`

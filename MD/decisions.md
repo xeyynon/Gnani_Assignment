@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-030.**
+**Latest: DEC-031.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the earlier voice-agent codebase (2026-10-26)
@@ -128,3 +128,11 @@ Before the first push, everything named for the earlier project was renamed (InB
 - `CLAUDE.md` was rewritten without any customer name, and is tracked.
 - **Why:** the repo is going on GitHub, and it should read as Dukaan Dost, not as a renamed copy of something else. A package under `dukaan_dost/` also removes the `sys.path` games the root-level script needed.
 - **Not changed:** git history before this commit still has the earlier names (for example the title of Build 1000). It can be rewritten before the first push if wanted.
+
+### DEC-031 · Python first; Cython only for a measured hotspot (2026-10-28)
+Surya's plan: develop in Python, and move to Cython later. Recorded with the evidence so the later step is a decision, not a reflex.
+- **Measured on a laptop, not the Pi** (`python -m evaluation.profile_frame_cost`): the work done on every 30 ms frame (energy plus both VAD checks) costs about 0.03 ms, which is 0.1% of the frame. The heaviest function is `_learn_caller_pitch`, about 2.4 ms once per utterance. Even 10× slower on the Pi, per-frame work stays around 1%.
+- **So Cython wouldn't make a call feel faster.** What makes a reply slow is waiting: the speech, language-model and text-to-speech network calls, and the 650 ms end-of-speech wait. Those are tuned through the settings and the Gnani integration (DEC-023, [pi_free_plan.md](pi_free_plan.md) section 4), not by compiling.
+- **When Cython becomes worth it:** a measured hotspot on the target machine, most likely 8 kHz to 16 kHz resampling and mu-law conversion if a phone-number transport is added (`audioop` is gone from newer Python), or pitch learning if the Pi is slow. Try vectorising with numpy first.
+- **How, if it happens:** move only that function into its own small module with a plain-Python version that stays the reference. Add the compiled version with the same signature as an *optional* extra, import it with a fallback to the Python one, and add a test that both give the same answers. A compiled build must never be required to run the agent; the Pi would need a C compiler and the Windows laptops a build toolchain.
+- **Not done now:** no `.pyx` files, no build step, no new module. Premature until the profile on the Pi shows a hotspot.
