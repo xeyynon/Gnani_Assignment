@@ -12,6 +12,13 @@
 | No order output | `orders/<call_id>.json` and `.txt` | Build step 8 |
 | No git | `git init`, after moving the upstream clone out (see [rules.md](rules.md)) | Build step 1 |
 
+## Loan guidance gaps (DEC-027)
+| Gap | Plan |
+|---|---|
+| No calculator | `loan_calculator.py`, unit-tested |
+| Scheme rules come from an SIH problem statement, not the schemes | Label as indicative; check the official documents before the README states them |
+| Two flows in 12 days | Scope order in DEC-027; cut udhaar first, and ship only complete, measured flows |
+
 ## Gaps per award
 | Award | What we have | What's missing | Evidence the judges will see |
 |---|---|---|---|

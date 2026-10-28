@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-026.**
+**Latest: DEC-027.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
@@ -88,3 +88,17 @@ Chosen by Surya from the options in [idea_research.md](idea_research.md). The ag
 - **Why:** kirana ordering is one of Gnani's own example ideas, and a competing entry is already public. The credit ledger is how real kiranas run, no visible entry does it, and balance enquiries and promises to pay are what Gnani's collections customers buy.
 - **Scope guard:** the ledger is the first thing cut if time runs short. Without it, the entry is still the kirana order agent.
 - **Alternatives rejected:** an outbound EMI-reminder caller (outbound dialling from the Pi is too risky for the deadline) and a clinic appointment line (a full re-plan).
+
+### DEC-027 · Dukaan Dost has two call types on one phone line: shop orders and Udyami loan guidance (2026-10-28)
+Chosen by Surya from [problem_research.md](problem_research.md). One agent, one number, one pipeline. The agent finds out in the first turn which of two things the caller wants:
+1. **Shop orders (with udhaar):** a customer orders from the kirana and can put it on credit (DEC-026).
+2. **Udyami Sahayak, loan guidance:** a would-be or new shopkeeper says how much money they can put in and what business they want, and hears the project cost, the maximum loan, the scheme, the interest rate and the instalment, spoken in their language (SIH 2026 PS 26091).
+
+- **Why this mix:** the loan calculator is deterministic (exact right answers, so a clean evaluation) and speaks to Gnani's lending customers. The kirana orders keep the story Gnani already named. The shop is the link: the same shopkeeper who takes orders is the one who might borrow to stock it.
+- **Scope order, because two products in 12 days is the risk:**
+  1. **Gnani integration** (Prisma, Timbre, Gemini key): needed by everything. Build first.
+  2. **Udyami loan guidance:** small and deterministic (three inputs plus a calculator). Build second, so there's a complete, measurable flow early.
+  3. **Shop orders:** the stock list, the order state and the order summary.
+  4. **Udhaar ledger:** cut first if time runs short.
+- **If time runs out:** ship whichever of 2 or 3 is complete and measured, and describe the other as future work. Don't ship two half-built flows.
+- **Scheme figures are indicative.** They come from an SIH problem statement, not the scheme documents. The agent says so ("andaaz se"), and the README labels them the same way, until checked against the official scheme documents.

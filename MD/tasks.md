@@ -26,6 +26,16 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Pick the Timbre voice; pick `hi-IN`, `hi-en` or `auto` for Hinglish
 - [ ] Note the credits used per minute of audio
 
+### Step 2b: Udyami loan guidance (DEC-027; build right after the Gnani integration)
+- [ ] `loan_calculator.py`: project cost, loan, scheme selection, instalment (pure functions) **with unit tests** for the scheme boundaries (₹1.40 lakh, ₹50 lakh) and the PS's worked example
+- [ ] Decide and document the instalment formula (reducing balance, moratorium handling)
+- [ ] Slot filling: margin money, business, place, each confirmed back
+- [ ] Call-type detection in the first turn (order vs loan guidance), and switching
+- [ ] Prompt rules: speak only what the calculator returns; amounts in words; "indicative"
+- [ ] Loan summary files in `orders/`
+- [ ] 8–10 of the eval scripts cover loan guidance (clean and noisy), with exact expected numbers
+- [ ] Check the scheme figures against the official scheme documents before the README states them
+
 ### Step 3: `stt_gnani.py`
 - [ ] Session thread with its own asyncio loop; headers (`x-model: prisma-v3.0`, `lang_code: hi-IN,en-IN,te-IN`); 1,024-byte framing (DEC-023)
 - [ ] `finish()` sends `commit`, collects segments, times out; returns `detected_language_code`

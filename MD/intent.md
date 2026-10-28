@@ -5,6 +5,9 @@
 2. **To show a real voice agent, not a demo script.** We already have a working phone agent (Smart Caller) that has handled real calls on a Raspberry Pi. Rebuilding its speech layer on Gnani's models shows we can integrate new models into a production pipeline.
 3. **To solve a real problem.** Kirana shops take orders by phone all day, often while serving customers at the counter. Calls get missed and orders get misheard.
 
+## Two things on one line (DEC-027)
+Dukaan Dost answers two kinds of call. A **customer** orders from the shop and can put it on credit. A **would-be or new shopkeeper** asks what loan they can get for a shop and what it will cost them each month, which comes from SIH 2026 problem statement PS 26091. The loan answers are computed by code, not guessed by the model, so each call has an exactly checkable result.
+
 ## The twist: a credit book by phone
 Most regulars at a kirana buy on **udhaar** (credit) and settle at the month's end. Dukaan Dost also keeps that book: "likh lo" adds the order to their account, "kitna baaki hai?" gets the balance, "Saturday ko dunga" records the promise. No other visible entry does this (see [idea_research.md](idea_research.md), DEC-026).
 
