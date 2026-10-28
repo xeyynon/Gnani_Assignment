@@ -39,7 +39,7 @@
 5. **Measured evaluation on noisy phone audio**, end to end (STT, then order accuracy, then latency), which nobody shows yet.
 
 ## 4. Options
-All of them reuse the same pipeline. Switching domain costs mainly `companies/<name>/` (prompt and knowledge) plus the domain logic (order state, ledger and so on).
+All of them reuse the same pipeline. Switching domain costs mainly `shops/<name>/` (prompt and knowledge) plus the domain logic (order state, ledger and so on).
 
 | # | Idea | Awards in reach | Crowding | Extra work over the base | Fit with Gnani's business |
 |---|---|---|---|---|---|

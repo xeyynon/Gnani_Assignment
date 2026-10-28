@@ -43,7 +43,7 @@ log = logging.getLogger("stt_google")
 # docs: chirp_2 is only in us-central1, europe-west4, asia-southeast1;
 # neither asia-south1 nor asia-south2 support it). Testing chirp_2
 # means setting BOTH of these together:
-#   STT_MODEL=chirp_2 STT_LOCATION=asia-southeast1 python3 ai_caller_final3.py
+#   STT_MODEL=chirp_2 STT_LOCATION=asia-southeast1 python3 -m dukaan_dost
 STT_LOCATION = os.environ.get("STT_LOCATION", "global")
 
 # ─────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ STT_LOCATION = os.environ.get("STT_LOCATION", "global")
 #     fine while multi-language callers get force-decoded, the exact
 #     v1-vs-v2 bug this file's module docstring describes.
 #   - chirp (v1) may not support streaming at all in every region.
-# Verify against real captured audio (stt_regression_test.py) before
+# Verify against real captured audio (evaluation/stt_regression_test.py) before
 # trusting either on a live call — same discipline as every other STT
 # change made in this project.
 STREAMING_STT_MODEL = os.environ.get("STT_MODEL", "latest_long")
@@ -145,7 +145,7 @@ STREAMING_FINISH_TIMEOUT_SEC = 10
 
 # Cached per distinct language_codes tuple. Normally just one entry
 # (the full 3-language list) — a second appears once session-sticky
-# language locking (ai_caller_final3.py, 2026-07-31) narrows a call
+# language locking (dukaan_dost/app.py, 2026-07-31) narrows a call
 # down to a single confirmed language after the first turn.
 _STREAMING_CONFIG_CACHE: dict[tuple[str, ...], "speech_v2.StreamingRecognitionConfig"] = {}
 
@@ -197,7 +197,7 @@ class StreamingSession:
 
     def __init__(self, language_codes: list[str] | None = None):
         # Defaults to the full 3-language candidate list. A caller
-        # (ai_caller_final3.py, once a call's language is locked) can
+        # (dukaan_dost/app.py, once a call's language is locked) can
         # instead pass a single-element list to restrict recognition to
         # just that language for the rest of the call — see module docs
         # on _get_streaming_config's per-language-tuple cache.
@@ -293,7 +293,7 @@ def start_streaming_session(language_code: str | None = None, is_stale=None) -> 
     language locking once a call's language is confirmed.
 
     is_stale: accepted for interface parity with stt_sarvam.py's
-    version (ai_caller_final3.py calls this through the shared
+    version (dukaan_dost/app.py calls this through the shared
     stt_provider dispatcher without knowing which backend is active).
     Unused here — Google's streaming path has no concurrency semaphore
     to abandon early; each StreamingSession call goes out immediately.

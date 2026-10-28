@@ -13,7 +13,7 @@ and the one of the two that has correctly recognized Telugu) — can be
 pointed at, one at a time, by an env var, and A/B'd on real calls
 without editing code.
 Exposes the exact same interface every backend module does
-(warmup/start_streaming_session), so ai_caller_final3.py only ever
+(warmup/start_streaming_session), so dukaan_dost/app.py only ever
 imports from here, never from a specific backend directly.
 
 Default set to "sarvam" for v3.0 (Sarvam STT + Google LLM + Google

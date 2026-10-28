@@ -46,7 +46,7 @@ On v2.5 there's no `commit`: send ~600 ms of silence frames instead and wait for
 
 **Per-utterance or per-call session:** upstream opens one STT session per utterance. If the account allows only one or two concurrent sessions (B-07), switch to **one session per call**: feed audio continuously, `commit` at each end of speech, and route each `transcript` to the waiting `finish()`. Mind the 15-minute session cap and the idle timeout.
 
-**Keyterms:** generated at startup from `companies/dukaan_dost/knowledge/products_pricing.md`: brand names, plus English, romanized and native-script item names. At most 200, and not every pack-size variant. Gnani warns context can lower accuracy on some audio, so it stays switchable (`STT_GNANI_KEYTERMS=0`) for the eval.
+**Keyterms:** generated at startup from `shops/dukaan_dost/knowledge/products_pricing.md`: brand names, plus English, romanized and native-script item names. At most 200, and not every pack-size variant. Gnani warns context can lower accuracy on some audio, so it stays switchable (`STT_GNANI_KEYTERMS=0`) for the eval.
 
 ## Timbre TTS (`tts_gnani.py`)
 **Streaming:** `wss://api.vachana.ai/api/v1/tts`, header `X-API-Key-ID`. Send one JSON request per sentence:

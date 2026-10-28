@@ -3,13 +3,13 @@
 The model work (Prisma, Timbre, Gemini) is in [ml_model_integration.md](ml_model_integration.md). This file covers the rest: the shop, orders, evidence and outreach.
 
 ## 1. Repo hygiene (day 1)
-- Move the upstream reference clone **out of** `E:\Projects\Gnani` (its folder name, git history and `companies/` contain client data). See [rules.md](rules.md) R-3.
-- `git init`. Check `.gitignore` covers `local_config.py`, `.env`, `ai_caller.log*`, `logs/`, `orders/` (except `orders/samples/`), `eval/audio/`.
+- Move the upstream reference clone **out of** `E:\Projects\Gnani` (its folder name, git history and `shops/` contain client data). See [rules.md](rules.md) R-3.
+- `git init`. Check `.gitignore` covers `local_config.py`, `.env`, `dukaan_dost.log*`, `logs/`, `orders/` (except `orders/samples/`), `evaluation/audio/`.
 - Add `GNANI_API_KEY` and `GEMINI_API_KEY` to `local_config.example.py`.
 - Add `gnani-vachana` and `websockets` to `requirements.txt` (pin the versions after the install works).
 - Set `CALL_DATA_ENABLED` to default to `0` (DEC-007).
 
-## 2. The shop: `companies/dukaan_dost/` (build step 7)
+## 2. The shop: `shops/dukaan_dost/` (build step 7)
 | File | Content |
 |---|---|
 | `config.yaml` | `system_prompt` for the order-taking persona: confirm each item and quantity, read the total back in words, never invent items or prices, ask when the quantity is unclear, keep replies to 1–2 short sentences. `fallback_messages` for `en-in`, `hi-in` and `te-in` |
@@ -36,8 +36,8 @@ Use made-up shop names and IDs. Brand names (Amul, Maggi, Aashirvaad) are fine a
 - In the demo: the order viewer shows the customer's balance before and after.
 
 ## 4. Evaluation assets (build step 9)
-- 20 order scripts in `eval/scripts/*.json`: the expected items and quantities, plus the turns the caller says.
-- Audio in `eval/audio/clean/` and `eval/audio/noisy/`. Noise from a royalty-free source (credit it in the README), mixed at ~10 dB SNR.
+- 20 order scripts in `evaluation/scripts/*.json`: the expected items and quantities, plus the turns the caller says.
+- Audio in `evaluation/audio/clean/` and `evaluation/audio/noisy/`. Noise from a royalty-free source (credit it in the README), mixed at ~10 dB SNR.
 - An eval runner that plays each script through the pipeline offline (no Bluetooth) and logs WER, order match and time to first audio.
 
 ## 5. README (build step 10)

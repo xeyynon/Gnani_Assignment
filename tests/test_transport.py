@@ -3,7 +3,7 @@ Offline tests for the audio transport seam (DEC-029).
 
 Part 1 checks the Pipewire transport issues exactly the commands the
 pipeline always ran. Part 2 runs the REAL recorder, _play and watchdog
-helpers from ai_caller_final3 against a fake transport, which proves the
+helpers from dukaan_dost.app against a fake transport, which proves the
 pipeline no longer needs the Pi. Nothing here touches PipeWire, a phone
 or the network.
 
@@ -21,8 +21,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from companies.core import transport as tp  # noqa: E402
-from companies.core import transport_pipewire as pw  # noqa: E402
+from dukaan_dost import transport as tp  # noqa: E402
+from dukaan_dost import transport_pipewire as pw  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -210,9 +210,9 @@ class FakeTransport(tp.Transport):
 
 @pytest.fixture(scope="module")
 def app():
-    os.environ.setdefault("COMPANY_NAME", "transport_test")
+    os.environ.setdefault("SHOP_NAME", "transport_test")
     try:
-        import ai_caller_final3 as m
+        import dukaan_dost.app as m
     except Exception as e:                       # e.g. webrtcvad missing on this machine
         pytest.skip(f"main module not importable here: {e}")
     return m

@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul09
+**Last updated:** 2026-10-28 · **Latest build:** 1001 · **Latest InBul:** InBul10
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -12,7 +12,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 ## Key dates
 | Date | What |
 |---|---|
-| 2026-10-26 | Project started from the Smart Caller codebase (this folder) |
+| 2026-10-26 | Project started from an earlier voice-agent codebase (see [origin.md](origin.md)) |
 | **2026-11-05** | LinkedIn and X posts out (shortlisting counts verified engagement) |
 | **2026-11-09** | Our submission target |
 | 2026-11-10, 11:59 PM IST | Hard deadline |
@@ -20,17 +20,18 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 ## Status at a glance
 | Area | State |
 |---|---|
-| Base codebase | ✅ In place: the root folder is the latest upstream code (Aug 19, 2026) with client names removed. See [helpfromsmartcaller.md](helpfromsmartcaller.md) |
+| Base codebase | ✅ In place: the root folder is the latest upstream code (Aug 19, 2026) with client names removed. See [origin.md](origin.md) |
 | Git and versioning | ✅ `main`, with Build 1000 (the baseline) and InBul01 (these docs and the changelog script). See [project_docs_guide.md](project_docs_guide.md) |
 | Upstream clone out of the folder | ⚠️ The move failed (permission denied); excluded locally meanwhile (DEC-021) |
-| CLAUDE.md in git | ⚠️ Untracked until the client name is taken out (DEC-022) |
+| CLAUDE.md in git | ✅ Rewritten without the customer's name and tracked (DEC-022, InBul10) |
+| Repository layout | ✅ Renamed and restructured for Dukaan Dost, ready for a first push (DEC-030). Only a licence choice is left |
 | Gnani API key | ❌ Not registered yet (the config and requirements are ready for it) |
 | Smoke test (Prisma and Timbre) | ❌ Not started |
 | `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
 | Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
 | Pi-free transport | 🟡 Interface done and tested offline (InBul09); the laptop and browser transports are next; not yet run on the Pi (DEC-029) |
-| Shop data (`companies/dukaan_dost/`) | ❌ Not started |
+| Shop data (`shops/dukaan_dost/`) | ❌ Not started |
 | Order summary output | ❌ Not started |
 | Evaluation | ❌ Not started |
 | README and SETUP | 🟡 Front page and setup written; results table waits for the eval |
@@ -71,7 +72,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [pain.md](pain.md) | The user's pain and ours |
 | [deployment.md](deployment.md) | Setting up the Pi, keys and running |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
-| [helpfromsmartcaller.md](helpfromsmartcaller.md) | What we inherit from the upstream project |
+| [origin.md](origin.md) | What we inherit from the upstream project |
 | [tried_and_failed.md](tried_and_failed.md) | Approaches that didn't work (not models) |
 | [tried_and_implemented.md](tried_and_implemented.md) | Approaches that worked and are in the code |
 | [session_handover_2026-10-28.md](session_handover_2026-10-28.md) | Picking up from the latest session |

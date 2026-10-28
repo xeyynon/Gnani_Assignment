@@ -32,24 +32,24 @@
 ```
 
 ## Audio transport (DEC-029)
-Everything between the diagram's Bluetooth box and the pipeline goes through `companies/core/transport.py`. `AUDIO_TRANSPORT` picks the implementation: `pipewire` (the Pi and Bluetooth phone, today's code in `transport_pipewire.py`); a laptop transport, a browser WebSocket transport and a phone-number transport are planned ([pi_free_plan.md](pi_free_plan.md)). The pipeline never calls `pw-record`, `pw-play` or `wpctl` directly. The loopback-cutting thread runs only for transports that need it.
+Everything between the diagram's Bluetooth box and the pipeline goes through `dukaan_dost/transport.py`. `AUDIO_TRANSPORT` picks the implementation: `pipewire` (the Pi and Bluetooth phone, today's code in `transport_pipewire.py`); a laptop transport, a browser WebSocket transport and a phone-number transport are planned ([pi_free_plan.md](pi_free_plan.md)). The pipeline never calls `pw-record`, `pw-play` or `wpctl` directly. The loopback-cutting thread runs only for transports that need it.
 
 ## Components
 | Component | File | Status |
 |---|---|---|
-| Main process, six threads | `ai_caller_final3.py` | Existing; small edits (TTS import, key loading, startup check, order hook) |
-| STT dispatcher | `companies/core/stt_provider.py` | Existing; add `gnani` |
-| Gnani STT | `companies/core/stt_gnani.py` | **New** |
-| TTS dispatcher | `companies/core/tts_provider.py` | **New** |
-| Gnani TTS | `companies/core/tts_gnani.py` | **New** |
+| Main process, six threads | `dukaan_dost/app.py` | Existing; small edits (TTS import, key loading, startup check, order hook) |
+| STT dispatcher | `dukaan_dost/stt_provider.py` | Existing; add `gnani` |
+| Gnani STT | `dukaan_dost/stt_gnani.py` | **New** |
+| TTS dispatcher | `dukaan_dost/tts_provider.py` | **New** |
+| Gnani TTS | `dukaan_dost/tts_gnani.py` | **New** |
 | Text pre-pass (explicit language, spoken units; Timbre reads numbers itself) | inside `tts_gnani.py` | **New** (DEC-024) |
-| Gemini | `companies/core/llm_gemini.py` | Existing; add the API-key client |
-| Conversation | `companies/core/conversation_manager.py` | Existing |
-| Knowledge | `companies/core/knowledge_retriever.py` | Existing; fixed file names |
-| Reply checks | `companies/core/validator.py` | Existing |
-| Shop config | `companies/dukaan_dost/` | **New** |
-| Order summary | `companies/core/order_writer.py` (proposed) | **New** |
-| Evaluation | `run_benchmark.py`, `analyze_benchmark.py` and new eval scripts | Existing; extend |
+| Gemini | `dukaan_dost/llm_gemini.py` | Existing; add the API-key client |
+| Conversation | `dukaan_dost/conversation_manager.py` | Existing |
+| Knowledge | `dukaan_dost/knowledge_retriever.py` | Existing; fixed file names |
+| Reply checks | `dukaan_dost/validator.py` | Existing |
+| Shop config | `shops/dukaan_dost/` | **New** |
+| Order summary | `dukaan_dost/order_writer.py` (proposed) | **New** |
+| Evaluation | `evaluation/run_benchmark.py`, `evaluation/analyze_benchmark.py` and new eval scripts | Existing; extend |
 
 ## Design principles we keep
 - **Threads talk only through queues and events.** Recorder, processor and playback never call each other.

@@ -1,14 +1,16 @@
-# AI Caller — Execution Flow
+# Pipeline reference (as built)
+
+The pipeline exactly as the code runs it, with the Raspberry Pi and Bluetooth transport. What changes for Dukaan Dost is in [flow.md](flow.md); the transport seam is in [pi_free_plan.md](pi_free_plan.md).
 
 ## Entry point
 
 ```
-ai_caller_final3.py  →  main()
+dukaan_dost/app.py  →  main()
 ```
 
-Run as: `python3 ai_caller_final3.py` (requires `COMPANY_NAME` env var pointing
-at a folder under `companies/`, plus Google Cloud credentials / project env
-vars — see `local_config.example.py`).
+Run as: `python3 -m dukaan_dost` from the project root. `SHOP_NAME` (default
+`dukaan_dost`) picks a folder under `shops/`; credentials come from
+`local_config.py` or env vars — see `local_config.example.py`.
 
 ## Startup sequence (`main()`, line ~3286)
 
@@ -16,9 +18,9 @@ vars — see `local_config.example.py`).
    placeholder).
 2. `_init_vad_metrics_csv()` — create `logs/vad_metrics.csv` if missing.
 3. Log VAD/barge-in config.
-4. Build `ConversationManager(COMPANY_DIR, LLM_MODEL, LLM_TOKENS, LLM_TEMP)`
-   → loads `companies/<name>/config.yaml` (system prompt + fallback messages)
-     and `companies/<name>/knowledge/core/always_on.md` (always-on context).
+4. Build `ConversationManager(SHOP_DIR, LLM_MODEL, LLM_TOKENS, LLM_TEMP)`
+   → loads `shops/<name>/config.yaml` (system prompt + fallback messages)
+     and `shops/<name>/knowledge/core/always_on.md` (always-on context).
 5. Warm up clients once, before any call can arrive:
    `_stt_warmup()` → `_tts_warmup()` → `_llm_warmup(LLM_MODEL)`.
 6. Register `SIGINT`/`SIGTERM` handler → sets `_shutdown` event.
@@ -62,7 +64,7 @@ recorder_thread
   ├─ read 30ms PCM frame from pw-record
   ├─ _is_speech() / _is_speech_strict() (webrtcvad) + _energy() gate
   ├─ onset confirm (VAD_ONSET_CONFIRM_FRAMES) → open StreamingSession
-  │     (companies.core.stt_provider.start_streaming_session — Sarvam or
+  │     (dukaan_dost.stt_provider.start_streaming_session — Sarvam or
   │      Google, per STT_PROVIDER)
   ├─ feed frames to session.feed() while triggered
   ├─ interim transcripts → _maybe_prefetch_rag() → knowledge_retriever
@@ -115,7 +117,7 @@ playback_thread
          directly while a chunk is playing → playback_thread kills it early
 ```
 
-## Module map (`companies/core/`)
+## Module map (`dukaan_dost/`)
 
 | Module | Responsibility |
 |---|---|
@@ -124,14 +126,14 @@ playback_thread
 | `tts_google.py` | Google TTS synthesis, streaming synthesis, digit-spelling helper, warmup |
 | `llm_gemini.py` | Vertex AI Gemini wrapper — `ask()` (blocking), `stream()` (generator), `warmup()` |
 | `conversation_manager.py` | Orchestrates one turn: knowledge retrieval + prompt assembly + Gemini call + validation |
-| `knowledge_retriever.py` | Loads `companies/<name>/knowledge/*.md`, keyword-scores `##` sections against the transcript, speculative prefetch cache |
+| `knowledge_retriever.py` | Loads `shops/<name>/knowledge/*.md`, keyword-scores `##` sections against the transcript, speculative prefetch cache |
 | `validator.py` | Post-LLM reply gating (greeting stripping, banned phrases, language checks) |
 | `retry.py` | Shared retry/backoff helper used by the network-calling modules |
 
-## Company configuration (`companies/<name>/`)
+## Shop configuration (`shops/<name>/`)
 
 ```
-companies/<name>/
+shops/<name>/
   config.yaml            # system_prompt + fallback_messages (per language)
   knowledge/
     core/always_on.md    # loaded in full, every turn
@@ -139,11 +141,11 @@ companies/<name>/
                           # in knowledge_retriever.py)
 ```
 
-Selected via `COMPANY_NAME` env var → `COMPANY_DIR = companies/<COMPANY_NAME>/`
-(`ai_caller_final3.py`, nothing deployment-specific hardcoded in source).
+Selected via `SHOP_NAME` env var → `SHOP_DIR = shops/<SHOP_NAME>/`
+(`dukaan_dost/app.py`, nothing deployment-specific hardcoded in source).
 
 ## Supporting/offline scripts (not part of the live call pipeline)
 
-- `run_benchmark.py` / `analyze_benchmark.py` — STT accuracy benchmark against `benchmark_dataset.json`
-- `stt_regression_test.py` — replays captured call audio through the real streaming STT code path
+- `evaluation/run_benchmark.py` / `evaluation/analyze_benchmark.py` — STT accuracy benchmark against `evaluation/benchmark_dataset.json`
+- `evaluation/stt_regression_test.py` — replays captured call audio through the real streaming STT code path
 - `tests/test_streaming_e2e.py` — exercises `ConversationManager.handle_turn_streaming()` → `validate_reply()` → `tts_google.synthesize()` without a live call

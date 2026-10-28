@@ -3,7 +3,7 @@
 Two kinds: the **pipeline agents** that run a call, and the **AI coding agents** (Claude) that build the project.
 
 ## 1. The pipeline agents
-Each one is a thread in `ai_caller_final3.py`. They talk only through queues and events, never by calling each other.
+Each one is a thread in `dukaan_dost/app.py`. They talk only through queues and events, never by calling each other.
 
 | Agent | Watches | Does | Hands off to |
 |---|---|---|---|
@@ -26,9 +26,9 @@ For Claude (or any coding agent) working in this repo. The root [CLAUDE.md](../C
 4. Before "fixing" something that looks odd, search [decisions.md](decisions.md), [tried_and_failed.md](tried_and_failed.md) and [failmlmodel.md](failmlmodel.md). It's probably deliberate.
 
 ### The codebase in brief
-- `ai_caller_final3.py` is ~3,400 lines with long, deliberate comments that explain *why*. Read the comment above a setting before changing it.
+- `dukaan_dost/app.py` is ~3,400 lines with long, deliberate comments that explain *why*. Read the comment above a setting before changing it.
 - The Pi is the real runtime: Bluetooth, PipeWire, `wpctl`, `pw-record`, `pw-play`. On Windows you can run module-level tests (STT, TTS, normaliser, conversation manager) but not a call.
-- `tests/test_streaming_e2e.py` runs the conversation, validator and TTS path without a call. Use it as the model for offline tests.
+- `tests/manual/test_streaming_e2e.py` runs the conversation, validator and TTS path without a call. Use it as the model for offline tests.
 
 ### Working rules
 - **Smoke test before integrating.** Prove each Gnani API works in a standalone script first.

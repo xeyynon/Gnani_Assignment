@@ -2,7 +2,7 @@
 transport.py
 
 Where a call's audio comes from and goes to (DEC-029). The pipeline in
-ai_caller_final3.py (VAD, STT, LLM, TTS, barge-in) is the same whatever
+dukaan_dost/app.py (VAD, STT, LLM, TTS, barge-in) is the same whatever
 carries the call; only these few operations differ:
 
     find_nodes()      is a call up right now? Returns (capture key, playback
@@ -17,7 +17,7 @@ carries the call; only these few operations differ:
     stop_playback()   end any in-flight clip. True if one was stopped.
 
 Audio is 16 kHz, mono, signed 16-bit little-endian PCM on the capture
-side and a WAV file on the playback side (ai_caller_final3.SAMPLE_RATE).
+side and a WAV file on the playback side (dukaan_dost.app.SAMPLE_RATE).
 A transport carrying a different rate converts at its own edge.
 
 Pick one with AUDIO_TRANSPORT (default "pipewire", the Raspberry Pi and

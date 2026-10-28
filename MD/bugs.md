@@ -13,7 +13,7 @@ Fixes to bugs found upstream, before this repo existed, are listed at the end fo
 **Fix:** give the prompt an explicit "order so far" block (DEC-006), make `LLM_HISTORY` an env var, and allow more tokens for the read-back turn.
 
 ### B-04 · Open (risk) · Greeting and messages assume English first
-The greeting is `"Hello! Welcome to {COMPANY_NAME}…"`, and the STT-failure apology is English only. Prisma needs a language before the first word.
+The greeting is `"Hello! Welcome to {SHOP_NAME}…"`, and the STT-failure apology is English only. Prisma needs a language before the first word.
 **Fix:** part of language selection (DEC-005).
 
 ### B-05 · Open (risk) · Validator greeting regex is generic
@@ -28,7 +28,7 @@ _None._
 
 ## Fixed
 ### B-01 · Fixed in Build 1001 · The startup check missed the example placeholder
-`main()` only caught `"your-project-id-here"`, but `local_config.example.py` ships `"your-project-id-or-number-here"`. Now it checks for `"your-project-id"` (both), and is skipped entirely when `GEMINI_API_KEY` is set, because the Gemini Developer API needs no Google Cloud project.
+`main()` only caught `"your-project-id-here"`, but `local_config.example.py` ships `"your-project-id-or-number-here"`. Now it checks for `"your-project-id"` (both) and for an empty project, via `_gemini_credentials_ok()` (8 tests), and is skipped entirely when `GEMINI_API_KEY` is set, because the Gemini Developer API needs no Google Cloud project.
 
 ### B-03 · Fixed in Build 1001 · Call recording was on by default
 `CALL_DATA_ENABLED` now defaults to off (opt in with `CALL_DATA_ENABLED=1`), and the startup log says whether recording is on (DEC-007).
@@ -50,4 +50,4 @@ _None._
 | Unlocked lazy singletons and caches | Locks added |
 | Synchronous VAD-metrics CSV writes on the hot path | Moved to a writer thread |
 | False barge-in interrupts, STT decode bias, repeat-command bug | Fixed 2026-08-19 |
-| `/tmp` log filling RAM on the Pi | Redirect to `/dev/null`; rely on the rotating `ai_caller.log` |
+| `/tmp` log filling RAM on the Pi | Redirect to `/dev/null`; rely on the rotating `dukaan_dost.log` |

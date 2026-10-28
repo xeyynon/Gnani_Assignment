@@ -35,3 +35,7 @@ Re-read Gnani's live docs, the contest page, PyPI and Google's Gemini pages. The
 - **Contest:** ten awards (Jugaad Genius and Crowd Favourite are worth a try too); the demo post must be a video of the working app and be live before submitting; engagement is counted at the cutoff.
 
 Still unknown until the key exists: our concurrency limit, the credit cost per minute, Timbre's idle timeout, and whether `hi-en` works on v3.0 voices.
+
+## Restructure for GitHub (InBul10)
+Everything named for the earlier project was renamed before the first push (DEC-030): the `dukaan_dost/` package (`python -m dukaan_dost`), `shops/`, `evaluation/`, `tests/manual/`, a rewritten CLAUDE.md, new `.gitignore`/`.gitattributes`/`pytest.ini`. 76 offline tests pass. Still open before pushing: the cloned reference folder inside the project can't be moved (permission denied; it is untracked and excluded locally, but close whatever has it open and move it out), a `LICENSE` choice, and whether to rewrite the early commit titles that still name the earlier project.
+

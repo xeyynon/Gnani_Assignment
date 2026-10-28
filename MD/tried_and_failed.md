@@ -1,6 +1,6 @@
 # Tried and failed
 
-Approaches (not models; see [failmlmodel.md](failmlmodel.md) for those) that didn't work. Most come from upstream Smart Caller. Add new ones with a date.
+Approaches (not models; see [failmlmodel.md](failmlmodel.md) for those) that didn't work. Most come from the earlier project. Add new ones with a date.
 
 | When | What we tried | What went wrong | What we do instead |
 |---|---|---|---|
@@ -12,7 +12,7 @@ Approaches (not models; see [failmlmodel.md](failmlmodel.md) for those) that did
 | Jul 2026 | Running in the background with `&` or `| tee` | The shell could send the process a shutdown signal | `setsid nohup … < /dev/null &` (DEC-016) |
 | Jul 2026 | Flagging `google-cloud-bigquery` and `-storage` as unused (grepping imports) | They're required by `google-cloud-aiplatform` | Check with `pip show` before removing anything (DEC-017) |
 | Jul 2026 | An STT benchmark with every language voiced by one en-IN TTS voice | The Hindi and Telugu clips were spoken with English phonetics, so the language results meant nothing and the WER was inflated by TTS mispronunciation | **Synthesise each eval script in its own language**; add real recordings |
-| Aug 2026 | Logging background stdout to `/tmp/live_test.log` | `/tmp` is RAM-backed on the Pi; the file grew without limit | `/dev/null`, plus the rotating `ai_caller.log` (DEC-015) |
+| Aug 2026 | Logging background stdout to `/tmp/live_test.log` | `/tmp` is RAM-backed on the Pi; the file grew without limit | `/dev/null`, plus the rotating `dukaan_dost.log` (DEC-015) |
 | Aug 2026 | Splitting TTS audio internally into a prefix and the rest | Left dead air mid-sentence | Split the *text* at the first comma and play the pieces back to back (DEC-018) |
 | Aug 2026 | Sarvam Bulbul TTS | 40–70% slower to first audio | See [failmlmodel.md](failmlmodel.md) |
 

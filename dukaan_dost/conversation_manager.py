@@ -28,7 +28,7 @@ _SENTENCE_END = re.compile(r'(?<=[.!?।])\s+')
 
 # 2026-08-17: an earlier version of this function split the first
 # sentence early at its first comma to start TTS sooner (measured
-# real gain — see [SPAN] llm_ttfs_ms in ai_caller_final3.py). Reverted
+# real gain — see [SPAN] llm_ttfs_ms in dukaan_dost/app.py). Reverted
 # same day: the "rest of sentence" clip needed a fresh TTS call that
 # routinely took longer than playback_thread's TTS_CONTINUATION_WAIT_
 # SEC (150ms, tuned for a different, faster case — Google TTS's own
@@ -51,13 +51,13 @@ def _language_display_name(language_code: str) -> str:
 
 
 class ConversationManager:
-    def __init__(self, company_dir, llm_model: str, max_tokens: int, temperature: float):
-        self.company_dir = company_dir
+    def __init__(self, shop_dir, llm_model: str, max_tokens: int, temperature: float):
+        self.shop_dir = shop_dir
         self.llm_model = llm_model
         self.max_tokens = max_tokens
         self.temperature = temperature
 
-        config_path = company_dir / "config.yaml"
+        config_path = shop_dir / "config.yaml"
         with open(config_path, encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 
@@ -66,7 +66,7 @@ class ConversationManager:
             lang.lower(): msg for lang, msg in self.config["fallback_messages"].items()
         }
 
-        self.core_context = get_core_context(company_dir)
+        self.core_context = get_core_context(shop_dir)
 
     def _fallback_for(self, detected_language: str) -> str:
         key = (detected_language or "en-in").lower()
@@ -115,7 +115,7 @@ class ConversationManager:
         # it, falling back to a normal (still fast, local) lookup
         # otherwise — see knowledge_retriever.py for why this is a
         # modest, not dramatic, win.
-        knowledge = get_relevant_context_maybe_cached(self.company_dir, transcript)
+        knowledge = get_relevant_context_maybe_cached(self.shop_dir, transcript)
         system_prompt = self._build_system_prompt(context, knowledge, detected_language, is_first_turn)
 
         messages = [{"role": "system", "content": system_prompt}]

@@ -5,10 +5,11 @@ Approaches that worked and are in the code. Upstream items are already in this f
 ## Dukaan Dost
 | When | What | Verified how |
 |---|---|---|
-| 2026-10-26 | Checked that this folder equals the latest upstream code with the client removed | `diff --strip-trailing-cr` against a fresh clone; see [helpfromsmartcaller.md](helpfromsmartcaller.md) |
+| 2026-10-26 | Checked that this folder equals the latest upstream code with the client removed | `diff --strip-trailing-cr` against a fresh clone; see [origin.md](origin.md) |
 | 2026-10-26 | The `MD/` knowledge folder | — |
 | 2026-10-28 | Git, with builds and InBuls (`scripts/changelog.mjs`); Build 1000 is the baseline | Ran `--pending` twice (hand-written part kept) and `--tag`; InBul01 |
 | 2026-10-28 | `Transport` interface; the Pipewire/Bluetooth code moved behind it unchanged (InBul09, DEC-029) | 17 offline tests: the Pipewire transport issues the same `wpctl`, `pw-record` and `pw-play` commands as before, and the REAL `recorder_thread`, `_play`, `_stop_playback` and call-detection helpers run against a fake transport on a Windows machine. **Not run on the Pi.** Total offline tests: 68 |
+| 2026-10-28 | Renamed and restructured for Dukaan Dost: `dukaan_dost/` package, `shops/`, `evaluation/`, `tests/manual/`, CLAUDE.md rewritten (InBul10, DEC-030) | All 76 offline tests pass after the move; `python -m dukaan_dost` starts and exits with the right message for each missing-credential and missing-shop case; a search of tracked files finds no old names outside the rename note |
 | 2026-10-28 | `loan_calculator.py`: project cost, loan, scheme choice, instalment, Indian digit grouping (InBul07) | 38 tests, including the PS's worked example, both scheme boundaries, the cap case, and a month-by-month simulation that the instalment clears the loan. The tests caught a real bug (`NaN` input crashed with the wrong error) before it was committed |
 | 2026-10-28 | Gemini through an API key (no Google Cloud project), model-aware thinking config, Gnani and Gemini keys, recording off by default (Build 1001) | 13 offline tests in `tests/test_llm_client.py`; the new startup logic run in isolation against six config cases. **Not yet run against a live Gemini or Gnani key** |
 
@@ -25,9 +26,9 @@ Approaches that worked and are in the code. Upstream items are already in this f
 | Speculative knowledge prefetch from interim transcripts | `knowledge_retriever.prefetch_relevant_context` |
 | Gemini streamed sentence by sentence; the first sentence flushed at its first comma | `conversation_manager.py` |
 | Streaming TTS: the first 2 chunks played as a fast clip, the rest as one clip | `_tts_and_enqueue` |
-| eSpeak fallback (English) when TTS fails | `ai_caller_final3.py` ~1687 |
+| eSpeak fallback (English) when TTS fails | `dukaan_dost/app.py` ~1687 |
 | Shutdown in under a second (`os._exit(0)` after joining threads) | `main()` |
 | VAD metrics CSV on a background writer, rotated at 5 MB | `vad_metrics_writer_thread` |
 | A disk-space floor for call recording (500 MB) | `CALL_DATA_MIN_FREE_BYTES` (we're turning recording off anyway) |
-| Every tuning knob is an env var | the CONFIG section of `ai_caller_final3.py` |
+| Every tuning knob is an env var | the CONFIG section of `dukaan_dost/app.py` |
 | `[SPAN]` timing logs per turn (STT wait, filter, LLM time to first sentence, TTS first chunk, total to first audio) | `processor_thread` ~2984. **Use these for the time-to-first-audio metric** |

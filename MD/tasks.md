@@ -5,11 +5,13 @@ When you tick something, add the date and the build or InBul that carried it.
 
 ## Build (Claude and Surya)
 ### Step 1: Setup
+- [x] Rename and restructure everything from the earlier project for Dukaan Dost, push-ready (2026-10-28, InBul10, DEC-030)
+- [ ] Choose and add a `LICENSE` before making the GitHub repo public (Surya's choice; no licence means all rights reserved)
 - [/] Move the upstream reference clone outside the project folder ([rules.md](rules.md) R-3). The move failed with permission denied on 2026-10-28; excluded locally meanwhile (DEC-021)
 - [x] `git init` (2026-10-28, Build 1000)
 - [x] Versioning: `scripts/changelog.mjs`, `MD/builds/`, `CHANGELOG.md` (2026-10-28, InBul01)
-- [ ] `.gitignore`: add `orders/`, `eval/audio/`, `.env`
-- [ ] Take the client name out of CLAUDE.md, then commit it (DEC-022)
+- [ ] `.gitignore`: add `orders/`, `evaluation/audio/`, `.env`
+- [x] Take the client name out of CLAUDE.md, then commit it (DEC-022) (2026-10-28, InBul10)
 - [x] `GNANI_API_KEY` and `GEMINI_API_KEY` in `local_config.example.py` and the key-loading block (2026-10-28, Build 1001)
 - [x] `gnani-vachana==0.9.0` and `websockets>=13` in `requirements.txt` (2026-10-28, Build 1001)
 - [x] Default `CALL_DATA_ENABLED` to `0` (DEC-007) (2026-10-28, Build 1001)
@@ -56,7 +58,7 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Warm, persistent WebSocket; one request at a time; recovers after barge-in
 - [ ] `synthesize()` via REST
 - [ ] Thin pre-pass (explicit language, spoken units) per DEC-024, **with unit tests**
-- [ ] `tts_provider.py` (`TTS_PROVIDER`); switch the import in `ai_caller_final3.py`
+- [ ] `tts_provider.py` (`TTS_PROVIDER`); switch the import in `dukaan_dost/app.py`
 
 ### Step 5: Gemini with an API key
 - [x] `genai.Client(api_key=…)` when `GEMINI_API_KEY` is set (2026-10-28, Build 1001)

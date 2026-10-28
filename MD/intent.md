@@ -2,7 +2,7 @@
 
 ## Why we're building this
 1. **To win, or place well, in Gnani.ai's Great Indian AI Internship Challenge**, and use it to get an internship.
-2. **To show a real voice agent, not a demo script.** We already have a working phone agent (Smart Caller) that has handled real calls on a Raspberry Pi. Rebuilding its speech layer on Gnani's models shows we can integrate new models into a production pipeline.
+2. **To show a real voice agent, not a demo script.** We already have a working phone agent (from an earlier project) that has handled real calls on a Raspberry Pi. Rebuilding its speech layer on Gnani's models shows we can integrate new models into a production pipeline.
 3. **To solve a real problem.** Kirana shops take orders by phone all day, often while serving customers at the counter. Calls get missed and orders get misheard.
 
 ## Two things on one line (DEC-027)

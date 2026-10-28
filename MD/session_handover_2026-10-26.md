@@ -2,8 +2,8 @@
 
 ## Done this session
 1. Read the build brief ([CLAUDE.md](../CLAUDE.md)).
-2. Cloned the upstream GitHub repo (latest commit `a69a3bf`, 2026-08-19) to compare it with this folder. **It's currently at the project root.** Its folder name, git remote, history and `companies/` contain the client's name, so it **has to move outside `E:\Projects\Gnani` before `git init`** (R-3).
-3. Diffed every shared file, ignoring line endings. **This folder is already the latest upstream code, de-identified.** No code port is needed. See [helpfromsmartcaller.md](helpfromsmartcaller.md).
+2. Cloned the upstream GitHub repo (latest commit `a69a3bf`, 2026-08-19) to compare it with this folder. **It's currently at the project root.** Its folder name, git remote, history and `shops/` contain the client's name, so it **has to move outside `E:\Projects\Gnani` before `git init`** (R-3).
+3. Diffed every shared file, ignoring line endings. **This folder is already the latest upstream code, de-identified.** No code port is needed. See [origin.md](origin.md).
 4. Created the `MD/` folder: 26 files, with the upstream HANDOFF lessons carried over without client names.
 
 ## Found along the way

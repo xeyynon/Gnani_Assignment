@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-run_benchmark.py
+evaluation/run_benchmark.py
 
 TTS -> STT round-trip evaluation of the current production STT pipeline
-(companies/core/stt_google.py, i.e. Google Cloud STT v2 as deployed).
+(dukaan_dost/stt_google.py, i.e. Google Cloud STT v2 as deployed).
 
 Since there is no live caller available to record real audio for these
 60 questions, each question's expected_text is synthesized to speech
@@ -33,18 +33,19 @@ from pathlib import Path
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "asia-south1")
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent   # the repository root
+EVAL_DIR = PROJECT_DIR / "evaluation"
 sys.path.insert(0, str(PROJECT_DIR))
 
-from companies.core import stt_google
-from companies.core.tts_google import synthesize as google_synthesize
+from dukaan_dost import stt_google
+from dukaan_dost.tts_google import synthesize as google_synthesize
 from google.cloud import speech_v2
 
 
 def transcribe_with_confidence(pcm: bytes):
     """
     Calls Google STT v2 with the exact same client, recognizer resource,
-    language_codes, and model as companies/core/stt_google.transcribe()
+    language_codes, and model as dukaan_dost/stt_google.transcribe()
     (reusing its own helpers, not a re-specified config) — the only
     difference is this also returns the alternative's confidence score,
     which transcribe() computes internally but doesn't expose in its
@@ -74,9 +75,9 @@ def transcribe_with_confidence(pcm: bytes):
     confidence = alt.confidence if alt.confidence else None
     return alt.transcript.strip(), result.language_code or "en-IN", confidence
 
-DATASET_PATH = PROJECT_DIR / "benchmark_dataset.json"
-RESULTS_JSON_PATH = PROJECT_DIR / "benchmark_results.json"
-RESULTS_CSV_PATH = PROJECT_DIR / "benchmark_results.csv"
+DATASET_PATH = EVAL_DIR / "benchmark_dataset.json"
+RESULTS_JSON_PATH = EVAL_DIR / "results" / "benchmark_results.json"
+RESULTS_CSV_PATH = EVAL_DIR / "results" / "benchmark_results.csv"
 
 TTS_VOICE_LANGUAGE = "en-IN"  # all 60 transcripts are Roman-script
 
@@ -233,6 +234,7 @@ def main():
         })
         print()
 
+    RESULTS_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(RESULTS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 

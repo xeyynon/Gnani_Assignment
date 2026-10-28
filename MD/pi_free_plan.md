@@ -3,7 +3,7 @@
 **Written 2026-10-28.** Surya wants the agent to run without the Raspberry Pi and Bluetooth phone. This file says what is actually tied to the Pi, what the alternatives are, and which parts of the pipeline need re-tuning. The decision on which transport to build first is DEC-029: browser first, phone number as stretch. Section 7 step 1 (the interface) is done (InBul09).
 
 ## 1. What is tied to the Pi
-I searched `ai_caller_final3.py` (3,400 lines). The Pi-specific code is a small, bounded part:
+I searched `dukaan_dost/app.py` (3,400 lines). The Pi-specific code is a small, bounded part:
 
 | What | Where | Pi-specific because |
 |---|---|---|

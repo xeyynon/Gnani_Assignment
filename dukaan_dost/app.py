@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-AI Caller — Final (Google Cloud edition)
------------------------------------------
+Dukaan Dost — a phone-order and loan-guidance voice agent for a kirana shop
+--------------------------------------------------------------------------
+Run from the project root:  python -m dukaan_dost
+
 Bluetooth HFP/SCO -> WebRTC VAD -> STT (multi-language, Sarvam primary
     / Google fallback — see stt_provider.py)
     -> Conversation Manager (knowledge retrieval + Gemini LLM + validator)
@@ -18,8 +20,8 @@ tts_google.py — synthesize/start_streaming_synthesis/needs_digit_
 spelling/warmup) if ever worth revisiting, ideally after a persistent-
 WebSocket rewrite to close the latency gap.
 
-See companies/core/stt_provider.py, companies/core/tts_google.py,
-companies/core/llm_gemini.py for those pieces.
+See dukaan_dost/stt_provider.py, dukaan_dost/tts_google.py,
+dukaan_dost/llm_gemini.py for those pieces.
 
 Features:
 - Persistent pw-record (no Bluetooth crashes)
@@ -63,23 +65,23 @@ from pathlib import Path
 import pytz
 import webrtcvad
 
-from companies.core.stt_provider import (
+from dukaan_dost.stt_provider import (
     warmup as _stt_warmup,
     start_streaming_session as _start_streaming_session,
     STT_PROVIDER as _STT_PROVIDER,
 )
-from companies.core.tts_google import (
+from dukaan_dost.tts_google import (
     synthesize as _tts_synthesize,
     warmup as _tts_warmup,
     start_streaming_synthesis as _start_tts_stream,
     needs_digit_spelling as _needs_digit_spelling,
 )
-from companies.core import llm_gemini as _llm_gemini
-from companies.core import transport as _transport_mod
-from companies.core.conversation_manager import ConversationManager
-from companies.core.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
-from companies.core.validator import validate_reply
-from companies.core.llm_gemini import warmup as _llm_warmup
+from dukaan_dost import llm_gemini as _llm_gemini
+from dukaan_dost import transport as _transport_mod
+from dukaan_dost.conversation_manager import ConversationManager
+from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
+from dukaan_dost.validator import validate_reply
+from dukaan_dost.llm_gemini import warmup as _llm_warmup
 
 # ─────────────────────────────────────────────────────
 # CONFIG — only edit this section
@@ -111,7 +113,7 @@ os.environ.setdefault("GOOGLE_CLOUD_PROJECT", _LOCAL_PROJECT)
 os.environ.setdefault("GOOGLE_CLOUD_LOCATION", _LOCAL_LOCATION)
 
 # Same priority order, for the optional Sarvam STT backend (see
-# companies/core/stt_sarvam.py, companies/core/stt_provider.py) — only
+# dukaan_dost/stt_sarvam.py, dukaan_dost/stt_provider.py) — only
 # read/needed at all when STT_PROVIDER=sarvam.
 try:
     from local_config import SARVAM_API_KEY as _LOCAL_SARVAM_KEY
@@ -134,16 +136,14 @@ for _key_name in ("GNANI_API_KEY", "GEMINI_API_KEY"):
     if _key_value and not _key_value.startswith("your-"):
         os.environ.setdefault(_key_name, _key_value)
 
-# Which deployment's knowledge base + rules to use — set via env var so
-# nothing deployment-specific is baked into the source. See
-# companies/<name>/ for the expected layout (config.yaml + knowledge/).
-COMPANY_NAME = os.getenv("COMPANY_NAME", "")
-if not COMPANY_NAME:
-    raise RuntimeError(
-        "COMPANY_NAME env var is not set. Point it at a folder under "
-        "companies/ (e.g. COMPANY_NAME=acme_foods)."
-    )
-COMPANY_DIR = Path(__file__).parent / "companies" / COMPANY_NAME
+# Where things live, whatever the working directory is.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Which shop's knowledge base + rules to use: a folder under shops/ (see
+# shops/README.md for the layout). Defaults to this project's own shop.
+SHOP_NAME = os.getenv("SHOP_NAME", "dukaan_dost")
+SHOP_DISPLAY_NAME = os.getenv("SHOP_DISPLAY_NAME") or SHOP_NAME.replace("_", " ").title()
+SHOP_DIR = PROJECT_ROOT / "shops" / SHOP_NAME
 
 # LLM (Gemini). With GEMINI_API_KEY set it goes through the Gemini
 # Developer API, otherwise through Vertex AI (see llm_gemini.py).
@@ -196,7 +196,7 @@ USER_LOCATION = "India"
 # always-on language rules: always start in English, switch only
 # after the caller uses another language).
 GREETING = (
-    f"Hello! Welcome to {COMPANY_NAME}. I might take a few seconds "
+    f"Hello! Welcome to {SHOP_DISPLAY_NAME}. I might take a few seconds "
     "to answer, so please bear with me. How can I help you today?"
 )
 
@@ -350,7 +350,7 @@ if SAMPLE_RATE not in (8000, 16000, 32000, 48000):
 # reaches STT, so later tuning of SILENCE_FRAMES has a measured
 # baseline to be judged against instead of guessing from the estimated
 # 1-5s range in the original brief.
-VAD_METRICS_CSV_PATH = Path(__file__).parent / "logs" / "vad_metrics.csv"
+VAD_METRICS_CSV_PATH = PROJECT_ROOT / "logs" / "vad_metrics.csv"
 VAD_METRICS_CSV_HEADER = [
     "timestamp", "call_id", "turn_id", "hangover_wait_s", "silent_frames",
     "utterance_len_s", "vad_mode", "frame_ms", "hangover_ms_config",
@@ -662,7 +662,7 @@ RECONNECT_SEC  = 2     # wait before reopening stream after call drop
 # pw-play returning implies — the old 0.4s let the reply's own tail
 # leak into the mic and get transcribed as a new caller utterance.
 # (A "simultaneous audio" symptom was investigated by bumping this to
-# 2.0s — root cause turned out to be two separate ai_caller_final3.py
+# 2.0s — root cause turned out to be two separate dukaan_dost/app.py
 # processes both alive and both answering the same call, unrelated to
 # this value. Reverted back to the known-good 1.2s.) Env-configurable
 # for the same reason the VAD constants are.
@@ -797,14 +797,14 @@ _console_handler.setFormatter(_LOG_FORMAT)
 # them bounded rather than growing unbounded on the Pi's SD card.
 # 5MB x 3 backups = 15MB cap, plenty for debugging recent calls.
 _file_handler = logging.handlers.RotatingFileHandler(
-    Path(__file__).parent / "ai_caller.log",
+    PROJECT_ROOT / "dukaan_dost.log",
     maxBytes=5 * 1024 * 1024,
     backupCount=3,
 )
 _file_handler.setFormatter(_LOG_FORMAT)
 
 logging.basicConfig(level=logging.INFO, handlers=[_console_handler, _file_handler])
-log = logging.getLogger("ai_caller")
+log = logging.getLogger("dukaan_dost")
 
 # ─────────────────────────────────────────────────────
 # GLOBALS
@@ -1288,11 +1288,11 @@ def _estimate_pitch_hz(chunk: bytes) -> float | None:
 # what separates "STT model is wrong" from "captured audio is bad"
 # without changing any production config.
 #
-# Off unless AI_CALLER_DUMP_DIR is set: production runs are unaffected,
+# Off unless DUKAAN_DUMP_DIR is set: production runs are unaffected,
 # and no extra disk writes or API calls happen by default.
 # REMOVE this block, the [REC] energy/byte fields, and the _dump_utterance
 # call once the root cause is proven.
-_DUMP_DIR = os.environ.get("AI_CALLER_DUMP_DIR")
+_DUMP_DIR = os.environ.get("DUKAAN_DUMP_DIR")
 _dump_seq = 0  # recorder thread only — no lock needed
 
 def _dump_utterance(pcm: bytes) -> None:
@@ -1716,7 +1716,7 @@ def _tts_and_enqueue(text: str, language_code: str, gen: int, reply_id: int) -> 
             # abandoned sentence's full synthesis finishes, delaying
             # how soon the caller's new, interrupting utterance gets
             # picked up off audio_q. The one-level-up abandonment check
-            # in the _ask_streaming loop (ai_caller_final3.py) can only
+            # in the _ask_streaming loop (dukaan_dost/app.py) can only
             # catch this BETWEEN sentences, not mid-synthesis — this is
             # the piece that completes the cancellation cascade for
             # that gap.
@@ -1913,7 +1913,7 @@ def _maybe_prefetch_rag(session, last_speculated: str) -> str:
         return last_speculated
 
     threading.Thread(
-        target=_prefetch_rag, args=(COMPANY_DIR, partial), daemon=True
+        target=_prefetch_rag, args=(SHOP_DIR, partial), daemon=True
     ).start()
     return partial
 
@@ -3153,6 +3153,14 @@ def playback_thread():
 # MAIN
 # ─────────────────────────────────────────────────────
 
+def _gemini_credentials_ok() -> bool:
+    """A Gemini API key, or a real Google Cloud project for Vertex AI."""
+    if _llm_gemini.api_key():
+        return True
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "").strip()
+    return bool(project) and "your-project-id" not in project
+
+
 def main():
     global _conv_mgr
 
@@ -3160,13 +3168,20 @@ def main():
     # project; only the Vertex path does. "your-project-id" matches both
     # placeholders ("...-here" in this file, "...-or-number-here" in the
     # example config); the old check matched only the first.
-    if not _llm_gemini.api_key() and "your-project-id" in os.environ["GOOGLE_CLOUD_PROJECT"]:
+    if not _gemini_credentials_ok():
         sys.exit(
             "No Gemini credentials configured. Either set GEMINI_API_KEY "
             "(Google AI Studio key, no Google Cloud project needed), or copy "
             "local_config.example.py to local_config.py and fill in your own "
             "Google Cloud project ID/location "
             "(or set GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION env vars)."
+        )
+
+    if not (SHOP_DIR / "config.yaml").is_file():
+        sys.exit(
+            f"Shop folder not found: {SHOP_DIR}\n"
+            f"It needs a config.yaml and a knowledge/ folder (see shops/README.md). "
+            f"Set SHOP_NAME to use a different folder under shops/."
         )
 
     _init_vad_metrics_csv()
@@ -3190,7 +3205,7 @@ def main():
         BARGE_IN_FLOOR_WARMUP_FRAMES, BARGE_IN_VAD_MODE,
     )
 
-    log.info("AI Caller — Final (Google Cloud edition)")
+    log.info("Dukaan Dost — Final (Google Cloud edition)")
     if _llm_gemini.api_key():
         log.info(f"LLM={LLM_MODEL} (Gemini API key) | User location={USER_LOCATION}")
     else:
@@ -3203,10 +3218,10 @@ def main():
             f"pipeline runs at {SAMPLE_RATE} Hz; the transport has to convert at its own edge."
         )
     log.info(f"STT={_STT_PROVIDER} | TTS=google | transport={_transport.name} | echo_tail={ECHO_TAIL_SEC}s")
-    log.info(f"Company knowledge base: {COMPANY_DIR}")
+    log.info(f"Shop knowledge base: {SHOP_DIR}")
 
     _conv_mgr = ConversationManager(
-        company_dir=COMPANY_DIR,
+        shop_dir=SHOP_DIR,
         llm_model=LLM_MODEL,
         max_tokens=LLM_TOKENS,
         temperature=LLM_TEMP,

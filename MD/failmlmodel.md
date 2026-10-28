@@ -1,6 +1,6 @@
 # Models that failed or were ruled out
 
-Inherited from upstream Smart Caller (July–August 2026). These were tested, not guessed. **Don't retry one without new evidence**, and if you do, add the result here.
+Inherited from the earlier project (July–August 2026). These were tested, not guessed. **Don't retry one without new evidence**, and if you do, add the result here.
 
 | Model | Role | What happened | Verdict |
 |---|---|---|---|

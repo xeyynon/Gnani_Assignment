@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # setup_pi.sh — provisions a fresh Raspberry Pi (Debian/Raspberry Pi OS,
-# Bookworm/trixie or later) to run the AI Caller phone agent.
+# Bookworm/trixie or later) to run the Dukaan Dost phone agent.
 #
 # What this does:
 #   1. Installs the system packages the app needs (PipeWire/WirePlumber
@@ -13,7 +13,7 @@
 #      exist yet — does NOT fill in any secrets, that's a manual step
 #      (see the printed instructions at the end).
 #   4. Does NOT touch systemd/autostart at all — that's a separate,
-#      deliberate step (see ai-caller.service + INSTALL.md in this same
+#      deliberate step (see dukaan-dost.service + INSTALL.md in this same
 #      deploy/ folder), so you review and enable it yourself.
 #   5. Does NOT run `gcloud auth login` — that's an interactive OAuth
 #      flow only you can complete (see the printed instructions).
@@ -27,7 +27,7 @@
 # alone are not enough; ADC needs the CLI to actually log in.
 #
 # Usage: run this FROM the project root (the directory containing
-# ai_caller_final3.py), as the user that will actually run the bot
+# dukaan_dost/app.py), as the user that will actually run the bot
 # (not root):
 #   bash deploy/setup_pi.sh
 
@@ -43,8 +43,8 @@ if [ "$(id -u)" -eq 0 ]; then
     exit 1
 fi
 
-if [ ! -f "ai_caller_final3.py" ]; then
-    echo "ai_caller_final3.py not found in $PROJECT_DIR — run this script" \
+if [ ! -f "dukaan_dost/app.py" ]; then
+    echo "dukaan_dost/app.py not found in $PROJECT_DIR — run this script" \
          "from inside the project directory (or leave it at deploy/setup_pi.sh" \
          "relative to the project root, which it already expects)." >&2
     exit 1
@@ -125,9 +125,9 @@ Setup script done. Three manual steps remain before this Pi can take a call:
        exit
 
 Once those three are done, test it manually first:
-     .venv/bin/python3 ai_caller_final3.py
+     .venv/bin/python3 -m dukaan_dost
 
 Only after a manual test call works should you set up autostart — see
-deploy/ai-caller.service and deploy/INSTALL.md in this same folder.
+deploy/dukaan-dost.service and deploy/INSTALL.md in this same folder.
 ===============================================================================
 EOF

@@ -36,7 +36,7 @@ Most live in `MD/`. A few sit at the repo root. `CHANGELOG.md` is generated, nev
 `problem_statement-gap-plan.md` (gaps against each award), `poa-non-ml.md` (everything except model work).
 
 ### Research and outside input
-`external_research.md` (vendor facts with sources), `helpfromsmartcaller.md` (what we inherit from the upstream project).
+`external_research.md` (vendor facts with sources), `origin.md` (what we inherit from the upstream project).
 
 ### Session handovers
 `session_handover_<date>.md`, one per working session.
@@ -99,4 +99,4 @@ current state    ──> DukaanDost_MASTER.md and the topic docs (ml.md, flow.md
 A build report says **what changed**. `decisions.md` says **why it was designed that way**. `bugs.md` links each fix to the build or InBul that carried it. The master reference and topic docs describe **how things are now**.
 
 ## 5. Naming
-The project is **Dukaan Dost**. The upstream codebase is **Smart Caller**; the earlier client deployment is never named (R-3). Gnani's models are **Prisma** (STT) and **Timbre** (TTS).
+The project is **Dukaan Dost**. The call pipeline comes from an earlier voice-agent project ([origin.md](origin.md)); the customer it was first built for is never named (R-3). Gnani's models are **Prisma** (STT) and **Timbre** (TTS).

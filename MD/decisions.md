@@ -4,10 +4,10 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-029.**
+**Latest: DEC-030.**
 
 ## Dukaan Dost decisions
-### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
+### DEC-001 · Build on the earlier voice-agent codebase (2026-10-26)
 The pipeline (barge-in, VAD, language lock, call isolation) already works on real calls. Rebuilding it would eat the whole deadline. **Revisit:** never, for this contest.
 
 ### DEC-002 · Gnani for STT and TTS, Gemini for the LLM (2026-10-26)
@@ -49,7 +49,7 @@ Small fixes are batched, about 10 per build. **Why:** the same scheme as our oth
 | DEC-012 | STT concurrency 10, from the vendor's documented limit | Guessing 1→2→4 failed. Sarvam's real limit is 20 (Starter). **For Gnani, look up the documented limit; don't guess** |
 | DEC-013 | Session-sticky language; a bare "hello", "hi" or "hey" doesn't set the lock | "Hello" carries no language signal in India. "Namaste" and "namaskar" **do**, so they're not in the list |
 | DEC-014 | Native-script text can re-lock the language mid-call; romanized keywords only affect the current reply | Script is an unambiguous signal; romanized keywords aren't |
-| DEC-015 | Log to `ai_caller.log` (rotating), and send the background process's stdout to `/dev/null` | `/tmp` on the Pi is RAM-backed; the old `/tmp` log grew without limit |
+| DEC-015 | Log to `dukaan_dost.log` (rotating), and send the background process's stdout to `/dev/null` | `/tmp` on the Pi is RAM-backed; the old `/tmp` log grew without limit |
 | DEC-016 | `setsid nohup … < /dev/null &` to run in the background | Plain `&` or piping through `tee` let the shell signal the process |
 | DEC-017 | Keep `google-cloud-aiplatform` in requirements | The Vertex path needs it, even with no direct import (checked with `pip show`) |
 | DEC-018 | Flush the first sentence early at its first comma | Starts TTS sooner. The split clip plays back to back, with no barge-in gap |
@@ -62,7 +62,7 @@ The first commit is the inherited agent, already de-identified, as **Build 1000*
 ### DEC-021 · The upstream clone stays out of git without being named (2026-10-28)
 Moving the clone out of the project folder failed (permission denied, 2026-10-28). Until it's moved, it's excluded through `.git/info/exclude`, which is local and never committed, instead of `.gitignore`, which would put its client-named folder into the repo. **Revisit:** delete the exclude line once the folder is moved.
 
-### DEC-022 · CLAUDE.md stays untracked until the client name is out of it (2026-10-28)
+### DEC-022 · CLAUDE.md stays untracked until the client name is out of it (2026-10-28; resolved the same day, InBul10: rewritten without it and tracked)
 The brief names the client twice (in a path and in a "don'ts" line). Committing it would write the name into git history for good. It stays untracked until it's rewritten. **Revisit:** when CLAUDE.md is reworked.
 
 ## Decisions recorded on 2026-10-28 (after the docs research)
@@ -104,7 +104,7 @@ Chosen by Surya from [problem_research.md](problem_research.md). One agent, one 
 - **Scheme figures are indicative.** They come from an SIH problem statement, not the scheme documents. The agent says so ("andaaz se"), and the README labels them the same way, until checked against the official scheme documents.
 
 ### DEC-028 · Loan instalment assumptions (2026-10-28)
-SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, tenures, moratoria, caps) but **not the instalment formula**. `companies/core/loan_calculator.py` assumes:
+SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, tenures, moratoria, caps) but **not the instalment formula**. `dukaan_dost/loan_calculator.py` assumes:
 - **Monthly reducing-balance instalments (an EMI)** at annual rate ÷ 12. The PS also mentions a "quarterly repayment schedule"; monthly is clearer to say on a phone call, and the code can be extended.
 - **Interest accrues during the moratorium and is capitalised** (added to the loan), then the loan is repaid over the remaining months (36−3 = 33 for Micro Finance, 84−6 = 78 for Term Loan). This is the conservative reading: it gives a higher instalment than serving the interest during the moratorium.
 - **The loan cap can bind just under the scheme boundary.** At a ₹1.40 lakh project cost, 90% is ₹1,26,000 but the Micro Finance cap is ₹1,25,000, so the caller's own share becomes ₹15,000, not ₹14,000. The calculator reports `own_contribution` and the agent must say it.
@@ -113,8 +113,18 @@ SIH PS 26091 gives the scheme rules (10% margin, 90% loan, two schemes, rates, t
 **Every figure is indicative** and the agent says so. **Revisit:** when the official scheme documents are checked (task in [tasks.md](tasks.md)); if they define the instalment differently, change `monthly_instalment()` and its tests.
 
 ### DEC-029 · Run without the Raspberry Pi: a transport interface, browser first, phone number as stretch (2026-10-28)
-Chosen by Surya from [pi_free_plan.md](pi_free_plan.md). The pipeline takes audio in and out through a small `Transport` interface (`companies/core/transport.py`), selected with `AUDIO_TRANSPORT` (default `pipewire`).
+Chosen by Surya from [pi_free_plan.md](pi_free_plan.md). The pipeline takes audio in and out through a small `Transport` interface (`dukaan_dost/transport.py`), selected with `AUDIO_TRANSPORT` (default `pipewire`).
 - **Order:** (1) the interface with today's Pi code moved behind it, behaviour unchanged (InBul09); (2) a laptop mic and speaker transport for development; (3) a browser WebSocket transport and page, the Pi-free "call"; (4) re-tune the settings that were set for Bluetooth, one at a time, against the evaluation harness; (5) stretch: a cloud phone number on the same WebSocket transport.
 - **Why:** the Pi-specific code was a small, bounded part of the file (call detection, loopback cutting, `pw-play`, `pw-record`, `espeak`); the logic is transport-independent. A browser transport is free and works in days, and without Bluetooth echo it allows real speak-over barge-in. A phone number needs Indian-number paperwork we can't count on in 12 days.
 - **Honesty rule:** the README and posts say "browser call" or "simulated phone line" unless a real number is wired up and tested (R-5). The Pi transport stays, as the only one proven on real calls, and as a comparison.
 - **Revisit:** if a phone number turns out to be quick to get, move step 5 earlier.
+
+### DEC-030 · Repository layout and naming for a public repo (2026-10-28)
+Before the first push, everything named for the earlier project was renamed (InBul10):
+- `ai_caller_final3.py` is now the `dukaan_dost/` package: `python -m dukaan_dost` from the project root. The helper modules from `companies/core/` live beside it in the same package, with their file names unchanged.
+- `companies/<name>/` is now `shops/<name>/`; `COMPANY_NAME` is now `SHOP_NAME` and defaults to `dukaan_dost`, so no env var is needed.
+- The benchmark tools moved to `evaluation/` (run as modules, results in `evaluation/results/`, committed). The old Google-STT diagnostic script was removed (it stays in git history). The two live cloud tests moved to `tests/manual/` and are excluded from the default `pytest` run by `pytest.ini`.
+- `AI_CALLER_*` diagnostics are `DUKAAN_*`; the log is `dukaan_dost.log`; the service is `dukaan-dost.service`; the Pi run guide moved to `deploy/RUNNING.md`; the old flow doc is `MD/pipeline_reference.md`; `MD/helpfromsmartcaller.md` became `MD/origin.md` and no longer names the earlier project.
+- `CLAUDE.md` was rewritten without any customer name, and is tracked.
+- **Why:** the repo is going on GitHub, and it should read as Dukaan Dost, not as a renamed copy of something else. A package under `dukaan_dost/` also removes the `sys.path` games the root-level script needed.
+- **Not changed:** git history before this commit still has the earlier names (for example the title of Build 1000). It can be rewritten before the first push if wanted.

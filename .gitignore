@@ -1,16 +1,25 @@
-# Per-deployment settings — each person keeps their own, see
-# local_config.example.py for the template that IS shared.
+# Secrets and per-machine settings (the shared template is local_config.example.py)
 local_config.py
+.env
 
-# Runtime logs — contain real caller conversation transcripts.
-ai_caller.log
-ai_caller.log.*
+# Runtime output. Logs contain call transcripts, so none of it is committed.
+*.log
+*.log.*
+logs/
+call_data/
+stt_dumps/
 
-# Python
+# Orders and ledgers the agent writes (synthetic samples go in orders/samples/)
+orders/*
+!orders/samples/
+
+# Generated evaluation audio; the results tables in evaluation/results/ ARE committed
+evaluation/audio/
+
+# Python and tooling
 __pycache__/
 *.pyc
-
-# VAD instrumentation metrics (Phase B, VAD latency workflow) — numeric
-# only (timestamps, durations, word counts), no verbatim transcript text
-logs/
-
+.venv/
+venv/
+.pytest_cache/
+node_modules/

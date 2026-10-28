@@ -1,6 +1,6 @@
 # Deployment
 
-The full Pi instructions are in [../RUNNING.md](../RUNNING.md) and [../deploy/INSTALL.md](../deploy/INSTALL.md). This page is the summary, plus what changes for Dukaan Dost.
+The full Pi instructions are in [../deploy/RUNNING.md](../deploy/RUNNING.md) and [../deploy/INSTALL.md](../deploy/INSTALL.md). This page is the summary, plus what changes for Dukaan Dost.
 
 ## Hardware
 - A Raspberry Pi with PipeWire, WirePlumber and BlueZ.
@@ -27,7 +27,7 @@ Env vars override nothing that's already set: the code loads `local_config.py` v
 
 ## Environment for the contest
 ```bash
-export COMPANY_NAME=dukaan_dost
+export SHOP_NAME=dukaan_dost
 export STT_PROVIDER=gnani
 export TTS_PROVIDER=gnani
 export CALL_DATA_ENABLED=0
@@ -35,11 +35,11 @@ export CALL_DATA_ENABLED=0
 
 ## Run, watch, stop (from RUNNING.md)
 ```bash
-ps aux | grep ai_caller_final3                      # make sure it isn't already running (two instances = bot talks over itself)
-setsid nohup .venv/bin/python3 ai_caller_final3.py > /dev/null 2>&1 < /dev/null &
+ps aux | grep dukaan_dost                      # make sure it isn't already running (two instances = bot talks over itself)
+setsid nohup .venv/bin/python3 -m dukaan_dost > /dev/null 2>&1 < /dev/null &
 disown
-tail -f ai_caller.log
-pkill -f ai_caller_final3.py                        # clean stop, under 1 s
+tail -f dukaan_dost.log
+pkill -f dukaan_dost                        # clean stop, under 1 s
 ```
 Use the `setsid` form exactly (DEC-016). For autostart on boot, see Stage 2 in `deploy/INSTALL.md` (a user systemd service plus `loginctl enable-linger`).
 
@@ -48,5 +48,5 @@ Use the `setsid` form exactly (DEC-016). For autostart on boot, see Stage 2 in `
 |---|---|
 | The bot talks over itself | Two instances running |
 | Can't SSH to the Pi | Its DHCP address changed; check `hostname -I` on the Pi |
-| `ModuleNotFoundError` in Thonny | Thonny uses its own venv; install `requirements.txt` into that venv too |
+| `ModuleNotFoundError` | Dependencies not installed in the interpreter you used; use the project's `.venv` |
 | No audio at call start | The Bluetooth nodes aren't up yet; the greeting waits `GREETING_DELAY_SEC` |

@@ -18,8 +18,8 @@
 | Data | Leaves the Pi to | Kept on the Pi |
 |---|---|---|
 | Caller audio | Gnani Prisma (WSS) | Not stored (`CALL_DATA_ENABLED=0`) |
-| Transcript and history | Google Gemini | `ai_caller.log` (gitignored, rotated) |
-| Reply text | Gnani Timbre (WSS) | `ai_caller.log` |
+| Transcript and history | Google Gemini | `dukaan_dost.log` (gitignored, rotated) |
+| Reply text | Gnani Timbre (WSS) | `dukaan_dost.log` |
 | Order | — | `orders/` (gitignored, except synthetic samples) |
 | API keys | Sent as headers to their own vendor only | `local_config.py` (gitignored) |
 

@@ -1,11 +1,11 @@
 # Runtime flow
 
-This builds on the root [flow.md](../flow.md), which describes the code exactly as it is today. This file adds what changes for Dukaan Dost. Lines marked **[NEW]** or **[CHANGE]** don't exist yet.
+This builds on [pipeline_reference.md](pipeline_reference.md), which describes the code exactly as it is today. This file adds what changes for Dukaan Dost. Lines marked **[NEW]** or **[CHANGE]** don't exist yet.
 
-## Startup (`main()`, around line 3286 of `ai_caller_final3.py`)
+## Startup (`main()`, around line 3286 of `dukaan_dost/app.py`)
 1. **[CHANGE]** Check the LLM credentials. If `GEMINI_API_KEY` is set, skip the `GOOGLE_CLOUD_PROJECT` check. Otherwise require a real project (see [bugs.md](bugs.md) B-01 for a hole in today's check).
 2. Create `logs/vad_metrics.csv` if it's missing.
-3. Build `ConversationManager`, which loads `companies/$COMPANY_NAME/config.yaml` and `knowledge/core/always_on.md`. For us, `COMPANY_NAME=dukaan_dost`.
+3. Build `ConversationManager`, which loads `shops/$SHOP_NAME/config.yaml` and `knowledge/core/always_on.md`. For us, `SHOP_NAME=dukaan_dost`.
 4. Warm up, in order: STT (`stt_provider.warmup()`), then TTS (**[CHANGE]** `tts_provider.warmup()`), then the LLM.
    - **[NEW]** Gnani warmup should open, and keep, the Timbre WebSocket so the first sentence doesn't pay for a TLS handshake.
 5. Register SIGINT and SIGTERM, then start the threads.
@@ -20,7 +20,7 @@ This builds on the root [flow.md](../flow.md), which describes the code exactly 
 | playback | Plays with `pw-play`, mutes the echo tail, listens for barge-in between sentences |
 | vad_metrics_writer | Writes VAD metrics to CSV off the hot path |
 
-([CLAUDE.md](../CLAUDE.md) says five threads. The sixth, vad_metrics_writer, was added upstream on 2026-08-17.)
+(The sixth, vad_metrics_writer, was added in the earlier project on 2026-08-17.)
 
 ## Per call
 ```

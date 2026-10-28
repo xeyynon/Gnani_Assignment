@@ -5,9 +5,10 @@ import json
 import statistics
 from pathlib import Path
 
-PROJECT_DIR = Path(__file__).resolve().parent
-RESULTS_PATH = PROJECT_DIR / "benchmark_results.json"
-REPORT_PATH = PROJECT_DIR / "benchmark_report.md"
+PROJECT_DIR = Path(__file__).resolve().parent.parent   # the repository root
+RESULTS_DIR = PROJECT_DIR / "evaluation" / "results"
+RESULTS_PATH = RESULTS_DIR / "benchmark_results.json"
+REPORT_PATH = RESULTS_DIR / "benchmark_report.md"
 
 with open(RESULTS_PATH, encoding="utf-8") as f:
     results = [r for r in json.load(f) if r.get("recognition_time_sec") is not None]
@@ -52,7 +53,7 @@ by_category = {cat: stats_for(rows) for cat, rows in sorted(group_by("category")
 by_difficulty = {diff: stats_for(rows) for diff, rows in sorted(group_by("difficulty").items())}
 
 # Language detection: every question was synthesized with the en-IN
-# voice (see run_benchmark.py docstring), so "en-IN" detected is the
+# voice (see evaluation/run_benchmark.py docstring), so "en-IN" detected is the
 # phonetically correct answer for ALL 60 rows under this setup - this
 # is NOT a measure of real Hindi/Telugu auto-detect accuracy.
 detected_en_in = sum(1 for r in results if r["detected_language"] == "en-IN")
@@ -65,7 +66,7 @@ lines.append("Generated from a TTS -> STT round-trip test: each of the 60 datase
               "questions was synthesized to speech with Google Cloud TTS (en-IN "
               "Chirp3-HD voice) and the resulting audio was fed through the exact "
               "same `transcribe()` path used in production "
-              "(`companies/core/stt_google.py`, STT v2, `latest_long` model, "
+              "(`dukaan_dost/stt_google.py`, STT v2, `latest_long` model, "
               "`global` location, `language_codes=[en-IN, hi-IN, te-IN]`).")
 lines.append("")
 lines.append("## Important Caveats — Read Before Trusting These Numbers")

@@ -2,7 +2,7 @@
 
 The exact interfaces a new STT, TTS or LLM backend has to provide. They're taken from the current code (checked 2026-10-26). If you change one, update this file.
 
-## STT backend (`companies/core/stt_<name>.py`)
+## STT backend (`dukaan_dost/stt_<name>.py`)
 Selected by `STT_PROVIDER` in `stt_provider.py`. Today the choices are `sarvam` (the default) and `google`; we're adding `gnani`.
 
 ```python
@@ -31,8 +31,8 @@ elif STT_PROVIDER == "gnani":
     from . import stt_gnani as _backend
 ```
 
-## TTS backend (`companies/core/tts_<name>.py`)
-Today `ai_caller_final3.py` imports straight from `tts_google` (line ~72). We'll add `tts_provider.py`, chosen with `TTS_PROVIDER=google|gnani`, and point that import at it.
+## TTS backend (`dukaan_dost/tts_<name>.py`)
+Today `dukaan_dost/app.py` imports straight from `tts_google` (line ~72). We'll add `tts_provider.py`, chosen with `TTS_PROVIDER=google|gnani`, and point that import at it.
 
 ```python
 def warmup() -> None: ...
@@ -54,7 +54,7 @@ What every backend must do:
 - **Locks around lazy singletons**, for the client, the connection and the voice cache. Warmup and the first call can race.
 - **Barge-in:** the caller stops reading `chunks()` partway through. The backend must cope: either finish the request quietly in the background, or close and reopen the connection before the next request (Timbre allows one request at a time per connection).
 
-## LLM (`companies/core/llm_gemini.py`)
+## LLM (`dukaan_dost/llm_gemini.py`)
 ```python
 def warmup(model: str) -> None: ...
 def ask(model, messages, max_tokens, temperature) -> str: ...
@@ -62,10 +62,10 @@ def stream(model, messages, max_tokens, temperature): ...  # yields text pieces
 ```
 The change: `_get_client()` uses `genai.Client(api_key=GEMINI_API_KEY)` when that key is set, and otherwise `genai.Client(vertexai=True, project=…, location=…)` as it does today.
 
-## Shop config (`companies/<COMPANY_NAME>/`)
+## Shop config (`shops/<SHOP_NAME>/`)
 - `config.yaml`: **must** have `system_prompt` (a string) and `fallback_messages` (a map from language code to text, e.g. `en-in`, `hi-in`, `te-in`).
 - `knowledge/core/always_on.md`: sent on every turn.
 - `knowledge/<fixed names>.md`: only these names are read (`KNOWLEDGE_FILES` in `knowledge_retriever.py`): `products_pricing.md`, `ordering_payment.md`, `delivery_shipping.md`, `packaging.md`, `refund_policy.md`, `payment_issues.md`, `faq.md`, `recommendations.md`. Each is split on `##` headings and scored by keyword overlap with the transcript, so **put each product (or small group) under its own `##` heading, with its Hindi and Telugu names in the same section**.
 
 ## Keys
-Follow the pattern in `ai_caller_final3.py` (lines ~93–120): try `from local_config import X`, fall back to the env var, and `os.environ.setdefault`. New keys: `GNANI_API_KEY`, `GEMINI_API_KEY`. Add both to `local_config.example.py` with placeholders.
+Follow the pattern in `dukaan_dost/app.py` (lines ~93–120): try `from local_config import X`, fall back to the env var, and `os.environ.setdefault`. New keys: `GNANI_API_KEY`, `GEMINI_API_KEY`. Add both to `local_config.example.py` with placeholders.
