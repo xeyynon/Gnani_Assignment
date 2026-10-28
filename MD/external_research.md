@@ -100,6 +100,7 @@ Multipart `audio_file`, `language_code`, `model`, `format`. **Clips up to 30 s**
 ## Gemini (ai.google.dev, read 2026-10-28; page updated 2026-10-26)
 - **Stable text models:** `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`; Pro only as `gemini-3.1-pro-preview`.
 - **`gemini-2.5-flash`:** still served "until further notice", but **only to users who used it before**. New projects should use **3.5 Flash-Lite or 3.8 Flash**.
+- **Thinking:** for gemini-3.x, Google's thinking page (ai.google.dev/gemini-api/docs/thinking, read 2026-10-28) documents only `thinking_level`. Lowest levels: `minimal` on 3.5 Flash-Lite and 3.6 Flash, `low` on 3.8 Flash (no `minimal`); gemini-2.5-flash-lite defaults to off. It doesn't mention `thinking_budget` for 3.x, so whether `thinking_budget=0` is refused there is **unknown**; `llm_gemini.py` sends `thinking_level` for 3.x.
 - **Rate limits** depend on tier and model and are shown in **AI Studio** ("not guaranteed"). Third-party blogs report the free tier was cut sharply in Dec 2025 and April 2026 (Flash at roughly 20–250 requests a day, depending on the source). **Unverified: read the AI Studio page for our key.** A 20-script eval with ~6 turns each is ~120+ requests, so a low daily cap means spreading the eval over days or enabling billing.
 
 ---

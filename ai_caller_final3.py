@@ -75,6 +75,7 @@ from companies.core.tts_google import (
     start_streaming_synthesis as _start_tts_stream,
     needs_digit_spelling as _needs_digit_spelling,
 )
+from companies.core import llm_gemini as _llm_gemini
 from companies.core.conversation_manager import ConversationManager
 from companies.core.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from companies.core.validator import validate_reply
@@ -119,6 +120,20 @@ except ImportError:
 if _LOCAL_SARVAM_KEY:
     os.environ.setdefault("SARVAM_API_KEY", _LOCAL_SARVAM_KEY)
 
+# Gnani (Prisma STT / Timbre TTS) and the Gemini Developer API, same
+# priority order: an env var already set wins, then local_config.py. A
+# value still shaped like the placeholder in local_config.example.py
+# ("your-...") counts as unset, so an unedited copy of the example fails
+# at startup with a clear message instead of at the first request.
+try:
+    import local_config as _local_config
+except ImportError:
+    _local_config = None
+for _key_name in ("GNANI_API_KEY", "GEMINI_API_KEY"):
+    _key_value = getattr(_local_config, _key_name, "") if _local_config else ""
+    if _key_value and not _key_value.startswith("your-"):
+        os.environ.setdefault(_key_name, _key_value)
+
 # Which deployment's knowledge base + rules to use — set via env var so
 # nothing deployment-specific is baked into the source. See
 # companies/<name>/ for the expected layout (config.yaml + knowledge/).
@@ -130,11 +145,20 @@ if not COMPANY_NAME:
     )
 COMPANY_DIR = Path(__file__).parent / "companies" / COMPANY_NAME
 
-# LLM (Gemini via Vertex AI)
-LLM_MODEL    = "gemini-2.5-flash"   # gemini-2.5-flash-lite would be faster but is not
-                                     # available in asia-south1 (404) for this project —
-                                     # only in us-central1, where the extra India->US
-                                     # round trip would cost more than it saves
+# LLM (Gemini). With GEMINI_API_KEY set it goes through the Gemini
+# Developer API, otherwise through Vertex AI (see llm_gemini.py).
+#
+# 2026-10-28: Google now serves the gemini-2.5 models only to users who
+# had already used them (ai.google.dev/gemini-api/docs/models), so a
+# fresh API key may be refused 2.5 Flash. On the API-key path the
+# default is gemini-3.5-flash-lite, a current stable model. On Vertex it
+# stays gemini-2.5-flash, the model this deployment is known to work
+# with there (2.5 flash-lite 404s in asia-south1 for the upstream
+# project). LLM_MODEL overrides either; LLM_THINKING_LEVEL tunes 3.x
+# thinking (see llm_gemini._thinking_config).
+LLM_MODEL    = os.getenv("LLM_MODEL") or (
+    "gemini-3.5-flash-lite" if os.environ.get("GEMINI_API_KEY") else "gemini-2.5-flash"
+)
 LLM_TOKENS   = int(os.getenv("LLM_TOKENS", "100"))  # 2026-08-01: capped 150->100 for shorter,
                                      # phone-call-appropriate replies; raised from the old 40-token
                                      # cap before that — real replies (pricing tables, delivery
@@ -1392,15 +1416,16 @@ def _dump_utterance(pcm: bytes) -> None:
 # was detected, and what the bot actually replied. That pairing is what
 # makes a future fine-tune/from-scratch model possible at all.
 #
-# On by default (CALL_DATA_ENABLED=0 to turn off) — this is meant to run
-# in production continuously, not be toggled on only for a specific
-# investigation the way _DUMP_DIR is.
+# OFF by default (CALL_DATA_ENABLED=1 to turn on). Upstream ran this
+# always-on to collect training data; Dukaan Dost uses synthetic data
+# only (the contest rules, DEC-007), and a test call may involve a real
+# person, so nothing is recorded unless someone opts in.
 #
-# Consent/disclosure: explicitly the caller's decision to handle outside
-# this call flow (2026-07-31) — this code does not add any spoken
-# notice about recording.
+# Consent/disclosure: this code does not add any spoken notice about
+# recording, so anyone turning it on must handle that outside the call
+# flow.
 CALL_DATA_DIR = os.environ.get("CALL_DATA_DIR", "/home/pi/call_data")
-CALL_DATA_ENABLED = os.environ.get("CALL_DATA_ENABLED", "1").lower() not in ("0", "false", "no")
+CALL_DATA_ENABLED = os.environ.get("CALL_DATA_ENABLED", "0").lower() in ("1", "true", "yes")
 _boot_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # + gen below disambiguates calls within one process run
 _call_data_seq = 0  # processor_thread only — no lock needed, same reasoning as _dump_seq
 
@@ -3286,10 +3311,16 @@ def playback_thread():
 def main():
     global _conv_mgr
 
-    if "your-project-id-here" in os.environ["GOOGLE_CLOUD_PROJECT"]:
+    # The Gemini Developer API (GEMINI_API_KEY) needs no Google Cloud
+    # project; only the Vertex path does. "your-project-id" matches both
+    # placeholders ("...-here" in this file, "...-or-number-here" in the
+    # example config); the old check matched only the first.
+    if not _llm_gemini.api_key() and "your-project-id" in os.environ["GOOGLE_CLOUD_PROJECT"]:
         sys.exit(
-            "No Google Cloud project configured. Copy local_config.example.py "
-            "to local_config.py and fill in your own project ID/location "
+            "No Gemini credentials configured. Either set GEMINI_API_KEY "
+            "(Google AI Studio key, no Google Cloud project needed), or copy "
+            "local_config.example.py to local_config.py and fill in your own "
+            "Google Cloud project ID/location "
             "(or set GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION env vars)."
         )
 
@@ -3315,8 +3346,12 @@ def main():
     )
 
     log.info("AI Caller — Final (Google Cloud edition)")
-    log.info(f"LLM={LLM_MODEL} | Project={os.environ['GOOGLE_CLOUD_PROJECT']} | "
-              f"Location={os.environ['GOOGLE_CLOUD_LOCATION']} | User location={USER_LOCATION}")
+    if _llm_gemini.api_key():
+        log.info(f"LLM={LLM_MODEL} (Gemini API key) | User location={USER_LOCATION}")
+    else:
+        log.info(f"LLM={LLM_MODEL} (Vertex AI) | Project={os.environ['GOOGLE_CLOUD_PROJECT']} | "
+                  f"Location={os.environ['GOOGLE_CLOUD_LOCATION']} | User location={USER_LOCATION}")
+    log.info(f"Call recording: {'ON' if CALL_DATA_ENABLED else 'off'}")
     log.info(f"STT={_STT_PROVIDER} | TTS=google")
     log.info(f"Company knowledge base: {COMPANY_DIR}")
 
