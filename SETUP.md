@@ -64,6 +64,12 @@ Open `http://127.0.0.1:8765/s/<shop>/dashboard`; the browser asks for a password
 
 The agent does not write real orders yet, so until it does the dashboard shows only the demo data, marked as made up.
 
+**To just look at it, with no keys or setup:**
+```bash
+python -m dukaan_dost.preview        # opens http://127.0.0.1:8765/s/demo_kirana/dashboard, password 1111
+```
+It serves only the dashboard, with a made-up shop, in a temporary folder that is deleted when you stop it (Ctrl+C).
+
 ## Tests (no call needed)
 ```bash
 python -m pytest                     # the offline tests

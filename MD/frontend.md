@@ -22,6 +22,8 @@ Three pages, all served by the agent on one port. Two exist; the admin one is pl
 - **Checked** in headless Chrome with demo data at 1200, 1100 (light), 400, 390 and 360 px wide: no horizontal overflow, numbers match the calculator.
 - **Shows demo data only** until the agent writes real orders (B-11). Demo data is marked "made-up".
 
+**See it without keys:** `python -m dukaan_dost.preview` serves just the dashboard with a made-up shop (password `1111`) from a temporary folder.
+
 ## Admin dashboard (planned)
 List shops and their status; add a shop from a template and set its PIN; see each shop's errors and mark them solved; edit a shop's prompt and stock list. It needs writes, which the server's HTTP layer can't take as request bodies, so the page will talk over a WebSocket with JSON commands (no new dependency).
 

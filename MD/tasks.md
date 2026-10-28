@@ -112,6 +112,7 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Shopkeeper dashboard: orders, credit book, loan enquiries, live; checked in a real browser at desktop and phone widths (2026-10-28, Build 1003)
 - [ ] The agent writes orders, loan summaries and credit balances at hang-up, so the dashboard shows real calls (B-11; with build steps 7 and 8)
 - [ ] Shopkeeper labels in Hindi and Telugu
+- [x] `python -m dukaan_dost.preview`: look at the dashboard with made-up data and no keys (2026-10-28, InBul13)
 - [ ] Try the dashboard on a real phone
 - [ ] Admin dashboard (next): list shops and their status; add a shop from a template and set its PIN; see errors per shop (failed turns, unreadable files, missing knowledge) and mark them solved; edit a shop's prompt and stock list. Needs writes, so it runs over a WebSocket with JSON commands
 
