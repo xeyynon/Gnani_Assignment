@@ -25,3 +25,13 @@
 1. Rework CLAUDE.md (without the client name), then commit it as an InBul.
 2. Build step 1: Gnani and Gemini keys in the example config and key loading, the new requirements, `CALL_DATA_ENABLED=0` by default, B-01. These are user-visible, so batch them into the next build.
 3. Build step 2: the smoke test (an InBul), once the Gnani key exists.
+
+## Later the same day: research (InBul02)
+Re-read Gnani's live docs, the contest page, PyPI and Google's Gemini pages. The full record is in [external_research.md](external_research.md). What changed the plan:
+- **Prisma v3.0** (released 2026-10-22) detects the language, has a `codemix` format, takes up to 200 `x-keyterms`, and has a `commit` frame to end an utterance immediately. Adopted as DEC-023; [ml_model_integration.md](ml_model_integration.md) is rewritten around it.
+- **Timbre normalises numbers, ₹ and units itself.** We only keep a thin pre-pass (DEC-024).
+- **New Gemini keys may not get `gemini-2.5-flash`** (B-06, DEC-025).
+- **Risk B-07:** Gnani accounts can be limited to one active request. Check on app.gnani.ai first thing after registering.
+- **Contest:** ten awards (Jugaad Genius and Crowd Favourite are worth a try too); the demo post must be a video of the working app and be live before submitting; engagement is counted at the cutoff.
+
+Still unknown until the key exists: our concurrency limit, the credit cost per minute, Timbre's idle timeout, and whether `hi-en` works on v3.0 voices.

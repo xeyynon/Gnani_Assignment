@@ -36,7 +36,7 @@ Use made-up shop names and IDs. Brand names (Amul, Maggi, Aashirvaad) are fine a
 - An eval runner that plays each script through the pipeline offline (no Bluetooth) and logs WER, order match and time to first audio.
 
 ## 5. README (build step 10)
-The problem; an architecture diagram; how Prisma and Timbre are used (headers, bias list, normaliser); the results table (measured only); how to run; "all data is synthetic".
+The problem; an architecture diagram; how Prisma and Timbre are used (Prisma v3.0 language detection, keyterms, `commit`; Timbre v3.0 voice); the results table (measured only); how to run; "all data is synthetic".
 
 ## 6. Videos and posts (Surya)
 | When | What |

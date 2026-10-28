@@ -31,10 +31,11 @@
 ## Limits we design around
 | Limit | Source | Effect |
 |---|---|---|
-| Prisma has no language auto-detect | Gnani docs | Language selection is our job (build step 6) |
+| Prisma v3.0 detects the language from a hint list (v2.5 needs one fixed language) | Gnani docs, 2026-10-28 | Send `hi-IN,en-IN,te-IN`; follow `detected_language_code` (DEC-023) |
 | Prisma wants exactly 1,024-byte frames at real-time pace | Gnani docs | `feed()` regroups frames; don't burst-send |
 | Prisma sessions are capped at 15 minutes | Gnani docs | A long call needs a reconnect. Calls are short, but guard it anyway |
 | Timbre handles one request per connection at a time | Gnani docs | Serialise synthesis per connection, or keep a small pool |
-| Timbre needs numbers as words | Gnani docs | Normaliser before every synthesis |
+| Timbre normalises numbers itself, but `auto` reads Latin-only text as English, and Telugu coverage is still being refined | Gnani docs, 2026-10-28 | Pass the language explicitly; thin pre-pass for units (DEC-024) |
+| The account may allow only one active request; the concurrent-session cap is per organisation | Gnani docs, 2026-10-28 | Check on app.gnani.ai; fall back to one STT session per call (B-07) |
 | 5,000 free credits | Gnani registration | Budget the eval; see [problem_statement-gap-plan.md](problem_statement-gap-plan.md) |
 | Bluetooth HFP is 16 kHz mono | Hardware | Request 16 kHz everywhere; no resampling |

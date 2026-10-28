@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1000 · **Latest InBul:** InBul01
+**Last updated:** 2026-10-28 · **Latest build:** 1000 · **Latest InBul:** InBul02
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper.
@@ -35,6 +35,8 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Videos, posts | ❌ Not started |
 
 The live checklist is in [tasks.md](tasks.md).
+
+**Research on 2026-10-28 changed the plan:** Prisma v3.0 (2026-10-22) detects the language itself and has a `commit` frame; Timbre now reads numbers itself; new Gemini keys may not get 2.5 Flash. Two risks to check first: B-06 and B-07. See [external_research.md](external_research.md).
 
 ## Document map
 | File | Read it when |

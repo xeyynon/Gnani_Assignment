@@ -13,7 +13,7 @@
 | Tight deadline (15 days) | Gnani integration, shop data, eval, videos and posts all have to land | Smoke test first; cut the optional web page if time runs short |
 | New, sparsely documented APIs | Prisma's end-of-segment behaviour isn't documented; Timbre is one request per connection | Smoke test; ask on Discord; keep Sarvam and Google as fallbacks |
 | 5,000 credits | The eval and testing can burn through them | Measure the cost per call early; keep the eval sized to fit |
-| Language without auto-detect | Prisma must be told the language up front | DEC-005 |
+| Gnani account limits | Possibly one active request at a time (B-07) | Check on app.gnani.ai first; one STT session per call as the fallback |
 | The Pi is the only real test bed | You can't run a real call on Windows | Offline tests for each module; batch the Pi test sessions |
 | Bluetooth audio quality | HFP is narrowband-ish 16 kHz with echo | Already tuned upstream; evaluate on noisy audio |
 | Engagement-based shortlisting | A good build with no reach may not get seen | Posts by Nov 5 with a real clip |

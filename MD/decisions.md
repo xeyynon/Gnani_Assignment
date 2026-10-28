@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-022.**
+**Latest: DEC-025.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the Smart Caller codebase (2026-10-26)
@@ -24,6 +24,8 @@ v3.0 voices cover all 10 languages, so the agent sounds like one person when the
 - **B:** start in `hi-IN` (it handles Hinglish), and switch when the caller asks or clearly speaks another language.
 
 Leaning towards **B with an A-style prompt as backup**: start in `hi-IN`, and greet with a line that tells Telugu and English callers they can say "Telugu" or "English". Decide after the smoke test shows how `hi-IN` handles English and Telugu speech.
+
+**Update 2026-10-28:** largely overtaken by DEC-023. Prisma v3.0 hears the language itself, so neither option is needed for STT. The open part is only the **greeting's language**: it's spoken before the caller says anything. Plan: greet in Hinglish ("Namaste! Dukaan Dost mein aapka swagat hai…") with one line in Telugu, then follow `detected_language_code`.
 
 ### DEC-006 · How the order state is updated: open
 Structured JSON from Gemini on each turn vs extraction from the transcript at hang-up. See [flow.md](flow.md). Decide before building step 8.
@@ -62,3 +64,21 @@ Moving the clone out of the project folder failed (permission denied, 2026-10-28
 
 ### DEC-022 · CLAUDE.md stays untracked until the client name is out of it (2026-10-28)
 The brief names the client twice (in a path and in a "don'ts" line). Committing it would write the name into git history for good. It stays untracked until it's rewritten. **Revisit:** when CLAUDE.md is reworked.
+
+## Decisions recorded on 2026-10-28 (after the docs research)
+### DEC-023 · Prisma v3.0, with a language list, as the STT model (2026-10-28)
+Use `x-model: prisma-v3.0` with `lang_code: hi-IN,en-IN,te-IN`, and feed `detected_language_code` into the existing language lock. v3.0 shipped on 2026-10-22: it identifies the language itself (a list is a hint, not a lock), handles code-mixed speech (`codemix` format), takes up to 200 product names and phrases as `x-keyterms`, and has a `commit` frame that ends an utterance immediately.
+- **Why a list, not `indic-auto`:** Gnani says listing the likely languages "helps most with short clips". Order turns are short ("haan", "do kilo"), and we only support these three.
+- **Why it fits the existing code:** our recorder already decides when the caller stops (webrtcvad, 650 ms hangover). `finish()` sends `commit` instead of ~600 ms of silence, which saves that time on every turn.
+- **Fallback:** Prisma v2.5 with a fixed `lang_code`, behind the same env var, if v3.0 tests worse on our audio. **Revisit:** if the smoke test shows v3.0 mislabelling Telugu or Hinglish.
+
+### DEC-024 · Rely on Timbre's own text normalisation; keep only a thin pre-pass (2026-10-28)
+Timbre now normalises numbers, ₹, units, dates and times on every request. We **don't** write a full number-to-words converter. The pre-pass only:
+- sets `language` explicitly (`hi-IN` or `te-IN`, never `auto`), because `auto` reads text with no Indic script as English
+- writes units the way callers say them ("kilo", "litre"), because Timbre always reads `kg` as the English "kilograms"
+- leaves ₹ amounts as digits for Timbre to read
+
+**Why:** less code to break before the demo. **Revisit:** if the smoke test shows Telugu number words wrong; Gnani says Telugu word choices are "under continuous refinement". Then add Telugu-only spelled-out amounts.
+
+### DEC-025 · Gemini model chosen by env var; default to a current model (2026-10-28)
+`LLM_MODEL` becomes an env var. The default moves off `gemini-2.5-flash`, which Google now serves only to users who used it before. Candidates are `gemini-3.5-flash-lite` (fastest) and `gemini-3.8-flash`, picked by time to first sentence and order accuracy in the eval. **Why:** a new AI Studio key may be refused 2.5 Flash outright.

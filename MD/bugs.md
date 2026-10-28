@@ -27,6 +27,14 @@ The greeting is `"Hello! Welcome to {COMPANY_NAME}…"`, and the STT-failure apo
 ### B-05 · Open (risk) · Validator greeting regex is generic
 After de-identification, `validator.py` strips any reply that starts "hello/hi/namaste … welcome to …". Fine for us, but check it doesn't strip a legitimate first-turn greeting from the LLM.
 
+### B-06 · Open · The Gemini model is hardcoded to one new keys may not get
+`LLM_MODEL = "gemini-2.5-flash"` is hardcoded (`ai_caller_final3.py` ~133). Google now serves the 2.5 models only to users who used them before (ai.google.dev, read 2026-10-28), so a fresh `GEMINI_API_KEY` may get an error on the first turn.
+**Fix:** make it an env var with a current default (DEC-025).
+
+### B-07 · Open (risk) · The Gnani account may allow only one active request
+Gnani's error docs show `429 RATE_LIMITED`, *"Only 1 active request is allowed at a time"*, for some accounts. The concurrent streaming-session cap is per organisation and only shown on app.gnani.ai. Our pipeline overlaps sessions in three ways: STT for the next utterance while TTS is still speaking, noise-triggered STT sessions (upstream needed 10 at once with Sarvam), and the TTS connection held open between turns.
+**Fix:** read the real limit as soon as the key exists. If it's 1–2: one persistent Prisma session per call (feed audio continuously, `commit` at our end of speech) instead of one per utterance; one TTS socket; and ask on Discord whether contest accounts can get more.
+
 ## Fixed, uncommitted
 _None._
 
