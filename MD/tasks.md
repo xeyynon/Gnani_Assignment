@@ -106,6 +106,14 @@ When you tick something, add the date and the build or InBul that carried it.
 ### Step 10: README
 - [ ] Problem, diagram, Gnani usage, results, how to run, synthetic-data note
 
+### Step 11: CI/CD (DEC-033; see [ci_cd.md](ci_cd.md))
+- [x] GitHub Actions: CI (tests, lint, repo hygiene, call page, container build), release on `build-*` tags, Dependabot (2026-10-28, InBul12)
+- [x] Scripts the pipeline calls, with tests that show they fail on bad input (124 tests in a clean environment)
+- [ ] Add the remote and make the first push, joining the GitHub initial commit with `-s ours` ([ci_cd.md](ci_cd.md), "The first push"), then `git push -u origin main --tags`
+- [ ] Watch the first CI run and fix anything red: the container build, Python 3.10, Windows (B-10)
+- [ ] On GitHub: set the `BANNED_TERMS` variable, turn on branch protection for `main`, make the first image public if wanted
+- [ ] Choose and add a `LICENSE`
+
 ## Demo and submission (Surya)
 - [ ] Register on gnani.ai/internship (college email); get the key and 5,000 credits
 - [ ] LinkedIn and X posts **by Nov 5**: a working-demo video, tagged #GnaniAI #GreatIndianAIInternshipChallenge, live **before** submitting; engagement counts at the cutoff

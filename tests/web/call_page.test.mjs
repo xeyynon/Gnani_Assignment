@@ -1,0 +1,56 @@
+// Tests for the browser call page (dukaan_dost/web/index.html) that need no browser.
+//   node --test tests/web/
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+const html = readFileSync(new URL("../../dukaan_dost/web/index.html", import.meta.url), "utf8");
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+
+// The resampler is plain JavaScript; pull it out the same way the page embeds it in the audio worklet.
+const fnSource = script.slice(script.indexOf("function makeResampler"), script.indexOf("const workletSource"));
+const makeResampler = new Function(`${fnSource}; return makeResampler;`)();
+
+function tone(rate, hz, seconds, amplitude) {
+  const out = new Float32Array(Math.floor(rate * seconds));
+  for (let i = 0; i < out.length; i++) out[i] = amplitude * Math.sin((2 * Math.PI * hz * i) / rate);
+  return out;
+}
+const rms = (samples) => Math.sqrt(samples.reduce((s, v) => s + v * v, 0) / samples.length);
+
+test("the page script is valid JavaScript", () => {
+  new Function(script);           // parses without running
+});
+
+test("the page talks to the path the server listens on", () => {
+  assert.match(script, /'\/ws'/);
+});
+
+test("the controls the user needs exist", () => {
+  for (const id of ["start", "hang", "status", "level", "speaking"]) {
+    assert.match(html, new RegExp(`id="${id}"`), `missing #${id}`);
+  }
+});
+
+test("the audio worklet carries its own copy of the resampler", () => {
+  assert.match(script, /makeResampler\.toString\(\)/);
+});
+
+for (const inRate of [48000, 44100, 32000, 16000]) {
+  test(`resamples a 440 Hz tone from ${inRate} Hz to 16 kHz without changing its length or level`, () => {
+    const resample = makeResampler(inRate, 16000);
+    const input = tone(inRate, 440, 1, 0.5);
+    const out = [];
+    for (let i = 0; i < input.length; i += 128) {            // 128 samples at a time, like an AudioWorklet
+      out.push(...resample(input.subarray(i, Math.min(i + 128, input.length))));
+    }
+    assert.ok(Math.abs(out.length / 16000 - 1) < 0.01, `got ${out.length} samples`);
+    const level = rms(out) / 32768;                          // a 0.5-amplitude sine has RMS 0.354
+    assert.ok(Math.abs(level - 0.354) < 0.04, `level ${level.toFixed(3)}`);
+  });
+}
+
+test("loud input is clipped, not wrapped around", () => {
+  const out = makeResampler(16000, 16000)(new Float32Array([1.5, -1.5, 1, -1]));
+  assert.deepEqual(Array.from(out), [32767, -32768, 32767, -32768]);
+});

@@ -28,6 +28,7 @@ MD/            project documentation
 python -m pytest                         # offline tests (run before every commit)
 python -m dukaan_dost                    # run the agent, then open the printed address in a browser
 node scripts/changelog.mjs --next-internal
+python scripts/check_repo.py && python scripts/check_docs.py && node --test tests/web/   # the CI hygiene and page checks
 ```
 
 ## Hard rules (full list in MD/rules.md)

@@ -1,0 +1,7 @@
+# Lint only for real errors (syntax errors, undefined names, broken comparisons).
+# The code base is large and carries long explanatory comments, so style rules
+# would drown the signal; widen this list deliberately, not by default.
+line-length = 120
+
+[lint]
+select = ["E9", "F63", "F7", "F82"]

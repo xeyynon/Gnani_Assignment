@@ -1,0 +1,17 @@
+# Weekly pull requests that bump pinned versions. CI (tests, lint, image build)
+# is the gate, so a bump that breaks something shows up red instead of silently.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly

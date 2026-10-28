@@ -64,7 +64,7 @@ A **build** is a numbered, user-visible release: anything a caller would hear or
 4. `node scripts/changelog.mjs --tag` pins the number. It doesn't modify files.
 
 ### Batching rule
-Don't make a build for every small fix. Wait until about **10 fixes** pile up, then make one build of all of them. This applies even to one urgent fix. Push only when explicitly told to ("push"), and push tags too (`git push --follow-tags`). Commits carry only Surya's name, with no co-author trailers.
+Don't make a build for every small fix. Wait until about **10 fixes** pile up, then make one build of all of them. This applies even to one urgent fix. Push only when explicitly told to ("push"), and push tags too (`git push origin main --tags`; our tags are lightweight, so `--follow-tags` would skip them). Commits carry only Surya's name, with no co-author trailers.
 
 ---
 

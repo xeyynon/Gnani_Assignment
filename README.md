@@ -1,5 +1,7 @@
 # Dukaan Dost
 
+[![CI](https://github.com/xeyynon/Gnani_Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/xeyynon/Gnani_Assignment/actions/workflows/ci.yml)
+
 A phone-order voice agent for a neighbourhood kirana store. A customer calls the agent and orders in **Telugu, Hindi, English or Hinglish**. The agent matches each item to the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper.
 
 Built for Gnani.ai's **Great Indian AI Internship Challenge**, on Gnani's **Prisma** (speech-to-text) and **Timbre** (text-to-speech) models, with Gemini for reasoning.
@@ -29,7 +31,8 @@ dukaan_dost/   the agent: run with `python -m dukaan_dost`
 shops/         one folder per shop (config.yaml + knowledge/), see shops/README.md
 evaluation/    benchmark and accuracy tools; committed results
 tests/         offline tests (tests/manual needs cloud credentials)
-scripts/       changelog.mjs, the build and InBul bookkeeping
+scripts/       changelog.mjs (builds and InBuls), and the checks CI runs
+.github/       GitHub Actions: CI on every push, a release and image per build tag
 MD/            project documentation, start at MD/DukaanDost_MASTER.md
 ```
 

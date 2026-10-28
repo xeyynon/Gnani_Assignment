@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1002 · **Latest InBul:** InBul11
+**Last updated:** 2026-10-28 · **Latest build:** 1002 · **Latest InBul:** InBul12
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -70,6 +70,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [agents.md](agents.md) | You want the pipeline's agents (threads), or you're an AI coding agent working here |
 | [bugs.md](bugs.md) | Known bugs and risks |
 | [pain.md](pain.md) | The user's pain and ours |
+| [ci_cd.md](ci_cd.md) | You want the GitHub Actions pipelines, what they check, the one-time GitHub setup and the first push |
 | [deployment.md](deployment.md) | Running it, keys and settings |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
 | [origin.md](origin.md) | What we inherit from the upstream project |

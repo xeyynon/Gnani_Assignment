@@ -4,7 +4,7 @@ Every design decision gets an id, `DEC-NNN`, numbered in the order it's recorded
 
 This file says **why**. What changed, and when, is in the build reports (`MD/builds/`) and the InBul commits.
 
-**Latest: DEC-032.**
+**Latest: DEC-033.**
 
 ## Dukaan Dost decisions
 ### DEC-001 · Build on the earlier voice-agent codebase (2026-10-26)
@@ -144,3 +144,11 @@ Surya's instruction: remove the Pi dependency completely and make the project so
 - **What we give up:** the "answers a real phone call" claim. The README, videos and posts say "browser call" and call phone-line audio "simulated" unless a real number is wired up and tested (R-5). The Pi transport was also the only one proven on real calls; the browser one has only been tested offline so far (B-08).
 - **What we gain:** it runs from one command on any laptop, anyone can try it, the tests exercise a real transport, and the browser's echo cancellation removes the main reason for the long mic mute (to be tuned with measurements).
 - **Revisit:** a phone-number transport, if a provider's paperwork turns out to be quick (DEC-029 stretch).
+
+### DEC-033 · CI/CD with GitHub Actions: checks on every push, a release and an image per build tag (2026-10-28)
+Details in [ci_cd.md](ci_cd.md).
+- **CI** runs the offline tests on Linux (Python 3.10 and 3.12) and Windows (3.12), a ruff check for real errors only, repo checks (secrets, local-only files, banned names, commit titles, doc links), the call page's Node tests, and a container build. No keys are needed.
+- **CD** is a GitHub Release (notes from the build report) plus a container image, on `build-*` tags only. **No auto-deploy**: there is no server, and the agent runs locally or from the image.
+- **Banned names live in a repository variable**, never in a committed file, because the list itself would be the thing we must not commit (R-3).
+- **Lint is deliberately narrow** (syntax errors and undefined names). The code base has long explanatory comments and a history of style choices, so wide style rules would bury real errors.
+- **Not yet proven on GitHub.** The first run may need fixes (B-10).

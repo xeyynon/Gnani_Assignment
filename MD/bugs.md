@@ -32,6 +32,11 @@ The WebSocket server, the protocol and the page's resampler are tested offline, 
 Each sentence is a separate clip, and the server sends the next one only after the page confirms the last one finished. That round trip may leave an audible gap between sentences.
 **Fix:** measure it. If audible, let the page queue the next clip while the last one plays.
 
+
+### B-10 · Open (risk) · The CI/CD workflows have never run on GitHub
+They parse, their jobs are wired correctly and the scripts they call are tested, but a real run can still fail on things only GitHub shows: the container build (no Docker engine was available to try it), Python 3.10 on Ubuntu, the release and image steps.
+**Fix:** watch the first run after the first push and fix what is red (task in [tasks.md](tasks.md)).
+
 ## Fixed, uncommitted
 _None._
 
