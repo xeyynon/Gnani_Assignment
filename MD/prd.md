@@ -30,6 +30,31 @@
 | Caller switches language mid-call | Follows a clear switch (native-script detection), not one stray word |
 | Caller hangs up mid-order | Writes a summary marked incomplete |
 
+## Call types (DEC-027)
+The agent decides in the first turn which of two things the caller wants, and says what it can do ("order de sakte hain, ya dukaan ke liye loan ke baare mein bata sakte hain"). A caller can switch mid-call. Everything in this file above this section is the **shop order** call. The **loan guidance** call is below.
+
+## Udyami loan guidance (DEC-027, from SIH 2026 PS 26091)
+A would-be or new shopkeeper says how much money they can put in and what business they want.
+
+**Inputs (three slots, confirmed back one at a time):**
+- **Margin money** the caller can put in, e.g. "ek lakh".
+- **Business type**, e.g. kirana, dairy, textiles (stored, not used in the arithmetic).
+- **Place** (village or town), stored for the summary.
+
+**The arithmetic (deterministic, never done by the language model):**
+- Project cost = margin money ÷ 0.10. Maximum loan = 90% of the project cost. Example: ₹1,00,000 margin money gives ₹10,00,000 project cost and a ₹9,00,000 loan.
+- Project cost up to ₹1.40 lakh: **Micro Finance Scheme**, 6.5% a year, 3-year repayment including a 3-month moratorium, loan up to ₹1.25 lakh.
+- Project cost above ₹1.40 lakh up to ₹50 lakh: **Term Loan Scheme**, 8% a year, 7-year repayment including a 6-month moratorium, loan up to ₹45 lakh.
+- Above ₹50 lakh: not covered; the agent says so.
+- The agent gives an **approximate monthly instalment**, computed in code from the scheme's rate and tenure after the moratorium. The exact formula is fixed when the calculator is built and is covered by unit tests.
+
+**Rules:**
+- The agent says these figures are **indicative** and the bank or agency confirms. It never promises approval.
+- It reads every amount back in words and asks the caller to confirm before calculating.
+- The numbers come from a calculator module, and the agent only speaks what the module returns.
+- The call produces a summary the caller could take to the agency: inputs, scheme, project cost, loan, rate, tenure, instalment. Written to `orders/` like an order, as `loan_<call_id>.json` and `.txt`.
+- Synthetic callers only; no real names, places or phone numbers (R-2).
+
 ## Udhaar (credit) ledger (DEC-026)
 Regulars buy on credit and settle at the month's end. The agent handles three things by phone:
 | Caller says | Agent does |
