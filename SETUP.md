@@ -20,7 +20,7 @@ Fill in the keys you need:
 
 | Key | When | Get it from |
 |---|---|---|
-| `GNANI_API_KEY` | Gnani STT or TTS (coming in the next builds) | https://app.gnani.ai/voice |
+| `GNANI_API_KEY` | `STT_PROVIDER=gnani` and/or `TTS_PROVIDER=gnani` | https://app.gnani.ai/voice |
 | `GEMINI_API_KEY` | The language model, with no Google Cloud project needed | https://aistudio.google.com/apikey |
 | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | Gemini on Vertex AI, Google STT or TTS (today's default speech providers) | A Google Cloud project with Speech-to-Text, Text-to-Speech and Vertex AI enabled; then `gcloud auth application-default login` |
 | `SARVAM_API_KEY` | `STT_PROVIDER=sarvam` (today's default) | https://dashboard.sarvam.ai |
@@ -76,3 +76,13 @@ python -m pytest                     # the offline tests
 ```
 - `tests/manual/` holds two end-to-end checks that need real cloud credentials; run those files directly.
 - `evaluation/` holds the benchmark tools ([evaluation/README.md](evaluation/README.md)).
+
+## Using Gnani's speech models
+```bash
+export GNANI_API_KEY=...            # or put it in local_config.py
+export STT_PROVIDER=gnani           # Prisma v3.0 for listening   (default: sarvam)
+export TTS_PROVIDER=gnani           # Timbre v3.0 for speaking    (default: google)
+python scripts/gnani_smoke_test.py roundtrip     # first contact: Timbre speaks, Prisma listens, scores printed
+python -m dukaan_dost
+```
+The two are independent: Gnani for listening and Google for speaking works. Settings (all optional): `GNANI_STT_MODEL` (default `prisma-v3.0`), `GNANI_STT_FORMAT` (`transcribe`, `verbatim`, `codemix`), `GNANI_STT_LANGUAGES` (default `hi-IN,en-IN,te-IN`), `GNANI_TTS_VOICE` (default `Shivani`), `GNANI_TTS_SPEED`, `GNANI_TTS_LANGUAGE` (e.g. `hi-en` to force Hinglish). This code has been tested only against a stand-in server so far; see B-13.

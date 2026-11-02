@@ -53,8 +53,19 @@ def _text(status: int, message: str, headers: dict | None = None) -> Reply:
                  {**SECURITY_HEADERS, **(headers or {})})
 
 
+def _live_for(shop: str, live_calls) -> list:
+    """This shop's calls in progress, from the transport. Only the length of each call is shared."""
+    if live_calls is None:
+        return []
+    try:
+        return [{"seconds": int(c.get("seconds", 0))} for c in live_calls() if c.get("shop") == shop]
+    except Exception:
+        return []
+
+
 def handle(path: str, headers, remote: str, shops_root: Path | None = None,
-           orders_root: Path | None = None, throttle: auth.Throttle | None = None) -> Reply | None:
+           orders_root: Path | None = None, throttle: auth.Throttle | None = None,
+           live_calls=None) -> Reply | None:
     """A Reply for dashboard paths, or None for anything else (so other handlers can try)."""
     m = ROUTE.match(path.split("?", 1)[0])
     if m is None:
@@ -82,6 +93,7 @@ def handle(path: str, headers, remote: str, shops_root: Path | None = None,
     if m.group("data"):
         payload = store.snapshot(shop, root=orders_root)
         payload["title"] = title
+        payload["live"] = _live_for(shop, live_calls)
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return Reply(200, "application/json; charset=utf-8", body, dict(SECURITY_HEADERS))
 

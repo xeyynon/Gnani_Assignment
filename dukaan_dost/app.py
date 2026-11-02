@@ -63,7 +63,8 @@ from dukaan_dost.stt_provider import (
     start_streaming_session as _start_streaming_session,
     STT_PROVIDER as _STT_PROVIDER,
 )
-from dukaan_dost.tts_google import (
+from dukaan_dost.tts_provider import (
+    TTS_PROVIDER as _TTS_PROVIDER,
     synthesize as _tts_synthesize,
     warmup as _tts_warmup,
     start_streaming_synthesis as _start_tts_stream,
@@ -76,6 +77,9 @@ from dukaan_dost import shops as _shops
 from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from dukaan_dost.validator import validate_reply
+from dukaan_dost.spoken_history import SpokenTracker
+from dukaan_dost import stock as _stock
+from dukaan_dost.stt_provider import set_keyterms as _set_stt_keyterms
 from dukaan_dost.llm_gemini import warmup as _llm_warmup
 
 # ─────────────────────────────────────────────────────
@@ -834,6 +838,9 @@ _mid_play_interrupt = threading.Event()
 
 _call_lock  = threading.Lock()
 _hist_lock  = threading.Lock()
+# Which sentences of each reply the caller actually heard, so an interrupted reply is
+# remembered as what was heard and not as what was queued (dukaan_dost/spoken_history.py).
+_spoken     = SpokenTracker()
 
 # Bumped at every call boundary. Queued audio and queued replies carry
 # the generation they belong to, so work that began during one call can
@@ -941,6 +948,22 @@ def _set_active_shop() -> None:
         shop = SHOP_NAME
     _active_shop = shop
     log.info(f"[SHOP] Call is for {shop!r}")
+    _boost_product_names(shop)
+
+
+def _boost_product_names(shop: str) -> None:
+    """Tell the speech recogniser this shop's product names (Gnani Prisma keyterms; the other
+    providers ignore it), so "Maggi" and "Amul butter" are heard as products. A shop without a
+    stock.json just gets no boosting."""
+    try:
+        terms = _stock.keyterms(_stock.load(_shops.shop_dir(shop)))
+    except FileNotFoundError:
+        terms = []
+    except (ValueError, OSError, KeyError) as e:
+        log.warning(f"[SHOP] stock list of {shop!r} is unusable, no product names boosted: {e}")
+        terms = []
+    kept = _set_stt_keyterms(terms)
+    log.info(f"[SHOP] {kept} product names given to the speech recogniser")
 
 
 def _find_call():
@@ -968,10 +991,21 @@ def _clear_history(reason=""):
         _no_speech_apologized = False
         _locked_language_code = None
         _history.clear()
+        _spoken.forget()
         _last_reply_wav = None
         _last_reply_lang = None
     _reset_caller_pitch_profile()
     log.info(f"History cleared{': ' + reason if reason else '.'}")
+
+
+def _trim_history_for_interrupt(reply_id) -> None:
+    """The caller interrupted this reply: make the history say only what they heard of it."""
+    with _hist_lock:
+        heard = _spoken.trim_after_interrupt(reply_id, _history)
+    if heard is not None:
+        log.info(f"[BARGE-IN] History for reply {reply_id} keeps only what was heard: "
+                 f"{heard!r}" if heard else f"[BARGE-IN] Reply {reply_id} was interrupted before "
+                 f"anything was heard; it and the caller's turn are dropped from the history.")
 
 
 def _drain_queues(reason: str) -> None:
@@ -1661,6 +1695,8 @@ def _tts_and_enqueue(text: str, language_code: str, gen: int, reply_id: int) -> 
     """
     enqueued: list[bytes] = []
     tts_first_ms = None
+    if gen == _call_gen:
+        _transport.send_event({"type": "agent", "reply": reply_id, "text": text})   # the call page's live transcript
 
     def _enqueue(wav_bytes: bytes, continuation: bool = False):
         # continuation=True marks this clip as the same sentence's own
@@ -2576,6 +2612,8 @@ def processor_thread():
 
             with _hist_lock:
                 _no_speech_apologized = False
+            if gen == _call_gen:
+                _transport.send_event({"type": "user", "text": transcript, "lang": language_code})
 
             # Native-script detection first: a FAR stronger, unambiguous
             # signal than keyword matching (see _detect_native_script_
@@ -2799,6 +2837,7 @@ def processor_thread():
                         # caller actually heard.
                         full_reply_parts.append(fallback_message)
                         new_chunks, this_tts_ms = _tts_and_enqueue(fallback_message, reply_language, gen, reply_id)
+                        _spoken.planned(reply_id, fallback_message, len(new_chunks))
                         if new_chunks:
                             if tts_first_ms is None:
                                 tts_first_ms = this_tts_ms
@@ -2811,6 +2850,7 @@ def processor_thread():
                     log.info(f"[STREAM] Sentence: '{validated}' ({sent_lang})")
 
                     new_chunks, this_tts_ms = _tts_and_enqueue(validated, sent_lang, gen, reply_id)
+                    _spoken.planned(reply_id, validated, len(new_chunks))
                     if new_chunks:
                         if tts_first_ms is None:
                             tts_first_ms = this_tts_ms
@@ -2856,8 +2896,14 @@ def processor_thread():
                 continue
 
             with _hist_lock:
-                _history.append({"role": "user", "content": transcript})
-                _history.append({"role": "assistant", "content": full_reply})
+                user_entry = {"role": "user", "content": transcript}
+                assistant_entry = {"role": "assistant", "content": full_reply}
+                _history.append(user_entry)
+                _history.append(assistant_entry)
+                _spoken.register_entry(reply_id, user_entry, assistant_entry)
+                if reply_id == _abandoned_reply_id:
+                    # the caller cut in before this entry existed; playback could not trim it
+                    _spoken.trim_after_interrupt(reply_id, _history)
                 if wav_chunks:
                     # Cache the FULL reply's audio (merged across
                     # sentence chunks), not just the last chunk — so a
@@ -2966,12 +3012,15 @@ def playback_thread():
                     # mute here is mute the recorder didn't need.
                     _mid_play_interrupt.clear()
                     _abandoned_reply_id = reply_id
+                    _trim_history_for_interrupt(reply_id)
                     barged_in = True
                     log.info(
                         f"[BARGE-IN] Mid-sentence interruption on reply {reply_id} "
                         f"after {chunks} chunk(s) — recorder stays live."
                     )
                     break
+
+                _spoken.clip_finished(reply_id)    # played to the end: an interrupted clip never gets here
 
                 if gen != _call_gen:
                     # 2026-07-31: the call this reply belonged to ended
@@ -3042,6 +3091,7 @@ def playback_thread():
 
                 if barged_in:
                     _abandoned_reply_id = reply_id
+                    _trim_history_for_interrupt(reply_id)
                     # 2026-08-18: this checkpoint path resolves the
                     # interruption via _caller_speaking, a DIFFERENT flag
                     # than _mid_play_interrupt — clear that one too, or a
@@ -3119,6 +3169,7 @@ def playback_thread():
             if _mid_play_interrupt.is_set() and is_expected_kill_exception:
                 _mid_play_interrupt.clear()
                 _abandoned_reply_id = reply_id
+                _trim_history_for_interrupt(reply_id)
                 barged_in = True
                 log.info(
                     f"[BARGE-IN] Mid-sentence interruption on reply {reply_id} "
@@ -3150,6 +3201,17 @@ def _gemini_credentials_ok() -> bool:
     return bool(project) and "your-project-id" not in project
 
 
+def _speech_key_problem() -> str | None:
+    """A message if a chosen speech provider is missing its key, else None."""
+    if "gnani" in (_STT_PROVIDER, _TTS_PROVIDER) and not os.environ.get("GNANI_API_KEY"):
+        return ("STT_PROVIDER/TTS_PROVIDER is set to gnani but GNANI_API_KEY is not. "
+                "Get a key at https://app.gnani.ai/voice and set it as an environment "
+                "variable or in local_config.py.")
+    if _STT_PROVIDER == "sarvam" and not os.environ.get("SARVAM_API_KEY"):
+        return "STT_PROVIDER is sarvam but SARVAM_API_KEY is not set."
+    return None
+
+
 def main():
 
     # The Gemini Developer API (GEMINI_API_KEY) needs no Google Cloud
@@ -3164,6 +3226,10 @@ def main():
             "Google Cloud project ID/location "
             "(or set GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION env vars)."
         )
+
+    problem = _speech_key_problem()
+    if problem:
+        sys.exit(problem)
 
     if not (SHOP_DIR / "config.yaml").is_file():
         sys.exit(
@@ -3205,12 +3271,13 @@ def main():
             f"Transport {_transport.name!r} carries {_transport.sample_rate} Hz audio but the "
             f"pipeline runs at {SAMPLE_RATE} Hz; the transport has to convert at its own edge."
         )
-    log.info(f"STT={_STT_PROVIDER} | TTS=google | transport={_transport.name} | echo_tail={ECHO_TAIL_SEC}s")
+    log.info(f"STT={_STT_PROVIDER} | TTS={_TTS_PROVIDER} | transport={_transport.name} | echo_tail={ECHO_TAIL_SEC}s")
     log.info(f"Shop knowledge base: {SHOP_DIR}  (shops available: {', '.join(_shops.list_shops()) or 'none'})")
 
     _get_conv_mgr(SHOP_NAME)      # fail now, not on the first call, if the default shop is broken
     _transport.configure(default_shop=SHOP_NAME, shop_exists=_shops.exists, shop_title=_shops.display_name)
-    _transport.add_http_handler(lambda path, headers, remote: _dashboard.handle(path, headers, remote))
+    _transport.add_http_handler(lambda path, headers, remote: _dashboard.handle(
+        path, headers, remote, live_calls=_transport.live_calls))
 
     # Pays the cold-start cost (credential loading, gRPC/HTTP channel
     # setup, TTS voice-cache lookups) once at boot instead of on the

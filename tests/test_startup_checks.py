@@ -57,3 +57,29 @@ def test_a_placeholder_api_key_does_not_count(app, monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "your-gemini-api-key-here")
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "your-project-id-here")
     assert not app._gemini_credentials_ok()
+
+
+# ---- speech provider keys -------------------------------------------------------
+
+def test_gnani_without_a_key_is_reported(app, monkeypatch):
+    monkeypatch.delenv("GNANI_API_KEY", raising=False)
+    monkeypatch.setattr(app, "_STT_PROVIDER", "gnani")
+    monkeypatch.setattr(app, "_TTS_PROVIDER", "google")
+    assert "GNANI_API_KEY" in app._speech_key_problem()
+    monkeypatch.setattr(app, "_STT_PROVIDER", "google")
+    monkeypatch.setattr(app, "_TTS_PROVIDER", "gnani")
+    assert "GNANI_API_KEY" in app._speech_key_problem()
+
+
+def test_gnani_with_a_key_is_fine(app, monkeypatch):
+    monkeypatch.setenv("GNANI_API_KEY", "abc")
+    monkeypatch.setattr(app, "_STT_PROVIDER", "gnani")
+    monkeypatch.setattr(app, "_TTS_PROVIDER", "gnani")
+    assert app._speech_key_problem() is None
+
+
+def test_sarvam_without_a_key_is_reported(app, monkeypatch):
+    monkeypatch.delenv("SARVAM_API_KEY", raising=False)
+    monkeypatch.setattr(app, "_STT_PROVIDER", "sarvam")
+    monkeypatch.setattr(app, "_TTS_PROVIDER", "google")
+    assert "SARVAM_API_KEY" in app._speech_key_problem()

@@ -2,7 +2,8 @@
 stt_provider.py
 
 Thin dispatcher selecting which STT BACKEND the pipeline talks to, via
-the STT_PROVIDER env var: "sarvam" (default, v3.0) or "google" (kept
+the STT_PROVIDER env var: "sarvam" (default, v3.0), "gnani" (Prisma, see
+stt_gnani.py) or "google" (kept
 as a fallback/comparison option — see stt_google.py's module comment
 for why its old "telephony" preset was deleted).
 
@@ -34,13 +35,16 @@ if STT_PROVIDER == "sarvam":
     from . import stt_sarvam as _backend
 elif STT_PROVIDER == "google":
     from . import stt_google as _backend
+elif STT_PROVIDER == "gnani":
+    from . import stt_gnani as _backend
 else:
     raise ValueError(
         f"STT_PROVIDER={STT_PROVIDER!r} is not a known backend "
-        f"(expected 'google' or 'sarvam')"
+        f"(expected 'google', 'sarvam' or 'gnani')"
     )
 
 log.info(f"[STT-PROVIDER] Using backend: {STT_PROVIDER}")
 
 warmup = _backend.warmup
 start_streaming_session = _backend.start_streaming_session
+set_keyterms = getattr(_backend, "set_keyterms", lambda terms: 0)
