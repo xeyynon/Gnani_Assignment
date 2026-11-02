@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {{include:shared/theme-init.html}}
-{{include:dashboard/menu-init.html}}
+{{include:shared/menu-init.html}}
 <title>{{SHOP}}: orders and credit</title>
 <style>
   /* The shopkeeper dashboard. Layout concept: a side menu (a top row on a phone), then a greeting and the four numbers
@@ -17,20 +17,22 @@
 {{include:shared/panel.css}}
 {{include:shared/theme-button.css}}
 {{include:shared/glass.css}}
+{{include:shared/shell.css}}
+{{include:shared/side-menu.css}}
+{{include:shared/topbar.css}}
+{{include:shared/notices.css}}
+{{include:shared/greeting.css}}
+{{include:shared/icon-tile.css}}
+{{include:shared/tile.css}}
+{{include:shared/status-pill.css}}
+{{include:shared/bento.css}}
 {{include:dashboard/layout.css}}
-{{include:dashboard/side-menu.css}}
-{{include:dashboard/topbar.css}}
-{{include:dashboard/notices.css}}
-{{include:dashboard/greeting.css}}
-{{include:dashboard/icon-tile.css}}
-{{include:dashboard/stat-tiles.css}}
-{{include:dashboard/status-pill.css}}
 {{include:dashboard/recent-orders.css}}
 {{include:dashboard/attention.css}}
-{{include:dashboard/quick-actions.css}}
+{{include:shared/quick-actions.css}}
 {{include:dashboard/sales-trend.css}}
-{{include:dashboard/lists.css}}
-{{include:dashboard/skeleton.css}}
+{{include:shared/lists.css}}
+{{include:shared/skeleton.css}}
 {{include:shared/brutal.css}}
 </style>
 </head>
@@ -70,16 +72,18 @@
 {{include:shared/format.js}}
 {{include:shared/keys.js}}
 {{include:shared/theme-helpers.js}}
+{{include:shared/menu-helpers.js}}
 {{include:dashboard/helpers.js}}
 /* ---- end helpers ---- */
 
 {{include:shared/dom.js}}
-const seen = new Set(), freshUntil = {}; let firstLoad = true, lastOk = 0, signedOut = false, failed = false, lastData = null;
+const seen = new Set(), freshUntil = {}; let firstLoad = true, lastData = null;
 
-{{include:dashboard/views.js}}
-{{include:dashboard/menu.js}}
+{{include:shared/views.js}}
+{{include:shared/menu.js}}
 
 /* ---- drawing ---- */
+{{include:shared/tile.js}}
 {{include:dashboard/stat-tiles.js}}
 {{include:dashboard/recent-orders.js}}
 {{include:dashboard/attention.js}}
@@ -87,8 +91,9 @@ const seen = new Set(), freshUntil = {}; let firstLoad = true, lastOk = 0, signe
 {{include:dashboard/orders-page.js}}
 {{include:dashboard/credit-page.js}}
 {{include:dashboard/loans-page.js}}
-{{include:dashboard/lists.js}}
-{{include:dashboard/skeleton.js}}
+{{include:shared/lists.js}}
+{{include:shared/skeleton.js}}
+{{include:dashboard/loading.js}}
 
 /* ---- the data: draw what the server sent, say how fresh it is, ask again every 3 seconds ---- */
 function render(d) {
@@ -118,46 +123,14 @@ function render(d) {
   $('notices').replaceChildren(...notes);
   firstLoad = false;
 }
-function tick() {
-  const el = $('updated'), dot = $('dot');
-  if (signedOut) return;
-  if (!lastOk) { el.textContent = failed ? 'Could not load the data yet. Retrying...' : 'Loading...'; dot.className = 'dot' + (failed ? ' off' : ''); return; }
-  const s = Math.round((Date.now() - lastOk) / 1000);
-  const stale = s > 10;
-  dot.className = 'dot' + (stale ? ' off' : '');
-  el.textContent = stale ? 'Connection lost. Showing data from ' + s + ' s ago.' : 'Live, updated ' + (s < 2 ? 'just now' : s + ' s ago');
-}
-async function poll() {
-  try {
-    const r = await fetch(location.origin + location.pathname.replace(/\/$/, '') + '/data', { cache: 'no-store', credentials: 'same-origin' });
-    if (r.status === 401 || r.status === 429) {
-      signedOut = true;
-      $('updated').textContent = r.status === 401 ? 'Signed out.' : 'Too many wrong attempts. Try again in a minute.';
-      $('dot').className = 'dot off';
-      $('notices').replaceChildren(h('div', { class: 'banner bad' }, 'Sign in again to see this shop. ', h('button', { type: 'button', id: 'reload', text: 'Sign in' })));
-      $('reload').addEventListener('click', () => location.reload());
-      return;
-    }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    try {
-      render(data);
-      lastOk = Date.now();
-      failed = false;
-    } catch (e) {                                   // a bug in drawing the data: say so, don't sit on "Loading..."
-      console.error(e);
-      $('notices').replaceChildren(h('div', { class: 'banner bad', text: 'The page could not show this data (' + e.message + ').' }));
-    }
-  } catch (e) { failed = true; /* a network problem: keep the last data; tick() shows the connection warning */ }
-  tick();
-  setTimeout(poll, 3000);
-}
+
+{{include:shared/poll.js}}
 
 {{include:shared/theme.js}}
 renderLoading();
 showView();
 setInterval(tick, 1000);
-poll();
+poll(location.origin + location.pathname.replace(/\/$/, '') + '/data', render, 3000);
 </script>
 </body>
 </html>

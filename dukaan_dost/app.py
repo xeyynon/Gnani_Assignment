@@ -73,6 +73,7 @@ from dukaan_dost.tts_provider import (
 from dukaan_dost import llm_gemini as _llm_gemini
 from dukaan_dost import transport as _transport_mod
 from dukaan_dost import dashboard as _dashboard
+from dukaan_dost import admin as _admin
 from dukaan_dost import shops as _shops
 from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
@@ -947,6 +948,13 @@ def _get_conv_mgr(shop: str | None = None) -> ConversationManager:
             )
             _conv_mgrs[shop] = mgr
         return mgr
+
+
+def _forget_shop(shop: str | None) -> None:
+    """The admin changed this shop's files: the next call that needs it loads them afresh (a call in progress keeps what it has)."""
+    with _conv_lock:
+        _conv_mgrs.pop(shop, None)
+    log.info(f"[ADMIN] {shop!r} was changed; its next call reloads it")
 
 
 def _set_active_shop() -> None:
@@ -3336,6 +3344,9 @@ def main():
     _transport.configure(default_shop=SHOP_NAME, shop_exists=_shops.exists, shop_title=_shops.display_name)
     _transport.add_http_handler(lambda path, headers, remote: _dashboard.handle(
         path, headers, remote, live_calls=_transport.live_calls))
+    _transport.add_http_handler(lambda path, headers, remote: _admin.handle(
+        path, headers, remote, live_calls=_transport.live_calls))
+    _transport.add_ws_handler(_admin.WS_PATH, _admin.make_ws_handler(on_change=_forget_shop))
 
     # Pays the cold-start cost (credential loading, gRPC/HTTP channel
     # setup, TTS voice-cache lookups) once at boot instead of on the

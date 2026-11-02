@@ -1,21 +1,5 @@
-  .shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
-  @media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr)}}
-  main{padding:0 24px 56px;min-width:0}
-  @media (max-width:600px){main{padding:0 14px 48px}}
-  .pagehead{margin:22px 0 12px}
-  .pagehead h2{font-size:22px}
-
-  /* The overview is a bento grid: unequal cells that fit together, one hero. On a phone it is two columns, then one.
-     The wrappers around the panels (.cols, .stack) and the tile row dissolve (display:contents), so every cell is placed
-     directly on the grid by the b-* classes below. */
-  [data-page=overview]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch}
-  [data-page=overview] #tiles,[data-page=overview] .cols,[data-page=overview] .stack{display:contents}
-  [data-page=overview] .hello,[data-page=overview] .panel,[data-page=overview] .tile.hero{grid-column:1/-1}
-  [data-page=overview] .hello{order:-2}
-  [data-page=overview] .tile.hero{order:-1}                    /* the big number first when the cells stack */
-  @media (max-width:520px){[data-page=overview]{grid-template-columns:minmax(0,1fr)}[data-page=overview] #tiles>.tile{grid-column:1/-1}}
+  /* Where the dashboard's cells sit on the bento grid (shared/bento.css). */
   @media (min-width:1001px){
-    [data-page=overview]{grid-template-columns:repeat(12,minmax(0,1fr))}
     [data-page=overview] #tiles>.tile.hero{grid-column:1/6;grid-row:2}
     [data-page=overview] #tiles>.tile:nth-child(1){grid-column:6/10;grid-row:2}
     [data-page=overview] #tiles>.tile:nth-child(3){grid-column:10/13;grid-row:2}

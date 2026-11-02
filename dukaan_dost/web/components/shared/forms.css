@@ -1,0 +1,19 @@
+  .field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .field label,.field .lbl{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .field .hint{font-size:13px;color:var(--muted)}
+  input[type=text],input[type=number],input[type=password],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  textarea{font-family:var(--mono);font-size:14px;line-height:1.5;resize:vertical;min-height:220px}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+  input[aria-invalid=true]{border-color:var(--warn)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:var(--radius-button);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;font-size:15px;text-decoration:none;cursor:pointer}
+  .btn:hover{border-color:var(--muted)}
+  .btn.primary{background:var(--green);border-color:var(--green);color:var(--on-green)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn svg{width:18px;height:18px}
+  .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .msg{font-size:14px;margin-top:10px;min-height:1.4em;color:var(--muted)}
+  .msg.bad{color:var(--warn);font-weight:600}
+  .msg.good{color:var(--green-ink);font-weight:600}
+  .pinshow{display:inline-block;font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:.25em;background:var(--green-soft);color:var(--green-ink);padding:12px 18px;border-radius:12px}
+  .result{margin-top:16px;padding:16px;border-radius:14px;background:var(--surface2);border:1px solid var(--line)}
+  @media (pointer:coarse){.btn,input[type=text],input[type=number],input[type=password],select{min-height:44px}}
