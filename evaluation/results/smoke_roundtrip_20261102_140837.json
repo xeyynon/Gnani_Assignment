@@ -1,6 +1,6 @@
 {
   "cmd": "roundtrip",
-  "when": "2026-11-02T13:57:00+05:30",
+  "when": "2026-11-02T14:08:03+05:30",
   "synthetic_speech_only": true,
   "data": {
     "experiment": "E3/E4/E6 roundtrip",
@@ -9,29 +9,29 @@
       {
         "label": "hindi",
         "reference": "दो किलो आटा और एक लीटर तेल चाहिए",
-        "heard": "2 kg आटा और 1 litre तेल चाहिए।",
+        "heard": "दो किलो आटा और एक लीटर तेल चाहिए।",
         "language": "hi-IN",
-        "wer": 0.462,
-        "stt_wait_ms": 1485,
-        "tts_first_chunk_ms": 577.9999999995198
+        "wer": 0.0,
+        "stt_wait_ms": 453,
+        "tts_first_chunk_ms": 530.9999999999491
       },
       {
         "label": "telugu",
         "reference": "రెండు కిలోల బియ్యం మరియు ఒక లీటర్ నూనె కావాలి",
-        "heard": "2 కిలోల బియ్యం మరియు 1 లీటర్ నూనె కావాలి.",
+        "heard": "రెండు కిలోల బియ్యం మరియు ఒక లీటర్ నూనె కావాలి.",
         "language": "te-IN",
-        "wer": 0.167,
-        "stt_wait_ms": 1515,
-        "tts_first_chunk_ms": 563.0000000001019
+        "wer": 0.0,
+        "stt_wait_ms": 485,
+        "tts_first_chunk_ms": 609.9999999996726
       },
       {
         "label": "english",
         "reference": "I want two packets of Maggi and one Amul butter",
-        "heard": "I want 2 packets of Maggi and 1 Amul butter.",
+        "heard": "I want 2 packets of muge and 1 amul butter.",
         "language": "en-IN",
-        "wer": 0.2,
-        "stt_wait_ms": 1562,
-        "tts_first_chunk_ms": 610.0000000005821
+        "wer": 0.3,
+        "stt_wait_ms": 437,
+        "tts_first_chunk_ms": 578.0000000004293
       },
       {
         "label": "hinglish",
@@ -39,8 +39,8 @@
         "heard": "2 kg आटा और 1 litre oil देना।",
         "language": "hi-IN",
         "wer": 0.875,
-        "stt_wait_ms": 1453,
-        "tts_first_chunk_ms": 452.9999999995198
+        "stt_wait_ms": 438,
+        "tts_first_chunk_ms": 578.9999999997235
       },
       {
         "label": "hindi_number",
@@ -48,8 +48,8 @@
         "heard": "मेरा प्रोजेक्ट का खर्च 1,50,000 रुपये है।",
         "language": "hi-IN",
         "wer": 0.235,
-        "stt_wait_ms": 1500,
-        "tts_first_chunk_ms": 453.0000000004293
+        "stt_wait_ms": 422,
+        "tts_first_chunk_ms": 515.9999999996217
       },
       {
         "label": "english_number",
@@ -57,8 +57,8 @@
         "heard": "The total is 260 rupees.",
         "language": "en-IN",
         "wer": 0.5,
-        "stt_wait_ms": 1500,
-        "tts_first_chunk_ms": 530.9999999999491
+        "stt_wait_ms": 422,
+        "tts_first_chunk_ms": 532.0000000001528
       }
     ]
   }

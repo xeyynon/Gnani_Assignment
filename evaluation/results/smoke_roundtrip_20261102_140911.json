@@ -1,0 +1,65 @@
+{
+  "cmd": "roundtrip",
+  "when": "2026-11-02T14:08:37+05:30",
+  "synthetic_speech_only": true,
+  "data": {
+    "experiment": "E3/E4/E6 roundtrip",
+    "keyterms": "Rice,Basmati rice,Atta,Maida,Suji,Besan,Poha,Sugar,Salt,Jaggery,Toor dal,Moong dal,Chana dal,Urad dal,Rajma,Kabuli chana,Sunflower oil,Groundnut oil,Mustard oil,Coconut oil,Ghee,Milk,Curd,Amul butter,Paneer,Eggs,Bread,Tea powder,Coffee powder,Maggi noodles,Parle-G biscuits,Good Day biscuits,Bhujia namkeen,Potato chips,Rusk,Turmeric powder,Red chilli powder,Coriander powder,Cumin,Mustard seeds,Garam masala,Tamarind,Black pepper,Onion,Potato,Tomato,Garlic,Ginger,Green chilli,Lemon,Bath soap,Detergent powder,Dishwash bar,Toothpaste,Shampoo sachet,Agarbatti,Matchbox,Candles,Mosquito coil,Cold drink,Drinking water,chawal,biyyam,sona masoori,basmati,basmati chawal,aata,wheat flour,gehu ka atta,godhuma pindi,refined flour,sooji,rava,semolina,gram flour,senaga pindi,atukulu,flattened rice,cheeni,chini,chakkera,namak,uppu,gud,gur,bellam,tur dal,arhar dal,kandipappu,mung dal,pesarapappu,senagapappu,minapappu,kidney beans,chole,chickpeas,refined oil,tel,nune,peanut oil,mungfali tel,sarson ka tel,nariyal tel,kobbari nune,neyyi,desi ghee,doodh,dudh,paalu,dahi,yogurt,perugu,butter,makhan,venna,cottage cheese,anda,ande,gudlu,double roti,pav,tea,chai,chai patti,coffee,maggi,noodles,maggie,parle g,parle-g,parleg,biscuit,good day,gooday,bhujia,namkeen,sev,chips,wafers,toast,turmeric,haldi,pasupu,chilli powder,lal mirch,mirchi powder,karam,dhania powder,dhaniya,jeera,jeelakarra,rai,sarson,avalu,masala,imli,chintapandu,kali mirch,miriyalu,pyaz,pyaaz,ullipaya,aloo,alu,bangaladumpa,tamatar,tamata,lahsun,vellulli,adrak,allam,hari mirch,pachimirchi,nimbu,nimmakaya,soap,sabun,nahane ka sabun,sabbu,detergent,washing powder,surf,dishwash,vim,bartan sabun,paste,colgate,shampoo,sachet,incense,agarbathi,machis,match box,aggipetti,candle,mombatti,machhar coil,good knight,soft drink,thums up",
+    "rows": [
+      {
+        "label": "hindi",
+        "reference": "दो किलो आटा और एक लीटर तेल चाहिए",
+        "heard": "2 किलो आटा और 8 लीटर तेल चाहिए।",
+        "language": "hi-IN",
+        "wer": 0.154,
+        "stt_wait_ms": 125,
+        "tts_first_chunk_ms": 484.00000000037835
+      },
+      {
+        "label": "telugu",
+        "reference": "రెండు కిలోల బియ్యం మరియు ఒక లీటర్ నూనె కావాలి",
+        "heard": "రెండు కిలోల biyyam మరియు ఒక లీటర్ నూనె కావాలి.",
+        "language": "te-IN",
+        "wer": 0.167,
+        "stt_wait_ms": 515,
+        "tts_first_chunk_ms": 515.0000000003274
+      },
+      {
+        "label": "english",
+        "reference": "I want two packets of Maggi and one Amul butter",
+        "heard": "I want 2 packets of Maggi and 1 Amul butter.",
+        "language": "en-IN",
+        "wer": 0.2,
+        "stt_wait_ms": 468,
+        "tts_first_chunk_ms": 594.0000000000509
+      },
+      {
+        "label": "hinglish",
+        "reference": "Do kilo atta aur one litre oil dena",
+        "heard": "2 किलो आटा और 1 लीटर oil देना।",
+        "language": "hi-IN",
+        "wer": 1.25,
+        "stt_wait_ms": 406,
+        "tts_first_chunk_ms": 453.0000000004293
+      },
+      {
+        "label": "hindi_number",
+        "reference": "मेरा प्रोजेक्ट का खर्च डेढ़ लाख रुपये है",
+        "heard": "मेरा प्रोजेक्ट का खर्च 1.5 लाख रुपये है।",
+        "language": "hi-IN",
+        "wer": 0.118,
+        "stt_wait_ms": 437,
+        "tts_first_chunk_ms": 516.0000000005311
+      },
+      {
+        "label": "english_number",
+        "reference": "The total is two hundred and sixty rupees",
+        "heard": "The total is 260 rupees.",
+        "language": "en-IN",
+        "wer": 0.5,
+        "stt_wait_ms": 438,
+        "tts_first_chunk_ms": 577.9999999995198
+      }
+    ]
+  }
+}
