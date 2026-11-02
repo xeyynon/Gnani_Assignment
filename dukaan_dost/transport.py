@@ -74,6 +74,13 @@ class Transport:
         """The shop the current call is for, or None (use the default shop)."""
         return None
 
+    def live_calls(self) -> list:
+        """Calls in progress right now, as [{"shop": name, "seconds": how long so far}]."""
+        return []
+
+    def send_event(self, event: dict) -> None:
+        """Tell the caller's page something to show (a transcript line, the order so far). Never blocks; ignored if there is no page."""
+
     def describe(self) -> str:
         """One line telling the operator how to place a call."""
         return self.name

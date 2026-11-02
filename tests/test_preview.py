@@ -66,3 +66,22 @@ def test_the_preview_page_is_served(running):
     transport, _ = running
     status, body = get(transport, f"/s/{preview.SHOP}/dashboard", preview.PIN)
     assert status == 200 and "Demo Kirana" in body
+
+
+def test_the_data_includes_live_calls_for_this_shop_only(running):
+    transport, _ = running
+    transport.add_http_handler(lambda p, h, r: None)       # no effect; keeps the handler list non-empty
+    from dukaan_dost import dashboard
+    calls = lambda: [{"shop": preview.SHOP, "seconds": 12, "who": "secret"}, {"shop": "other", "seconds": 99}]
+    headers = {"Authorization": "Basic " + base64.b64encode(f"shop:{preview.PIN}".encode()).decode()}
+    reply = dashboard.handle(f"/s/{preview.SHOP}/dashboard/data", headers, "t",
+                             shops_root=Path(running[1]) / "shops", orders_root=Path(running[1]) / "orders",
+                             live_calls=calls)
+    assert json.loads(reply.body)["live"] == [{"seconds": 12}]
+
+
+def test_a_failing_call_source_does_not_break_the_dashboard():
+    from dukaan_dost import dashboard
+    def boom():
+        raise RuntimeError("x")
+    assert dashboard._live_for("a", boom) == [] and dashboard._live_for("a", None) == []

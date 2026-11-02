@@ -28,6 +28,15 @@ TITLE = "Demo Kirana"
 PIN = "1111"
 
 
+_STARTED = time.monotonic()
+
+
+def _pretend_calls() -> list:
+    """The preview has no agent, so it shows a made-up call that comes and goes (40 s on, 20 s off)."""
+    t = int(time.monotonic() - _STARTED) % 60
+    return [{"shop": SHOP, "seconds": t}] if t < 40 else []
+
+
 def build(host: str = "127.0.0.1", port: int = 8765):
     """Start the preview server. Returns (transport, temp_dir); the caller closes and deletes them."""
     tmp = Path(tempfile.mkdtemp(prefix="dukaan_preview_"))
@@ -44,7 +53,7 @@ def build(host: str = "127.0.0.1", port: int = 8765):
     transport.configure(default_shop=SHOP, shop_exists=lambda n: shops.exists(n, shops_root),
                         shop_title=lambda n: shops.display_name(n, shops_root))
     transport.add_http_handler(lambda path, headers, remote: dashboard.handle(
-        path, headers, remote, shops_root=shops_root, orders_root=orders_root))
+        path, headers, remote, shops_root=shops_root, orders_root=orders_root, live_calls=_pretend_calls))
     try:
         transport.start()
     except Exception:

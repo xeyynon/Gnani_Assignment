@@ -47,6 +47,21 @@ KNOWLEDGE_FILES = [
 ]
 
 MAX_CONTEXT_CHARS = 1200  # keep the LLM prompt small and fast
+
+# What counts as a letter of a word. Python's \w does not include the vowel signs
+# and other combining marks of Indian scripts (the "ा" of "आटा", the "ి" of
+# "పిండి"), so a plain \w+ cut every Hindi and Telugu word into fragments
+# ("आटा" became "आट") and keyword retrieval was mostly noise for them. The block
+# U+0900-U+0DFF covers Devanagari, Bengali, Gurmukhi, Gujarati, Odia, Tamil,
+# Telugu, Kannada and Malayalam, complete with their marks.
+_WORD_CHARS = r"\w\u0900-\u0DFF"
+_TOKEN = re.compile(rf"[{_WORD_CHARS}]+")
+
+
+def _tokens(text: str) -> set[str]:
+    return set(_TOKEN.findall(text.lower()))
+
+
 CORE_FILENAME = "core/always_on.md"
 
 # path -> (mtime, [sections]). Avoids re-reading and re-splitting every
@@ -96,7 +111,7 @@ def _score_section(section: str, query_words: set[str]) -> int:
     section_lower = section.lower()
     return sum(
         1 for word in query_words
-        if re.search(rf"\b{re.escape(word)}\b", section_lower)
+        if re.search(rf"(?<![{_WORD_CHARS}]){re.escape(word)}(?![{_WORD_CHARS}])", section_lower)
     )
 
 
@@ -115,7 +130,7 @@ def get_relevant_context(shop_dir: Path, transcript: str) -> str:
     transcript and returns the top-matching sections, up to
     MAX_CONTEXT_CHARS. Returns "" if no file has any keyword overlap.
     """
-    query_words = set(re.findall(r"\w+", transcript.lower()))
+    query_words = _tokens(transcript)
     if not query_words:
         return ""
 
@@ -196,8 +211,8 @@ def get_relevant_context_maybe_cached(shop_dir: Path, final_transcript: str) -> 
         cached_context = _speculative_context
 
     if cached_partial and cached_context is not None:
-        partial_words = set(re.findall(r"\w+", cached_partial.lower()))
-        final_words = set(re.findall(r"\w+", final_transcript.lower()))
+        partial_words = _tokens(cached_partial)
+        final_words = _tokens(final_transcript)
         if partial_words and partial_words.issubset(final_words):
             log.debug(f"[KNOWLEDGE] Reusing speculative context (partial: '{cached_partial}')")
             return cached_context

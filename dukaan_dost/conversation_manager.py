@@ -14,6 +14,7 @@ handle_turn_streaming() — yields sentence-sized chunks as Gemini streams
 """
 
 import logging
+import os
 import re
 
 import yaml
@@ -24,7 +25,39 @@ from .validator import validate_reply
 
 log = logging.getLogger("conversation_manager")
 
-_SENTENCE_END = re.compile(r'(?<=[.!?।])\s+')
+# Where a streamed reply is cut into speakable sentences. A full stop is NOT a
+# sentence end after an abbreviation: "Rs. 260 hai" must stay one clip, because
+# each clip is spoken separately with a listening pause between them, and a
+# price split from its currency word is heard as a stumble. Fragments shorter
+# than SENTENCE_MIN_CHARS ("Ji.") are merged into the next sentence, so no clip
+# is a bare syllable. Decimals ("1.5 kg") never match: no whitespace follows
+# the dot. Found by reading the voice-agent tutorial (arXiv 2603.05413), which
+# uses the same two rules.
+_BOUNDARY = re.compile(r'[.!?।]+(?=\s)')
+_NO_SPLIT_AFTER = frozenset({
+    "rs", "inr", "mr", "mrs", "ms", "dr", "sri", "smt", "no", "nos", "st", "vs", "approx",
+})
+SENTENCE_MIN_CHARS = int(os.getenv("SENTENCE_MIN_CHARS", "8"))
+
+
+def next_sentence(buffer: str, min_chars: int | None = None):
+    """
+    The first complete sentence in `buffer`, as (sentence, rest), or None when
+    the buffer holds no finished sentence yet. A sentence ends at . ! ? or the
+    Hindi danda followed by whitespace, except after an abbreviation or when it
+    would be shorter than min_chars.
+    """
+    min_chars = SENTENCE_MIN_CHARS if min_chars is None else min_chars
+    for m in _BOUNDARY.finditer(buffer):
+        before = buffer[:m.start()].split()
+        last_word = before[-1].lower().strip("(\"'") if before else ""
+        if m.group(0) == "." and last_word in _NO_SPLIT_AFTER:
+            continue
+        sentence = buffer[:m.end()].strip()
+        if len(sentence) < min_chars:
+            continue
+        return sentence, buffer[m.end():].lstrip()
+    return None
 
 # 2026-08-17: an earlier version of this function split the first
 # sentence early at its first comma to start TTS sooner (measured
@@ -182,13 +215,11 @@ class ConversationManager:
             buffer += chunk
 
             while True:
-                m = _SENTENCE_END.search(buffer)
-                if not m:
+                found = next_sentence(buffer)
+                if found is None:
                     break
-                sentence = buffer[:m.start() + 1].strip()
-                buffer = buffer[m.end():]
-                if sentence:
-                    yield sentence, reply_language
+                sentence, buffer = found
+                yield sentence, reply_language
 
         remainder = buffer.strip()
         if remainder:

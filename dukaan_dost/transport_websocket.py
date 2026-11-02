@@ -17,6 +17,9 @@ Protocol (one call at a time; a second visitor is told "busy"):
     page -> server   binary: 16 kHz mono s16le PCM, any chunk size
                      text:   {"type": "played", "id": N}   clip N finished or was stopped
     server -> page   text:   {"type": "ready"} | {"type": "busy"} | {"type": "stop"}
+                             {"type": "user", "text": ..., "lang": ...}   what the caller said
+                             {"type": "agent", "reply": N, "text": ...}   a sentence the agent is about to say
+                             {"type": "order", "items": [...], "total": N} the order so far (not sent yet)
                      binary: 4-byte big-endian clip id, then a WAV file to play
 
 The pipeline's threads are plain threads, so the asyncio server runs on its
@@ -74,6 +77,7 @@ class _Session:
         self.id = sid
         self.ws = ws
         self.shop = shop
+        self.started = time.monotonic()
         self.closed = threading.Event()
         self.lock = threading.Lock()
         self.pending = {}            # clip id -> Event set when the page confirms it
@@ -169,6 +173,12 @@ class WebSocketTransport(Transport):
         if shop and self._http_handlers:
             text += f" (shopkeeper dashboard: {base}dashboard)"
         return text
+
+    def live_calls(self) -> list:
+        s = self._session
+        if s is None or s.closed.is_set():
+            return []
+        return [{"shop": s.shop or self._default_shop, "seconds": int(time.monotonic() - s.started)}]
 
     def call_shop(self):
         s = self._session
@@ -319,6 +329,15 @@ class WebSocketTransport(Transport):
         except Exception as e:
             log.debug(f"[CALL] send failed: {e}")
             return False
+
+    def send_event(self, event: dict) -> None:
+        s = self._session
+        if s is None or s.closed.is_set() or self._loop is None:
+            return
+        try:                                               # fire and forget: a slow page must never stall the pipeline
+            asyncio.run_coroutine_threadsafe(s.ws.send(json.dumps(event)), self._loop)
+        except Exception as e:
+            log.debug(f"[CALL] event not sent: {e}")
 
     def find_call(self):
         s = self._session
