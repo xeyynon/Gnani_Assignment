@@ -2,7 +2,7 @@
 llm_provider.py
 
 Chooses the language model with the LLM_PROVIDER environment variable: "gemini" (default) or
-"groq" (see llm_groq.py). Both expose ask(), stream() and warmup(); conversation_manager.py and
+"groq" (see llm_groq.py). Both expose ask(), ask_json(), stream() and warmup(); conversation_manager.py and
 app.py import from here and never from a specific backend.
 """
 
@@ -23,6 +23,7 @@ else:
 log.info(f"[LLM-PROVIDER] Using backend: {LLM_PROVIDER}")
 
 ask = _backend.ask
+ask_json = _backend.ask_json
 stream = _backend.stream
 warmup = _backend.warmup
 api_key = _backend.api_key

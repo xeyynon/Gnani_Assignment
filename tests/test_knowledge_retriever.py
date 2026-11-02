@@ -29,16 +29,17 @@ def test_words_in_indian_scripts_are_kept_whole(text, words):
 
 
 @pytest.mark.parametrize("query, section, expected", [
-    ("आटा chahiye", ATTA, 1),                    # Hindi word, vowel sign at the end
-    ("గోధుమ పిండి ఇవ్వండి", ATTA, 2),            # two Telugu words
-    ("atta kitne ka hai", ATTA, 1),
-    ("aata", ATTA, 1),
+    ("आटा chahiye", ATTA, 3),                    # Hindi word in the heading: 3
+    ("గోధుమ పిండి ఇవ్వండి", ATTA, 6),            # two Telugu words in the heading
+    ("atta kitne ka hai", ATTA, 3),
+    ("aata", ATTA, 2),                           # only in the "Also called" line: 2
+    ("5", ATTA, 1),                              # only in the body: 1
     ("चीनी", ATTA, 0),                           # a different product does not match
-    ("चीनी", SUGAR, 1),
+    ("चीनी", SUGAR, 3),
     ("confirm", CONFIRM, 0),                     # whole words only: confirm is not confirmation
     ("confirmation", CONFIRM, 1),
 ])
-def test_scoring_matches_whole_words_in_every_script(query, section, expected):
+def test_scoring_matches_whole_words_in_every_script_and_weights_the_name(query, section, expected):
     assert kr._score_section(section, kr._tokens(query)) == expected
 
 
@@ -63,3 +64,21 @@ def test_a_speculative_result_is_reused_when_the_final_transcript_extends_the_pa
     (kn / "products_pricing.md").write_text(ATTA, encoding="utf-8")
     kr.prefetch_relevant_context(tmp_path, "आटा")
     assert "Atta" in kr.get_relevant_context_maybe_cached(tmp_path, "आटा do kilo")
+
+
+@pytest.mark.parametrize("request_text, first_heading", [
+    ("what is the price of ghee?", "## Ghee"),
+    ("add one ghee", "## Ghee"),
+    ("I want a kilo of dragon fruit and two packets of Parle-G", "## Parle-G biscuits"),
+])
+def test_everyday_words_do_not_outrank_the_product_asked_for(request_text, first_heading):
+    shop = Path(__file__).resolve().parent.parent / "shops" / "dukaan_dost"
+    assert kr.get_relevant_context(shop, request_text).startswith(first_heading)
+
+
+def test_a_message_of_only_everyday_words_does_not_fail(tmp_path):
+    kn = tmp_path / "knowledge"
+    kn.mkdir()
+    (kn / "faq.md").write_text("## The price\nthe price is fixed", encoding="utf-8")
+    kr.get_relevant_context(tmp_path, "what is the")
+    assert kr.get_relevant_context(tmp_path, "") == ""

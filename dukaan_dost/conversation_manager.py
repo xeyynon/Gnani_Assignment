@@ -20,7 +20,9 @@ import re
 import yaml
 
 from .knowledge_retriever import get_core_context, get_relevant_context_maybe_cached
-from .llm_provider import ask as gemini_ask, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
+from . import order_turn
+from . import stock as _stock
+from .llm_provider import ask as gemini_ask, ask_json as gemini_ask_json, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
 from .validator import validate_reply
 
 log = logging.getLogger("conversation_manager")
@@ -100,6 +102,19 @@ class ConversationManager:
         }
 
         self.core_context = get_core_context(shop_dir)
+
+        # A shop with a stock.json takes orders through the order flow (order_turn.py): the model
+        # says which items and how many, the code checks the stock and does all the sums.
+        try:
+            self.stock_items = _stock.load(shop_dir)
+        except FileNotFoundError:
+            self.stock_items = []
+        except (ValueError, OSError, KeyError) as e:
+            log.warning(f"[ORDER] {shop_dir.name}: the stock list is unusable, order taking is off: {e}")
+            self.stock_items = []
+        # the JSON note needs more room than plain speech; gpt-oss models spend part of the budget reasoning first
+        self.order_tokens = int(os.getenv("ORDER_LLM_TOKENS") or (700 if llm_model.startswith("openai/gpt-oss") else 260))
+        self.order_temperature = float(os.getenv("ORDER_LLM_TEMP", "0.2"))   # reading an order is extraction, not chat
 
     def _fallback_for(self, detected_language: str) -> str:
         key = (detected_language or "en-in").lower()
@@ -191,7 +206,64 @@ class ConversationManager:
 
         return reply, detected_language or "en-IN"
 
-    def handle_turn_streaming(self, transcript: str, recent_history: list[dict], context: str, detected_language: str):
+    def _closing_for(self, payment, language):
+        """The shop's fixed sentence for when payment has been chosen (config: order_closing, order_closing_credit)."""
+        table = self.config.get("order_closing_credit" if payment == "udhaar" else "order_closing") or {}
+        table = {str(k).lower(): v for k, v in table.items()}
+        return table.get((language or "en-in").lower()) or table.get("en-in")
+
+    def _order_turn(self, transcript: str, recent_history: list[dict], context: str, detected_language: str, order):
+        """
+        One turn of order taking: ask the model for a JSON note (items, quantities, payment, finish, a
+        short reply), apply it to `order` (which checks the stock list and does the sums), and yield
+        the reply as sentences, with the amounts written by the code.
+        """
+        examples = [(it["sku"], it["name"]["en"], it["unit"]) for it in self.stock_items[:2]]
+        full_context = "\n\n".join(part for part in (
+            context, order_turn.prompt_section(examples), order.state_for_model()) if part)
+        messages, _ = self._build_messages(transcript, recent_history, full_context, detected_language)
+        reply_language = detected_language or "en-IN"
+
+        raw = gemini_ask_json(model=self.llm_model, messages=messages, max_tokens=self.order_tokens,
+                              temperature=self.order_temperature, schema=order_turn.SCHEMA)
+        plan = order_turn.parse_plan(raw)
+        if plan is None and raw.strip():
+            # The model answered in plain words (it tends to when asked for something out of stock). Plain
+            # words cannot be trusted to match the order, so ask once more for the JSON note.
+            log.warning(f"[ORDER] plain text instead of the JSON note, asking again: {raw[:160]!r}")
+            retry = messages + [{"role": "assistant", "content": raw},
+                                {"role": "user", "content": "That was not the JSON object. Answer again with only "
+                                 "the JSON object described above, for the caller's last message."}]
+            raw = gemini_ask_json(model=self.llm_model, messages=retry, max_tokens=self.order_tokens,
+                                  temperature=self.order_temperature, schema=order_turn.SCHEMA)
+            plan = order_turn.parse_plan(raw)
+        if plan is None:
+            log.warning(f"[ORDER] the model's answer was not usable JSON: {raw[:200]!r}")
+            yield self._fallback_for(detected_language), reply_language
+            return
+
+        plan.say = validate_reply(plan.say, self._fallback_for(detected_language), not recent_history,
+                                  language_code=detected_language or "") if plan.say else ""
+        result = order.apply(plan.ops, plan.payment, plan.customer_name, plan.delivery, plan.finish,
+                             language=reply_language)
+        text = order_turn.compose(plan, result, order, detected_language,
+                                  closing=self._closing_for(order.payment, detected_language))
+        if not text:
+            yield self._fallback_for(detected_language), reply_language
+            return
+
+        buffer = text
+        while True:
+            found = next_sentence(buffer)
+            if found is None:
+                break
+            sentence, buffer = found
+            yield sentence, reply_language
+        if buffer.strip():
+            yield buffer.strip(), reply_language
+
+    def handle_turn_streaming(self, transcript: str, recent_history: list[dict], context: str, detected_language: str,
+                              order=None):
         """
         Yields (sentence_chunk, reply_language) tuples as Gemini streams.
 
@@ -202,6 +274,10 @@ class ConversationManager:
         The caller is responsible for validation and history — the full
         reply text must be assembled from the yielded chunks.
         """
+        if order is not None and self.stock_items:
+            yield from self._order_turn(transcript, recent_history, context, detected_language, order)
+            return
+
         messages, _ = self._build_messages(transcript, recent_history, context, detected_language)
         reply_language = detected_language or "en-IN"
 
