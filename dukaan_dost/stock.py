@@ -82,20 +82,23 @@ def render_products_md(items) -> str:
 
 def keyterms(items, limit: int = 200) -> list:
     """
-    Words to boost in Prisma: Latin-script names and aliases (HTTP headers are ASCII). Every
-    item's main name comes first, then the aliases, so the cap of 200 cuts aliases and never
-    a whole product.
+    Words to boost in Prisma: each product's main English name (HTTP headers are ASCII, so
+    Hindi and Telugu names cannot be sent anyway).
+
+    Deliberately NOT the Latin-script aliases ("biyyam", "chawal"). Tried on the real service
+    on 2026-11-02: boosting 200 terms including those aliases fixed "Maggi" and "Amul" but also
+    turned the Telugu word for rice into Latin "biyyam" and misheard "एक लीटर" as "8 लीटर".
+    Boosting only the 61 main names fixed the brands with no such damage. A small test (six
+    synthetic sentences), so treat it as a direction; the evaluation repeats it properly.
     """
-    main = [re.sub(r"\s*\(.*?\)", "", it["name"]["en"]).strip() for it in items]
-    aliases = [a for it in items for a in it["aliases"]]
     out, seen = [], set()
-    for c in main + aliases:
-        c = " ".join(c.split())
-        key = c.lower()
-        if len(c) < 3 or key in seen or not c.isascii() or "," in c:
+    for it in items:
+        name = " ".join(re.sub(r"\s*\(.*?\)", "", it["name"]["en"]).split())
+        key = name.lower()
+        if len(name) < 3 or key in seen or not name.isascii() or "," in name:
             continue
         seen.add(key)
-        out.append(c)
+        out.append(name)
         if len(out) >= limit:
             break
     return out

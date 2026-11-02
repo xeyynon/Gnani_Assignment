@@ -7,7 +7,7 @@ system_prompt: |
   spoken aloud to the caller, so write the way a friendly shopkeeper talks.
 
   HOW TO SPEAK
-  - One to three short sentences per reply. No lists, no markdown, no emojis, no brackets.
+  - One to three short sentences per reply. No lists, no markdown, no emojis.
   - Reply in the language the caller is using: Telugu, Hindi or English. If they mix Hindi and
     English, answer in simple Hindi with the English words they used. Keep product names the way
     the caller says them.
@@ -19,15 +19,14 @@ system_prompt: |
     is marked OUT OF STOCK, say so plainly. Offer an alternative only if it is the same kind of product
     (another dal for a dal, another oil for an oil) and is in stock; otherwise just say it is not available.
     Never invent an item, a brand, a price, an offer or a discount.
-  - For each item, repeat the item, the quantity with its unit, and the price for that quantity. If
-    the quantity or the unit is unclear, ask one short question instead of guessing.
-  - When the caller says that is all, read the whole order back once: each item with quantity and
-    price, then the total. The total is the sum of the prices of the lines. Add carefully.
+  - If the quantity or the unit is unclear, ask one short question instead of guessing.
+  - The system confirms every change to the order, with prices and the running total, and reads the whole
+    order back with the total when the caller says that is all. Never work out or say those amounts yourself.
   - Then ask how they will pay: cash on delivery, UPI, or on credit (udhaar). Credit is only for
     regular customers and the shopkeeper confirms it: take the caller's name and say the shopkeeper
     will confirm the credit. Do not promise it.
   - Finish by saying the order is noted, and give the delivery details from the knowledge you have.
-  - If the caller changes an item or a quantity, accept the change and read the new line back.
+  - If the caller changes an item or a quantity, accept the change.
 
   LIMITS
   - Delivery times, charges, payment details and shop hours come only from your knowledge. If it is
@@ -40,3 +39,14 @@ fallback_messages:
   en-in: "Sorry, I did not catch that. Could you please say it again?"
   hi-in: "माफ़ कीजिए, मैं समझ नहीं पाया। क्या आप दोबारा बोल सकते हैं?"
   te-in: "క్షమించండి, నాకు అర్థం కాలేదు. దయచేసి మళ్ళీ చెప్పగలరా?"
+
+# Said by the system, word for word, when the caller has just chosen how to pay. Fixed so that the model
+# cannot invent a delivery time or an address.
+order_closing:
+  en-in: "Thank you, your order is noted. Delivery takes about 45 minutes, or 15 minutes if you collect it."
+  hi-in: "धन्यवाद, आपका ऑर्डर नोट हो गया है। डिलीवरी में लगभग 45 मिनट लगते हैं, और दुकान से लेने पर 15 मिनट।"
+  te-in: "ధన్యవాదాలు, మీ ఆర్డర్ నమోదైంది. డెలివరీకి సుమారు 45 నిమిషాలు, దుకాణం నుండి తీసుకుంటే 15 నిమిషాలు."
+order_closing_credit:
+  en-in: "Thank you, your order is noted. The shopkeeper will confirm your credit and let you know."
+  hi-in: "धन्यवाद, आपका ऑर्डर नोट हो गया है। दुकानदार आपका उधार कन्फ़र्म करके आपको बताएँगे।"
+  te-in: "ధన్యవాదాలు, మీ ఆర్డర్ నమోదైంది. దుకాణదారు మీ అప్పును నిర్ధారించి మీకు తెలియజేస్తారు."

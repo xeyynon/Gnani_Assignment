@@ -78,6 +78,7 @@ from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from dukaan_dost.validator import validate_reply
 from dukaan_dost.spoken_history import SpokenTracker
+from dukaan_dost.order_session import OrderSession
 from dukaan_dost import stock as _stock
 from dukaan_dost.stt_provider import set_keyterms as _set_stt_keyterms
 from dukaan_dost.llm_provider import LLM_PROVIDER as _LLM_PROVIDER, warmup as _llm_warmup
@@ -846,6 +847,10 @@ _hist_lock  = threading.Lock()
 # Which sentences of each reply the caller actually heard, so an interrupted reply is
 # remembered as what was heard and not as what was queued (dukaan_dost/spoken_history.py).
 _spoken     = SpokenTracker()
+# The order being taken on the current call (order_session.py). Created when a call starts, written
+# to orders/<shop>/ when it ends. None while no call is up or the shop has no stock list.
+_order      = None
+_order_lock = threading.Lock()
 
 # Bumped at every call boundary. Queued audio and queued replies carry
 # the generation they belong to, so work that began during one call can
@@ -954,6 +959,39 @@ def _set_active_shop() -> None:
     _active_shop = shop
     log.info(f"[SHOP] Call is for {shop!r}")
     _boost_product_names(shop)
+    _start_order(shop)
+
+
+def _start_order(shop: str) -> None:
+    """A new, empty order for the call that just started (if the shop has a stock list)."""
+    global _order
+    try:
+        items = _get_conv_mgr(shop).stock_items
+    except Exception as e:
+        log.warning(f"[ORDER] could not start an order for {shop!r}: {e}")
+        items = []
+    session = OrderSession(shop, items, listener=_transport.send_event) if items else None
+    with _order_lock:
+        _order = session
+
+
+def _finish_order(reason: str) -> None:
+    """The call is over: write the order to orders/<shop>/ (if anything was ordered) and drop it."""
+    global _order
+    with _order_lock:
+        session, _order = _order, None
+    if session is None:
+        return
+    try:
+        record = session.close()
+    except Exception as e:
+        log.error(f"[ORDER] could not save the order for call {session.call_id}: {e}", exc_info=True)
+        return
+    if record is None:
+        log.info(f"[ORDER] {reason}: nothing was ordered, no order file written.")
+    else:
+        log.info(f"[ORDER] {reason}: saved order {record['call_id']} for {session.shop!r} "
+                 f"({len(record['items'])} item(s), total {record['total']}, status {record['status']}).")
 
 
 def _boost_product_names(shop: str) -> None:
@@ -981,6 +1019,7 @@ def _device_name():
 
 def _clear_history(reason=""):
     global _last_reply_wav, _last_reply_lang, _no_speech_apologized, _locked_language_code
+    _finish_order(reason or "history cleared")          # write the finished call's order before its state goes
     # 2026-07-31: _no_speech_apologized and _locked_language_code used
     # to be set here BEFORE acquiring _hist_lock, while processor_thread
     # writes them without any lock at all — despite a comment elsewhere
@@ -1636,7 +1675,7 @@ def _ask_streaming(transcript: str, language_code: str):
     with _hist_lock:
         recent = list(_history[-(LLM_HISTORY * 2):])
 
-    yield from _get_conv_mgr().handle_turn_streaming(transcript, recent, context, language_code)
+    yield from _get_conv_mgr().handle_turn_streaming(transcript, recent, context, language_code, order=_order)
 
 
 # ─────────────────────────────────────────────────────
@@ -3331,6 +3370,8 @@ def main():
     log.info("Ready — waiting for a call. Press Ctrl+C to stop.")
     while not _shutdown.is_set():
         time.sleep(0.5)
+
+    _finish_order("shutdown")       # a call still in progress keeps its order
 
     # A playback in flight blocks playback_thread inside communicate()
     # for up to PLAY_TIMEOUT_SEC, so it cannot observe _shutdown,

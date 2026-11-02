@@ -155,6 +155,22 @@ def ask(model: str, messages: list[dict], max_tokens: int, temperature: float) -
         return ""
 
 
+def ask_json(model: str, messages: list[dict], max_tokens: int, temperature: float, schema: dict | None = None) -> str:
+    """Blocking call in JSON mode (the order turns): the JSON text, or "" on failure. `schema` is not used here yet:
+    the JSON mime type alone is asked for."""
+    client = _get_client()
+    system_instruction, turns = _split_system_and_turns(messages)
+    config = _make_config(model, max_tokens, temperature)
+    config.system_instruction = system_instruction
+    config.response_mime_type = "application/json"
+    try:
+        response = with_retry(lambda: client.models.generate_content(model=model, contents=turns, config=config))
+        return (response.text or "").strip()
+    except Exception as e:
+        log.error(f"[GEMINI] {e}")
+        return ""
+
+
 def stream(model: str, messages: list[dict], max_tokens: int, temperature: float):
     """
     Streaming call — yields text chunks as Gemini generates them.

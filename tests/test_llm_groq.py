@@ -270,3 +270,89 @@ def test_gemini_without_credentials_still_reports_and_mentions_groq(app, monkeyp
     monkeypatch.delenv("GOOGLE_CLOUD_PROJECT", raising=False)
     message = app._llm_problem()
     assert "GEMINI_API_KEY" in message and "LLM_PROVIDER=groq" in message
+
+
+# ---- JSON mode ---------------------------------------------------------------------------------------
+
+def test_json_mode_asks_for_a_json_object(monkeypatch):
+    with FakeGroq([(200, {}, completion('{"a": 1}'))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("m", MESSAGES, 50, 0.1) == '{"a": 1}'
+    assert s.requests[0]["body"]["response_format"] == {"type": "json_object"}
+    assert s.requests[0]["body"]["stream"] is False
+
+
+def test_plain_ask_does_not_ask_for_json(monkeypatch):
+    with FakeGroq([(200, {}, completion("hello"))]) as s:
+        point_at(s, monkeypatch)
+        llm_groq.ask("m", MESSAGES, 50, 0.1)
+    assert "response_format" not in s.requests[0]["body"]
+
+
+def test_when_the_model_answers_in_plain_text_in_json_mode_that_text_is_handed_back_without_a_retry(monkeypatch):
+    refusal = json.dumps({"error": {"message": "Failed to generate JSON.", "type": "invalid_request_error",
+                                    "code": "json_validate_failed",
+                                    "failed_generation": "Paneer aaj stock mein nahi hai."}}).encode()
+    with FakeGroq([(400, {}, refusal), (200, {}, completion("{}"))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("m", MESSAGES, 50, 0.1) == "Paneer aaj stock mein nahi hai."
+    assert len(s.requests) == 1                      # asking the same thing again would fail the same way
+
+
+def test_other_400_errors_still_fail_and_retry(monkeypatch):
+    other = json.dumps({"error": {"code": "invalid_api_key", "message": "bad key"}}).encode()
+    with FakeGroq([(400, {}, other), (400, {}, other)]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("m", MESSAGES, 50, 0.1) == ""
+    assert len(s.requests) == 2
+
+
+def test_a_400_in_plain_mode_is_not_treated_as_a_plain_text_answer(monkeypatch):
+    refusal = json.dumps({"error": {"code": "json_validate_failed", "failed_generation": "x"}}).encode()
+    with FakeGroq([(400, {}, refusal), (400, {}, refusal)]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask("m", MESSAGES, 50, 0.1) == ""
+
+
+SCHEMA = {"type": "object", "properties": {"a": {"type": "number"}}, "required": ["a"], "additionalProperties": False}
+
+
+def test_a_schema_is_sent_as_strict_structured_output(monkeypatch):
+    with FakeGroq([(200, {}, completion('{"a": 1}'))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("some-model", MESSAGES, 50, 0.1, schema=SCHEMA) == '{"a": 1}'
+    assert s.requests[0]["body"]["response_format"] == {
+        "type": "json_schema", "json_schema": {"name": "answer", "strict": True, "schema": SCHEMA}}
+
+
+def test_a_model_that_refuses_schemas_gets_plain_json_mode_and_is_remembered(monkeypatch):
+    unsupported = json.dumps({"error": {"code": "invalid_request_error",
+                                        "message": "json_schema is not supported with this model"}}).encode()
+    monkeypatch.setattr(llm_groq, "_schema_unsupported", set())
+    with FakeGroq([(400, {}, unsupported), (200, {}, completion('{"a": 1}')), (200, {}, completion('{"a": 2}'))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("old-model", MESSAGES, 50, 0.1, schema=SCHEMA) == '{"a": 1}'
+        assert llm_groq.ask_json("old-model", MESSAGES, 50, 0.1, schema=SCHEMA) == '{"a": 2}'
+    assert s.requests[0]["body"]["response_format"]["type"] == "json_schema"
+    assert s.requests[1]["body"]["response_format"] == {"type": "json_object"}
+    assert s.requests[2]["body"]["response_format"] == {"type": "json_object"}      # remembered: no second refusal
+
+
+def test_without_a_schema_json_mode_is_unchanged(monkeypatch):
+    with FakeGroq([(200, {}, completion("{}"))]) as s:
+        point_at(s, monkeypatch)
+        llm_groq.ask_json("m", MESSAGES, 50, 0.1)
+    assert s.requests[0]["body"]["response_format"] == {"type": "json_object"}
+
+
+def test_a_reasoning_model_always_gets_room_to_reason(monkeypatch):
+    with FakeGroq([(200, {}, completion("ok")), (200, {}, completion("ok"))]) as s:
+        point_at(s, monkeypatch)
+        llm_groq.ask("openai/gpt-oss-20b", MESSAGES, 100, 0.1)
+        llm_groq.ask("some-other-model", MESSAGES, 100, 0.1)
+    assert s.requests[0]["body"]["max_tokens"] == llm_groq.REASONING_ROOM >= 400
+    assert s.requests[1]["body"]["max_tokens"] == 100
+
+
+def test_the_default_model_is_one_this_account_can_use():
+    assert llm_groq.DEFAULT_MODEL == "openai/gpt-oss-20b"

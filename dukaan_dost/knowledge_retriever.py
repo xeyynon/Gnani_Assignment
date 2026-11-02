@@ -62,6 +62,17 @@ def _tokens(text: str) -> set[str]:
     return set(_TOKEN.findall(text.lower()))
 
 
+# Words that say nothing about WHICH product or topic the caller means. Left in, "what is the price of
+# ghee" scored a long generic FAQ section (the, is, price, of) above the one-line ghee section (ghee), and
+# the model was then told, with confidence, that the shop had no ghee. "do" is the Hindi for two.
+_STOPWORDS = frozenset("""
+a an the i me my we you your is are am was were be been of to in on at for from and or it its this that these those
+what which who when where how much many some any please want need can could would will shall do does did
+hai hain ho tha thi ka ki ke ko se me mein main mai aur ya kya kitna kitne kitni chahiye chahie dena dedo de
+bhi to yeh ye woh wo is us isko usko mujhe mera meri mere aap aapka
+""".split())
+
+
 CORE_FILENAME = "core/always_on.md"
 
 # path -> (mtime, [sections]). Avoids re-reading and re-splitting every
@@ -108,11 +119,25 @@ def _score_section(section: str, query_words: set[str]) -> int:
     confirmation" in product tables), diluting the score of the
     section the query is actually about.
     """
-    section_lower = section.lower()
-    return sum(
-        1 for word in query_words
-        if re.search(rf"(?<![{_WORD_CHARS}]){re.escape(word)}(?![{_WORD_CHARS}])", section_lower)
-    )
+    # A word counts 3 when it is in the section's heading (the item's name in three languages), 2 when it is
+    # in the "Also called" line (spellings callers use), 1 anywhere else.
+    lines = section.lower().splitlines()
+    heading = lines[0] if lines else ""
+    also = next((ln for ln in lines if ln.startswith("also called")), "")
+    rest = "\n".join(lines[1:])
+
+    def has(word, text):
+        return re.search(rf"(?<![{_WORD_CHARS}]){re.escape(word)}(?![{_WORD_CHARS}])", text) is not None
+
+    score = 0
+    for word in query_words:
+        if has(word, heading):
+            score += 3
+        elif has(word, also):
+            score += 2
+        elif has(word, rest):
+            score += 1
+    return score
 
 
 def get_core_context(shop_dir: Path) -> str:
@@ -131,6 +156,9 @@ def get_relevant_context(shop_dir: Path, transcript: str) -> str:
     MAX_CONTEXT_CHARS. Returns "" if no file has any keyword overlap.
     """
     query_words = _tokens(transcript)
+    informative = query_words - _STOPWORDS
+    if informative:
+        query_words = informative
     if not query_words:
         return ""
 

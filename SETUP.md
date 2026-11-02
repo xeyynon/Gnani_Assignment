@@ -22,7 +22,8 @@ cp .env.example .env        # then edit .env; never commit it
 | Key | When | Get it from |
 |---|---|---|
 | `GNANI_API_KEY` | `STT_PROVIDER=gnani` and/or `TTS_PROVIDER=gnani` | https://app.gnani.ai/voice |
-| `GEMINI_API_KEY` | The language model, with no Google Cloud project needed | https://aistudio.google.com/apikey |
+| `GROQ_API_KEY` | The language model when `LLM_PROVIDER=groq` (what `.env` uses for now) | https://console.groq.com/keys |
+| `GEMINI_API_KEY` | The language model when `LLM_PROVIDER=gemini`, with no Google Cloud project needed | https://aistudio.google.com/apikey |
 | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | Gemini on Vertex AI, Google STT or TTS (today's default speech providers) | A Google Cloud project with Speech-to-Text, Text-to-Speech and Vertex AI enabled; then `gcloud auth application-default login` |
 | `SARVAM_API_KEY` | `STT_PROVIDER=sarvam` (today's default) | https://dashboard.sarvam.ai |
 

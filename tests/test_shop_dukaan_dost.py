@@ -97,17 +97,16 @@ def test_an_out_of_stock_item_says_so_in_the_text_the_model_reads(items):
     assert "OUT OF STOCK" in paneer and "in stock" not in paneer.replace("OUT OF STOCK", "")
 
 
-def test_keyterms_are_ascii_unique_and_within_the_prisma_cap(items):
+def test_keyterms_are_the_main_english_names_only(items):
     terms = stock.keyterms(items)
-    assert 100 < len(terms) <= 200
+    assert 50 <= len(terms) <= 70 and len(terms) <= 200
     assert all(t.isascii() and "," not in t and len(t) >= 3 for t in terms)
     assert len({t.lower() for t in terms}) == len(terms)
-    for brand in ("Maggi noodles", "Amul butter", "Parle-G biscuits"):
+    for brand in ("Maggi noodles", "Amul butter", "Parle-G biscuits", "Toor dal"):
         assert brand in terms
-    # no product is dropped by the cap: every item's main name is in
-    for it in items:
-        main = re.sub(r"\s*\(.*?\)", "", it["name"]["en"]).strip()
-        assert main in terms or len(main) < 3
+    # the Latin-script aliases are left out: they made Prisma write Telugu words in Latin letters
+    for alias in ("biyyam", "chawal", "aata", "pasupu"):
+        assert alias not in terms
 
 
 # ---- the shop folder loads and answers retrieval ---------------------------------------------------
@@ -179,7 +178,7 @@ def test_a_call_gives_the_shops_product_names_to_the_recogniser(app, monkeypatch
     given = []
     monkeypatch.setattr(app, "_set_stt_keyterms", lambda terms: given.append(list(terms)) or len(terms))
     app._boost_product_names("dukaan_dost")
-    assert len(given[0]) == 200 and "Maggi noodles" in given[0]
+    assert 50 <= len(given[0]) <= 70 and "Maggi noodles" in given[0]
 
 
 def test_a_shop_without_a_stock_list_just_gets_no_boosting(app, monkeypatch, tmp_path):
