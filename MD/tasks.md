@@ -146,7 +146,9 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Shopkeeper labels in Hindi and Telugu
 - [x] `python -m dukaan_dost.preview`: look at the dashboard with made-up data and no keys (2026-10-28, InBul13)
 - [ ] Try the dashboard on a real phone
-- [ ] Admin dashboard (next): list shops and their status; add a shop from a template and set its PIN; see errors per shop (failed turns, unreadable files, missing knowledge) and mark them solved; edit a shop's prompt and stock list. Needs writes, so it runs over a WebSocket with JSON commands
+- [x] Admin dashboard, read-only: every shop with a state, totals, and a problem list from file checks (2026-11-02, branch `admin-dashboard`, DEC-042; needs a build)
+- [x] Admin dashboard, writes: add a shop (blank or a copy) with its PIN, set a PIN, edit the instructions and the stock list, mark warnings solved, an activity log (2026-11-03, branch `admin-dashboard`, DEC-042)
+- [ ] Admin dashboard: failed turns per shop (the agent must first write an error log)
 
 ### Step 11: CI/CD (DEC-033; see [ci_cd.md](ci_cd.md))
 - [x] GitHub Actions: CI (tests, lint, repo hygiene, call page, container build), release on `build-*` tags, Dependabot (2026-10-28, InBul12)

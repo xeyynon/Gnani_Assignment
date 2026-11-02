@@ -11,7 +11,8 @@ shops share it (DEC-034): the call link picks the shop.
     GET /s/<shop>/      the call page for that shop (dukaan_dost/web/index.html)
     WS  /s/<shop>/ws    a call for that shop
     GET /, WS /ws       the same for the default shop
-Other HTTP routes (the dashboards) are added with add_http_handler().
+Other HTTP routes (the dashboards) are added with add_http_handler(), and other sockets (the admin page's
+commands) with add_ws_handler().
 
 Protocol (one call at a time; a second visitor is told "busy"):
     page -> server   binary: 16 kHz mono s16le PCM, any chunk size
@@ -150,6 +151,7 @@ class WebSocketTransport(Transport):
         self._shop_exists = None        # callable(name) -> bool; None accepts any valid name
         self._shop_title = None         # callable(name) -> str shown on the call page
         self._http_handlers = []
+        self._ws_handlers = {}          # path -> async handler(ws), for sockets that are not calls (the admin page)
 
     def configure(self, default_shop=None, shop_exists=None, shop_title=None) -> None:
         """Tell the server which shops exist and what to call them."""
@@ -160,6 +162,10 @@ class WebSocketTransport(Transport):
     def add_http_handler(self, handler) -> None:
         """handler(path, headers, remote_address) -> a Reply-like object, or None to pass."""
         self._http_handlers.append(handler)
+
+    def add_ws_handler(self, path: str, handler) -> None:
+        """An async handler(ws) for WebSocket connections to an exact path. It is responsible for its own sign-in."""
+        self._ws_handlers[path] = handler
 
     # -- lifecycle --------------------------------------------------------
 
@@ -260,6 +266,9 @@ class WebSocketTransport(Transport):
                 return self._html(connection, reply.status, reply.body.decode("utf-8"),
                                   reply.content_type, reply.headers)
 
+        if path in self._ws_handlers:
+            return None                                       # carry on with the WebSocket handshake; the handler checks who is asking
+
         shop, is_ws = None, False
         if path == "/ws":
             is_ws = True
@@ -282,6 +291,10 @@ class WebSocketTransport(Transport):
         return self._html(connection, 200, body.replace("{{SHOP}}", html_escape(self._title(shop))))
 
     async def _handle(self, ws) -> None:
+        handler = self._ws_handlers.get(ws.request.path.split("?", 1)[0])
+        if handler is not None:
+            await handler(ws)
+            return
         m = SHOP_ROUTE.match(ws.request.path.split("?", 1)[0])
         shop = m.group("shop") if m else None
         with self._session_lock:

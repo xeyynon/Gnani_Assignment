@@ -4,18 +4,6 @@ function itemsSummary(items, max) {
   const more = (items || []).length - max;
   return parts.join(', ') + (more > 0 ? ' +' + more + ' more' : '');
 }
-function relTime(iso, now) {
-  const t = new Date(iso), n = now || new Date();
-  if (isNaN(t)) return '';
-  const mins = Math.round((n - t) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return mins + ' min ago';
-  const clock = t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-  if (t.toDateString() === n.toDateString()) return Math.round(mins / 60) + ' h ago, ' + clock;
-  const y = new Date(n); y.setDate(n.getDate() - 1);
-  if (t.toDateString() === y.toDateString()) return 'yesterday ' + clock;
-  return t.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' ' + clock;
-}
 function callStatus(live) {                  // [{seconds}] -> the line shown at the top
   if (!live || !live.length) return 'No call right now';
   const s = live[0].seconds, t = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
@@ -25,8 +13,6 @@ function limitUsed(balance, limit) { return limit > 0 ? Math.max(0, Math.min(1, 
 const STATUS = { confirmed: 'Confirmed', credit_pending: 'Credit pending', incomplete: 'Incomplete' };
 function statusLabel(s) { return STATUS[s] || 'Confirmed'; }
 function paymentLabel(p) { return { cash: 'Cash', upi: 'UPI', udhaar: 'On credit' }[p] || (p || ''); }
-function menuOpen(stored) { return stored !== 'closed'; }       // the menu is open unless it was hidden on purpose
-function greeting(hour) { return hour < 12 ? 'Good morning!' : hour < 17 ? 'Good afternoon!' : 'Good evening!'; }
 function change(now, before, label) {         // today against yesterday -> {text, dir}; no percentage from a zero
   label = label || 'vs yesterday';
   now = Number(now) || 0; before = Number(before) || 0;

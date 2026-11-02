@@ -6,7 +6,7 @@ Three pages, all served by the agent on one port. Two exist; the admin one is pl
 |---|---|---|---|
 | Call page | `/s/<shop>/` (and `/` for the default shop) | The caller | Built (Build 1002) |
 | Shopkeeper dashboard | `/s/<shop>/dashboard` | The shop's owner, with the shop's PIN | Built (Build 1003) |
-| Admin dashboard | `/admin` | You, with the admin password | Planned (DEC-034) |
+| Admin dashboard | `/admin` | You, with the admin password | Built (DEC-042): overview, problems, add a shop, edit a shop, activity |
 
 ## Design system (both pages)
 One palette, chosen 2026-11-02: solid cards on a soft page, **Kirana Green** `#16803D` as the brand colour, blue for sales and "processing", violet for credit (udhaar), amber for pending, red for errors and the end-call button (`#DC2626`). Status is always a coloured pill **with a label**, never colour alone. Cards have a 14 px radius, buttons 9 px, a 1 px `#E2E8F0` border and a very light shadow; no gradients. Dark themes follow the device. Text is Inter when installed, otherwise the system font (the pages load nothing from outside, so Inter cannot be fetched). The tokens live in `components/shared/tokens.css`, one copy for both pages.
@@ -104,8 +104,18 @@ Adding a component: write `components/<page or shared>/<name>.{html,css,js}`, ad
 
 **See it without keys:** `python -m dukaan_dost.preview` serves just the dashboard with a made-up shop (password `1111`) from a temporary folder.
 
-## Admin dashboard (planned)
-List shops and their status; add a shop from a template and set its PIN; see each shop's errors and mark them solved; edit a shop's prompt and stock list. It needs writes, which the server's HTTP layer can't take as request bodies, so the page will talk over a WebSocket with JSON commands (no new dependency).
+## Admin dashboard (DEC-042)
+`dukaan_dost/web/admin.html` (a template; components under `components/admin/`). Server: `admin.py` (sign-in, data, the command socket), `admin_actions.py` (every change, testable on a temp folder), `shop_health.py` (the checks).
+- **Sign-in:** user `admin` and `ADMIN_PASSWORD` only. A shop's PIN never opens it. With no password set every admin route answers 503 and says how to set one (it fails closed). Five wrong guesses lock the address for a minute.
+- **Overview:** four tiles across every shop (Shops with how many are ready, need attention or are broken; Calls now; To fix, with errors and warnings; Orders today), then one card per shop: name and link, a state pill (Ready, Needs attention, Broken, always with the word), orders today, the last order ("no orders yet" rather than a date), a live-call chip, badges for "no PIN" and problems, and buttons: Edit, Shop dashboard, Call page. **No money** appears: sales and credit are the shopkeeper's business, not the admin's.
+- **Problems:** every problem from every shop, errors first, from file checks (an unreadable `config.yaml`, no system prompt or English fallback, missing always-on or topic knowledge, a missing, unreadable or empty stock list, no PIN, unreadable order files). A **warning can be marked solved** (it moves to "Marked solved" with an Undo and stops counting); an **error cannot**, because the shop cannot work until it is fixed. Problem ids are stable (`shop:code`).
+- **Add a shop:** a name, a link name (suggested from the name and checked as you type), start blank or as a copy of any shop that is not broken, and a PIN (typed, or a 6 digit one is made). The PIN is shown once, because it is stored scrambled and cannot be read back. The shop is built in a hidden folder and renamed into place in one step, so the agent never sees a half-made shop, and an existing shop is never overwritten.
+- **Edit a shop** (`#edit/<name>`): the shop's name and instructions (a copy of the previous `config.yaml` is kept as `config.yaml.bak`; its comments are dropped), a new PIN, and the stock list: change prices and availability, remove items, add an item (Hindi and Telugu names required, a unit, at least one English-letter alias). The whole stock list is checked before it is written, and `knowledge/products_pricing.md` is rewritten from it. A running agent drops its cached copy of the shop, so the **next call** uses the change; a call in progress keeps what it has.
+- **Changes go over a WebSocket** (`/admin/ws`) as JSON commands, because the HTTP layer cannot read request bodies. A page first fetches a short-lived random token (`/admin/token`, a signed-in request) and sends it as its first message; the socket also refuses any connection whose Origin is not this server, which stops a page on another site from driving it. Commands are rate limited (60 a minute).
+- **Not offered, on purpose:** deleting a shop (nothing is deleted from disk by any admin action), showing a PIN again, marking an error solved, failed turns per shop (the agent does not record them yet, and a list built from guesses would be worse than none).
+- **Same components as the shop dashboard.** The page frame, side menu, top bar, tiles, pills, lists, forms, polling, theme and view switcher are in `components/shared/` and used by both pages. The view switcher treats every `[data-page]` as a view and reads `#edit/alpha` as view `edit`, part `alpha`.
+- Try it without keys: `python -m dukaan_dost.preview`, then `/admin` (user `admin`, password `admin1111`). The preview has three made-up shops (one ready, one with no PIN, one broken) and everything on the page works on them, in a temporary folder that is deleted when it stops.
+- **Checked** by driving the real page in headless Chrome through 20 flows (create, refuse a duplicate, generated PIN, edit instructions, refuse an empty prompt, add and change and remove stock, set a PIN, mark solved and undo, a hostile shop name shown as text), and for sideways scrolling.
 
 ## Rules for all of them
 - Synthetic data only in screenshots and the video (R-2).

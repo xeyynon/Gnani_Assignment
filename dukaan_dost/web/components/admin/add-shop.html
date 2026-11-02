@@ -1,0 +1,25 @@
+      <section class="panel" aria-labelledby="h-add">
+        <div class="ph"><h2 id="h-add" tabindex="-1"><svg class="i"><use href="#i-plus"/></svg>Add a shop</h2></div>
+        <form id="addform" novalidate>
+          <div class="field"><label for="add-title">Shop name</label>
+            <input type="text" id="add-title" maxlength="60" autocomplete="off">
+            <span class="hint">What callers hear and what the pages show.</span></div>
+          <div class="field"><label for="add-name">Link name</label>
+            <input type="text" id="add-name" maxlength="40" autocomplete="off" spellcheck="false" aria-describedby="add-name-hint">
+            <span class="hint" id="add-name-hint">The shop's address will be /s/<span id="add-name-show">...</span>/ . Lower case letters, digits, - and _.</span></div>
+          <div class="field"><label for="add-template">Start from</label>
+            <select id="add-template"><option value="blank">A blank shop (you add the stock and the knowledge)</option></select>
+            <span class="hint">Copying a shop brings its instructions, knowledge and stock list; then edit them.</span></div>
+          <div class="field"><label for="add-pin">Shopkeeper's PIN</label>
+            <input type="text" id="add-pin" autocomplete="off" inputmode="numeric" aria-describedby="add-pin-hint">
+            <span class="hint" id="add-pin-hint">Leave empty and a 6 digit PIN is made for you. It is shown once.</span></div>
+          <div class="btns"><button class="btn primary" id="add-go" type="submit">Create the shop</button></div>
+          <div class="msg" id="add-msg" role="status"></div>
+        </form>
+        <div class="result" id="add-result" hidden>
+          <div><strong id="add-result-title"></strong></div>
+          <p class="muted">The shopkeeper's PIN, shown only now. It is stored scrambled and cannot be read back; you can set a new one later.</p>
+          <div class="pinshow" id="add-result-pin"></div>
+          <div class="btns" id="add-result-links"></div>
+        </div>
+      </section>
