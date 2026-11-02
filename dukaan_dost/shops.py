@@ -42,6 +42,18 @@ def list_shops(root: Path | None = None) -> list:
     return sorted(p.name for p in base.iterdir() if valid_name(p.name) and (p / "config.yaml").is_file())
 
 
+def list_folders(root: Path | None = None) -> list:
+    """Every folder under shops/ that has a valid shop name, whether or not it has a config.yaml.
+
+    list_shops() only counts a folder once it has a config.yaml, which is right for the agent (it can only
+    serve a shop it can load). The admin needs the wider list: a folder whose config.yaml went missing or was
+    never written is exactly the shop that needs attention, and must not simply vanish from view."""
+    base = root or SHOPS_DIR
+    if not base.is_dir():
+        return []
+    return sorted(p.name for p in base.iterdir() if p.is_dir() and valid_name(p.name))
+
+
 def display_name(name: str, root: Path | None = None) -> str:
     """The shop's spoken and shown name: `display_name` in config.yaml, else the folder name in title case."""
     fallback = name.replace("_", " ").replace("-", " ").title()

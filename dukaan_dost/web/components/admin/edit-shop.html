@@ -1,0 +1,46 @@
+      <div class="pagehead"><h2 id="edit-title" tabindex="-1">Edit shop</h2>
+        <p class="muted"><a href="#overview">All shops</a> <span id="edit-links"></span></p></div>
+
+      <section class="panel" aria-labelledby="h-instr">
+        <div class="ph"><h3 id="h-instr"><svg class="i"><use href="#i-chat"/></svg>Name and instructions</h3></div>
+        <div class="field"><label for="ed-title">Shop name</label><input type="text" id="ed-title" maxlength="60" autocomplete="off"></div>
+        <div class="field"><label for="ed-prompt">Instructions for the agent</label>
+          <textarea id="ed-prompt" rows="16" spellcheck="false" aria-describedby="ed-prompt-hint"></textarea>
+          <span class="hint" id="ed-prompt-hint">What the agent is told about this shop on every call. A copy of the previous config.yaml is kept as config.yaml.bak, and its comments are dropped. Applies to the next call.</span></div>
+        <div class="btns"><button class="btn primary" id="ed-save" type="button">Save name and instructions</button></div>
+        <div class="msg" id="ed-msg" role="status"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-pin">
+        <div class="ph"><h3 id="h-pin"><svg class="i"><use href="#i-key"/></svg>Shopkeeper's PIN</h3></div>
+        <div class="field"><label for="ed-pin">New PIN</label>
+          <input type="text" id="ed-pin" autocomplete="off" inputmode="numeric" aria-describedby="ed-pin-hint">
+          <span class="hint" id="ed-pin-hint">Type one (at least 4 characters), or leave empty and press the button for a made-up 6 digit PIN. The old PIN stops working.</span></div>
+        <div class="btns"><button class="btn primary" id="ed-setpin" type="button">Set the PIN</button></div>
+        <div class="msg" id="ed-pin-msg" role="status"></div>
+        <div class="result" id="ed-pin-result" hidden><p class="muted">The new PIN, shown only now:</p><div class="pinshow" id="ed-pin-show"></div></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-stock">
+        <div class="ph"><h3 id="h-stock"><svg class="i"><use href="#i-box"/></svg>Stock list</h3></div>
+        <div class="tablewrap"><table class="stocktable">
+          <thead><tr><th scope="col">Item</th><th scope="col">Price (rupees)</th><th scope="col">In stock</th><th scope="col">Remove</th></tr></thead>
+          <tbody id="ed-stock"></tbody></table></div>
+        <div class="btns"><button class="btn primary" id="ed-stock-save" type="button">Save stock changes</button></div>
+        <div class="msg" id="ed-stock-msg" role="status"></div>
+
+        <details class="addbox"><summary>Add an item</summary>
+          <form id="itemform" novalidate>
+            <div class="field"><label for="it-sku">Item code</label><input type="text" id="it-sku" maxlength="31" autocomplete="off" spellcheck="false"><span class="hint">Capital letters, digits and -, for example SUGAR-1KG.</span></div>
+            <div class="field"><label for="it-en">Name in English</label><input type="text" id="it-en" autocomplete="off"></div>
+            <div class="field"><label for="it-hi">Name in Hindi</label><input type="text" id="it-hi" autocomplete="off"></div>
+            <div class="field"><label for="it-te">Name in Telugu</label><input type="text" id="it-te" autocomplete="off"></div>
+            <div class="field"><label for="it-unit">Sold by</label><select id="it-unit"></select></div>
+            <div class="field"><label for="it-price">Price (rupees)</label><input type="number" id="it-price" min="0" step="any" inputmode="decimal"></div>
+            <div class="field"><label for="it-aliases">How callers say it, in English letters</label><input type="text" id="it-aliases" autocomplete="off"><span class="hint">Separate with commas, for example sugar, cheeni.</span></div>
+            <p class="hint">Hindi and Telugu names should be checked by someone who speaks them.</p>
+            <div class="btns"><button class="btn primary" id="it-add" type="submit">Add to the stock list</button></div>
+            <div class="msg" id="it-msg" role="status"></div>
+          </form>
+        </details>
+      </section>

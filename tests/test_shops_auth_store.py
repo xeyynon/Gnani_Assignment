@@ -301,3 +301,15 @@ def test_same_time_figures_skip_incomplete_orders_in_sales(tmp_path):
     store.write_order("alpha", sample_order("half", NOW - timedelta(days=1, hours=3), total=999, status="incomplete"), tmp_path)
     s = store.snapshot("alpha", NOW, tmp_path)["summary"]
     assert s["orders_yesterday_same_time"] == 1 and s["sales_yesterday_same_time"] == 0
+
+
+def test_list_folders_includes_a_shop_with_no_config_but_list_shops_does_not(tmp_path):
+    (tmp_path / "ok").mkdir()
+    (tmp_path / "ok" / "config.yaml").write_text("system_prompt: x", encoding="utf-8")
+    (tmp_path / "noconfig").mkdir()
+    (tmp_path / "Bad Name").mkdir()
+    (tmp_path / "a").mkdir()                                  # too short to be a shop name
+    (tmp_path / "README.md").write_text("not a shop", encoding="utf-8")
+    assert shops.list_shops(tmp_path) == ["ok"]
+    assert shops.list_folders(tmp_path) == ["noconfig", "ok"]
+    assert shops.list_folders(tmp_path / "missing") == []

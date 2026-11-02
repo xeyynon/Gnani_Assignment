@@ -79,6 +79,12 @@ def check_pin(shop: str, pin: str, path: Path | None = None) -> bool:
     return hmac.compare_digest(_hash(pin, salt), expected)
 
 
+def check_admin_configured() -> bool:
+    """Is an admin password set at all? (The placeholder from local_config.example.py does not count.)"""
+    configured = os.environ.get("ADMIN_PASSWORD", "")
+    return bool(configured) and not configured.startswith("your-")
+
+
 def check_admin(password: str) -> bool:
     configured = os.environ.get("ADMIN_PASSWORD", "")
     if not configured or configured.startswith("your-") or not isinstance(password, str):
