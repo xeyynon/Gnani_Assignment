@@ -1,0 +1,16 @@
+    <section class="panel callcard" id="callcard" data-view="idle" aria-label="Call">
+      <div class="chips">
+        <span class="chip" id="callchip"><span class="dot"></span><span id="calltext">Not on a call</span><b id="timer" hidden>0:00</b></span>
+        <span class="chip" id="lang"><svg class="i" style="width:16px;height:16px"><use href="#i-globe"/></svg><span id="langtext">Language: detected as you speak</span></span>
+      </div>
+      <div class="avatar"><div class="core"><svg class="i"><use href="#i-store"/></svg></div></div>
+      <h2 id="title">Ready when you are</h2>
+      <p id="status" role="status">Press Start call and talk the way you would at the counter.</p>
+      <div id="level" aria-hidden="true"></div>
+      <span id="speaking">Idle</span>
+      <div class="controls">
+        <div class="ctl" id="mutewrap" hidden><button class="round" id="mute" type="button" aria-pressed="false" aria-label="Mute microphone" title="Mute (M)"><svg class="i" id="muteicon"><use href="#i-mic"/></svg></button><span id="mutelabel">Mute (M)</span></div>
+        <div class="ctl" id="startwrap"><button class="startbtn brut" id="start" type="button"><svg class="i"><use href="#i-phone"/></svg>Start call</button></div>
+        <div class="ctl" id="hangwrap" hidden><button class="round end brut" id="hang" type="button" aria-label="End call"><svg class="i"><use href="#i-phone"/></svg></button>End call</div>
+      </div>
+    </section>

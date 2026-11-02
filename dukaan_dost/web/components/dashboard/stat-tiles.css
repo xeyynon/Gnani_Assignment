@@ -1,0 +1,9 @@
+  .tile{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:18px 20px;min-width:0;overflow-wrap:anywhere;background:var(--surface)}
+  .tile .k{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .tile .v{font-family:var(--mono);font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .tile .s{font-size:13px;color:var(--muted)}
+  .s.up{color:var(--green-ink)}.s.down{color:var(--warn)}
+  /* the hero: the one number a shopkeeper opens the page for. Big, blue, with the hard brutalist edge (class brut). */
+  .tile.hero{background:var(--blue-soft)}
+  .tile.hero .ico{background:var(--surface);color:var(--blue)}
+  .tile.hero .v{font-size:clamp(26px,2.8vw,40px);color:var(--blue)}

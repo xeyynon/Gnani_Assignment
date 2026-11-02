@@ -2,9 +2,9 @@
 //   node --test tests/web/
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { composedPage } from "./composed.mjs";
 
-const html = readFileSync(new URL("../../dukaan_dost/web/index.html", import.meta.url), "utf8");
+const html = composedPage("index");
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // The resampler is plain JavaScript; pull it out the same way the page embeds it in the audio worklet.
@@ -69,8 +69,8 @@ test("loud input is clipped, not wrapped around", () => {
 
 // ---- the call screen's own helpers, pulled out the way the dashboard test does ----
 const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers"));
-const { langName, clock, rupees, barHeight } = new Function(
-  `${helperSource}; return { langName, clock, rupees, barHeight };`)();
+const { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey } = new Function(
+  `${helperSource}; return { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey };`)();
 
 test("language names", () => {
   assert.equal(langName("hi-IN"), "Hindi");
@@ -113,4 +113,56 @@ test("the page handles every message the server can send", () => {
   for (const type of ["ready", "busy", "stop", "user", "agent", "order"]) {
     assert.match(script, new RegExp(`m\.type === '${type}'`), `no handler for ${type}`);
   }
+});
+
+// ---- rules both pages follow (docs: MD/frontend.md, "Design system") ----
+const tokenFree = (src) => src.replace(/:root[^{]*\{[^}]*\}/g, "");           // drop the token rules themselves
+
+test("no colour is written outside the tokens", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  const left = tokenFree(style).match(/#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\(/g);
+  assert.equal(left, null, `literal colours outside the token rules: ${left}`);
+});
+
+test("the theme is applied before the page paints, under the same key on both pages", () => {
+  const init = html.match(/<script id="theme-init">([\s\S]*?)<\/script>/);
+  assert.ok(init, "missing the head script that sets the saved theme");
+  assert.ok(html.indexOf('id="theme-init"') < html.indexOf("<style>"), "the theme script must run before the CSS");
+  assert.match(init[1], /dd:theme/);
+  assert.match(script, /localStorage\.setItem\('dd:theme'/);
+  new Function(init[1]);
+});
+
+test("dark tokens apply by device unless Light is chosen, and when Dark is chosen", () => {
+  assert.match(html, /prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)\{/);
+  assert.match(html, /:root\[data-theme="dark"\]\{/);
+});
+
+test("touch targets are 44px on a coarse pointer", () => {
+  assert.match(html, /@media \(pointer:coarse\)\{[^}]*min-height:44px/);
+});
+
+test("theme and shortcut helpers", () => {
+  assert.equal(nextTheme("auto"), "light");
+  assert.equal(nextTheme("light"), "dark");
+  assert.equal(nextTheme("dark"), "auto");
+  assert.equal(nextTheme("nonsense"), "auto");
+  assert.equal(themeLabel("dark"), "Dark");
+  assert.equal(themeLabel(undefined), "Auto");
+  const key = (over) => ({ target: { tagName: "BODY" }, ...over });
+  assert.equal(isPlainKey(key({})), true);
+  assert.equal(isPlainKey(key({ ctrlKey: true })), false);       // browser shortcuts still work
+  assert.equal(isPlainKey(key({ metaKey: true })), false);
+  assert.equal(isPlainKey(key({ altKey: true })), false);
+  assert.equal(isPlainKey(key({ repeat: true })), false);        // holding a key must not flap the theme
+  assert.equal(isPlainKey(key({ defaultPrevented: true })), false);
+  assert.equal(isPlainKey(key({ target: { tagName: "INPUT", type: "text" } })), false);   // never while typing
+  assert.equal(isPlainKey(key({ target: { tagName: "TEXTAREA" } })), false);
+  assert.equal(isPlainKey(key({ target: { tagName: "INPUT", type: "checkbox" } })), true);
+});
+
+test("a button that disappears hands keyboard focus on, and Mute shows its key", () => {
+  assert.match(script, /focusIfLost\(\$\('hang'\)\)/);
+  assert.match(script, /focusIfLost\(\$\('start'\)\)/);
+  assert.match(html, /Mute \(M\)/);
 });

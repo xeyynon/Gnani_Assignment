@@ -1,0 +1,3 @@
+  .hello{margin-top:22px}
+  .hello h2{font-size:clamp(24px,4vw,30px);letter-spacing:-.01em}
+  .hello p{color:var(--muted)}

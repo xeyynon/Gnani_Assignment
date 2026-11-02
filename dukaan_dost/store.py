@@ -65,6 +65,18 @@ def write_order(shop: str, order: dict, root: Path | None = None) -> Path:
     return path
 
 
+def write_order_text(shop: str, call_id: str, text: str, root: Path | None = None) -> Path:
+    """A readable copy of the order (order_<call_id>.txt) next to the JSON; the dashboards only read the JSON."""
+    if not ID_RE.match(str(call_id)):
+        raise ValueError(f"{call_id!r} is not a valid call id")
+    path = shop_orders_dir(shop, root) / f"order_{call_id}.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+    return path
+
+
 def write_loan(shop: str, loan: dict, root: Path | None = None) -> Path:
     path = _record_path(shop, "loan", loan["call_id"], root)
     _atomic_write(path, {**loan, "type": "loan", "shop": shop})
@@ -167,6 +179,11 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
         return sum(1 for o in orders if o["_when"].astimezone(IST).date() == day)
 
     yesterday = today - timedelta(days=1)
+    # Yesterday only up to this time of day, so "vs yesterday" compares like with like: at 10 am today is not
+    # measured against a whole day of sales.
+    same_time = now - timedelta(days=1)
+    yesterday_so_far = [o for o in orders if o["_when"].astimezone(IST).date() == yesterday
+                        and o["_when"].astimezone(IST) <= same_time]
     trend = [{"date": (today - timedelta(days=n)).isoformat(), "sales": day_sales(today - timedelta(days=n)),
               "orders": day_orders(today - timedelta(days=n))} for n in range(6, -1, -1)]
 
@@ -179,6 +196,9 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
             "orders_total": len(orders),
             "orders_yesterday": day_orders(yesterday),
             "sales_yesterday": day_sales(yesterday),
+            "orders_yesterday_same_time": len(yesterday_so_far),
+            "sales_yesterday_same_time": sum(_int(o.get("total")) for o in yesterday_so_far
+                                             if o.get("status") != "incomplete"),
             "udhaar_outstanding": sum(c["balance"] for c in owing),
             "customers_owing": len(owing),
             "loans_today": sum(1 for l in loans if l["_when"].astimezone(IST).date() == today),

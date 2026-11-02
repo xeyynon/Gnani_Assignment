@@ -1,0 +1,5 @@
+  /* Brutalism, as an accent and never the base: a thick border and a hard offset shadow, on the few things that matter most
+     (the call button, End call, the hero number). It presses in when clicked. Everything else stays quiet. */
+  .brut{border:2px solid var(--brut);box-shadow:var(--hard-shadow)}
+  .brut:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--brut)}
+  @media (prefers-reduced-motion:no-preference){.brut{transition:transform .08s,box-shadow .08s}}

@@ -1,0 +1,7 @@
+  .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none}
+  .ico svg{width:24px;height:24px}
+  .ico.green{background:var(--green-soft);color:var(--green)}
+  .ico.blue{background:var(--blue-soft);color:var(--blue)}
+  .ico.credit{background:var(--credit-soft);color:var(--credit)}
+  .ico.amber{background:var(--amber-soft);color:var(--amber)}
+  .ico.warn{background:var(--warn-soft);color:var(--warn)}

@@ -1,0 +1,5 @@
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+  td.q{color:var(--muted);white-space:nowrap;padding-left:10px}
+  .order-total{font-family:var(--mono);display:flex;justify-content:space-between;margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--green-soft);font-weight:700;font-variant-numeric:tabular-nums}

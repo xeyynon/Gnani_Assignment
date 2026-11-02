@@ -46,6 +46,7 @@ from pathlib import Path
 
 from websockets.asyncio.server import serve
 
+from . import webpage
 from .shops import valid_name
 from .transport import Capture, PlaybackTimeout, Transport
 
@@ -274,8 +275,9 @@ class WebSocketTransport(Transport):
         if is_ws:
             return None                                       # carry on with the WebSocket handshake
         try:
-            body = PAGE_PATH.read_text(encoding="utf-8")
-        except OSError:
+            body = webpage.load(PAGE_PATH)                    # the page, with its components stitched in
+        except (OSError, webpage.ComponentError) as e:
+            log.error(f"[CALL] the call page could not be built: {e}")
             return connection.respond(HTTPStatus.INTERNAL_SERVER_ERROR, "The call page is missing.\n")
         return self._html(connection, 200, body.replace("{{SHOP}}", html_escape(self._title(shop))))
 

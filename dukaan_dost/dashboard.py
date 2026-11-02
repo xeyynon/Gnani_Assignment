@@ -22,7 +22,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import auth, shops, store
+from . import auth, shops, store, webpage
 
 PAGE_PATH = Path(__file__).parent / "web" / "dashboard.html"
 ROUTE = re.compile(r"^/s/(?P<shop>[^/]+)/dashboard(?P<data>/data)?/?$")
@@ -97,5 +97,8 @@ def handle(path: str, headers, remote: str, shops_root: Path | None = None,
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return Reply(200, "application/json; charset=utf-8", body, dict(SECURITY_HEADERS))
 
-    page = PAGE_PATH.read_text(encoding="utf-8").replace("{{SHOP}}", html.escape(title))
+    try:
+        page = webpage.load(PAGE_PATH).replace("{{SHOP}}", html.escape(title))     # the page, with its components stitched in
+    except (OSError, webpage.ComponentError):
+        return _text(500, "The dashboard page could not be built.")
     return Reply(200, "text/html; charset=utf-8", page.encode("utf-8"), dict(SECURITY_HEADERS))

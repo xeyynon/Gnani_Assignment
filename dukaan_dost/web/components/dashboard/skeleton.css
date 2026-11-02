@@ -1,0 +1,2 @@
+  .skel{background:var(--line);border-radius:8px;opacity:.7}
+  @media (prefers-reduced-motion:no-preference){.skel{animation:skel 1.4s ease-in-out infinite}@keyframes skel{50%{opacity:.45}}}

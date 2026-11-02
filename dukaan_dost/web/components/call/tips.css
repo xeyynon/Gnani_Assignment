@@ -1,0 +1,5 @@
+  .tips{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:15px}
+  .tips li{display:flex;gap:9px;align-items:flex-start}
+  .tips svg{color:var(--green);margin-top:2px;width:18px;height:18px}
+  .note{margin-top:12px;font-size:13px;color:var(--muted)}
+  @media (min-width:901px){.b-tips .tips{flex-direction:row;flex-wrap:wrap;gap:8px 32px}}

@@ -284,3 +284,20 @@ def test_seeding_fills_the_dashboard_and_reset_wipes_first(tmp_path):
 def test_seeding_refuses_a_bad_shop_name(tmp_path):
     with pytest.raises(ValueError):
         demo_data.seed("../evil", tmp_path)
+
+
+def test_yesterday_is_compared_up_to_the_same_time_of_day(tmp_path):
+    # NOW is 15:30 IST. Yesterday's 10:00 order is before that time; its 18:00 order is not.
+    store.write_order("alpha", sample_order("early", NOW - timedelta(days=1, hours=5, minutes=30), total=100), tmp_path)
+    store.write_order("alpha", sample_order("late", NOW - timedelta(days=1) + timedelta(hours=2, minutes=30), total=400), tmp_path)
+    store.write_order("alpha", sample_order("today", NOW - timedelta(hours=1), total=70), tmp_path)
+    s = store.snapshot("alpha", NOW, tmp_path)["summary"]
+    assert s["orders_yesterday"] == 2 and s["sales_yesterday"] == 500                  # the whole day, as before
+    assert s["orders_yesterday_same_time"] == 1 and s["sales_yesterday_same_time"] == 100
+    assert s["orders_today"] == 1 and s["sales_today"] == 70
+
+
+def test_same_time_figures_skip_incomplete_orders_in_sales(tmp_path):
+    store.write_order("alpha", sample_order("half", NOW - timedelta(days=1, hours=3), total=999, status="incomplete"), tmp_path)
+    s = store.snapshot("alpha", NOW, tmp_path)["summary"]
+    assert s["orders_yesterday_same_time"] == 1 and s["sales_yesterday_same_time"] == 0
