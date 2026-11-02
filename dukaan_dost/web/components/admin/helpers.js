@@ -79,3 +79,54 @@ function changeSummary(c) {                 // "2 prices or availability changed
   if (c.remove.length) bits.push(c.remove.length + ' removed');
   return bits.join(', ');
 }
+
+/* the shops list: filter tabs and search */
+const SHOP_FILTERS = ['all', 'ready', 'attention', 'broken'];
+function filterCounts(shops) {
+  const c = { all: shops.length, ready: 0, attention: 0, broken: 0 };
+  shops.forEach(s => { if (c[s.state] !== undefined) c[s.state]++; else c.attention++; });   // an unknown state counts as needing attention, never as ready
+  return c;
+}
+function filterShops(shops, filter, query) {
+  const q = String(query == null ? '' : query).trim().toLowerCase();
+  return shops.filter(s => (filter === 'all' || !SHOP_FILTERS.includes(filter) || (STATE[s.state] ? s.state : 'attention') === filter)
+    && (!q || String(s.title).toLowerCase().includes(q) || String(s.name).toLowerCase().includes(q)));
+}
+function emptyShopsText(filter, query, total) {
+  const q = String(query == null ? '' : query).trim();
+  if (!total) return 'No shops yet. Each folder under shops/ with a config.yaml is a shop.';
+  if (q) return 'No shop matches "' + q + '".';
+  if (filter !== 'all' && STATE[filter]) return 'No shop is ' + STATE[filter][1].toLowerCase() + '.';
+  return 'No shops to show.';
+}
+function isSearchKey(e) {                   // Ctrl+K or Cmd+K: go to the search box
+  return Boolean(e && !e.shiftKey && !e.altKey && (e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'k');
+}
+function searchHint(platform) { return /mac|iphone|ipad/i.test(String(platform || '')) ? '⌘ K' : 'Ctrl K'; }
+
+/* the banner: shown when something needs attention, and stays dismissed until the numbers change */
+function bannerView(totals, shops) {
+  const n = (totals.errors || 0) + (totals.warnings || 0);
+  if (!n) return null;
+  const affected = shops.filter(s => s.problems > 0).length;
+  return {
+    key: (totals.errors || 0) + '/' + (totals.warnings || 0),
+    title: totals.errors ? 'Some shops cannot take calls properly' : 'Some shops need a look',
+    sub: problemSub(totals) + ' across ' + plural(affected, 'shop', 'shops') + '.'
+  };
+}
+function bannerHidden(view, dismissedKey) { return !view || dismissedKey === view.key; }
+
+/* the activity list */
+const ACTIVITY = { create_shop: 'Shop added', set_pin: 'PIN changed', save_prompt: 'Instructions saved', save_stock: 'Stock saved', dismiss: 'Marked solved', restore: 'Brought back' };
+function activityLabel(kind) { return ACTIVITY[kind] || String(kind || 'Change'); }
+function activityWhere(entry, shops) {      // "Alpha Kirana" for a known shop, the plain name for one that is gone, "" for none
+  if (!entry.shop) return '';
+  const s = shops.find(x => x.name === entry.shop);
+  return s ? s.title : entry.shop;
+}
+
+/* the link a caller opens for a shop (what "Copy call link" copies) */
+function callLink(origin, name) { return String(origin || '').replace(/\/+$/, '') + '/s/' + name + '/'; }
+function previewCount(list, n) { return Array.isArray(list) ? list.slice(0, n) : []; }        // the first few of a list, for a panel that links to the rest
+function viewAllText(total, shown) { return total > shown ? 'View all ' + total : 'View all'; }

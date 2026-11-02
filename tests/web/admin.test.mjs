@@ -5,13 +5,15 @@ import assert from "node:assert/strict";
 import { composedPage } from "./composed.mjs";
 
 const html = composedPage("admin");
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).sort((a, b) => b.length - a.length)[0];   // the main one, not the tiny head scripts
 
 const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers ---- */"));
 const { stateView, severityView, plural, liveText, shopSub, problemSub, validShopId, slugify, shopIdProblem, pinProblem, parseAliases,
-  newItem, newItemProblem, stockChanges, changeSummary, STOCK_UNITS, rupees, relTime } = new Function(
+  newItem, newItemProblem, stockChanges, changeSummary, STOCK_UNITS, filterCounts, filterShops, emptyShopsText, isSearchKey, searchHint,
+  bannerView, bannerHidden, activityLabel, activityWhere, callLink, previewCount, viewAllText, rupees, relTime } = new Function(
   `${helperSource}; return { stateView, severityView, plural, liveText, shopSub, problemSub, validShopId, slugify, shopIdProblem, pinProblem, parseAliases,
-  newItem, newItemProblem, stockChanges, changeSummary, STOCK_UNITS, rupees, relTime };`)();
+  newItem, newItemProblem, stockChanges, changeSummary, STOCK_UNITS, filterCounts, filterShops, emptyShopsText, isSearchKey, searchHint,
+  bannerView, bannerHidden, activityLabel, activityWhere, callLink, previewCount, viewAllText, rupees, relTime };`)();
 
 test("the page script is valid JavaScript", () => {
   new Function(script);
@@ -82,10 +84,10 @@ test("the shared formatters work here too", () => {
 });
 
 test("the menu names the sections, and nothing in it is a placeholder", () => {
-  for (const v of ["overview", "problems", "add"]) assert.match(html, new RegExp(`class="nav" href="#${v}" data-view="${v}"`));
+  for (const v of ["overview", "problems", "activity", "add"]) assert.match(html, new RegExp(`class="nav" href="#${v}" data-view="${v}"`));
   assert.doesNotMatch(html, /aria-disabled="true"/);
   assert.doesNotMatch(html, /class="soon"/);
-  for (const v of ["problems", "add", "edit"]) assert.match(html, new RegExp(`data-page="${v}" hidden`));
+  for (const v of ["problems", "activity", "add", "edit"]) assert.match(html, new RegExp(`data-page="${v}" hidden`));
 });
 
 test("the overview carries no money: that is the shopkeeper's business", () => {
@@ -193,4 +195,128 @@ test("an error has no 'mark solved' button; a warning does", () => {
 
 test("a shop is opened for editing only from a safe address", () => {
   assert.match(script, /\^\[a-z0-9\]\[a-z0-9_-\]\{1,39\}\$\/\.test\(v\.part\)/);
+});
+
+const SHOPS = [
+  { name: "alpha", title: "Alpha Kirana", state: "ready" }, { name: "beta_store", title: "Beta Store", state: "attention" },
+  { name: "gamma", title: "Gamma", state: "broken" }, { name: "delta", title: "Delta Mart", state: "ready" }];
+
+test("the filter tabs count each state, and an unknown state counts as needing attention, never as ready", () => {
+  assert.deepEqual(filterCounts(SHOPS), { all: 4, ready: 2, attention: 1, broken: 1 });
+  assert.deepEqual(filterCounts([{ state: "???" }]), { all: 1, ready: 0, attention: 1, broken: 0 });
+  assert.deepEqual(filterCounts([]), { all: 0, ready: 0, attention: 0, broken: 0 });
+});
+
+test("a tab and the search narrow the shops, and the counts match what a tab shows", () => {
+  assert.equal(filterShops(SHOPS, "all", "").length, 4);
+  assert.deepEqual(filterShops(SHOPS, "ready", "").map(s => s.name), ["alpha", "delta"]);
+  assert.deepEqual(filterShops(SHOPS, "broken", "").map(s => s.name), ["gamma"]);
+  const counts = filterCounts(SHOPS);
+  for (const f of ["ready", "attention", "broken"]) assert.equal(filterShops(SHOPS, f, "").length, counts[f]);
+  assert.deepEqual(filterShops(SHOPS, "all", "  BETA ").map(s => s.name), ["beta_store"]);             // trimmed, any case, name or link
+  assert.deepEqual(filterShops(SHOPS, "all", "beta_s").map(s => s.name), ["beta_store"]);
+  assert.deepEqual(filterShops(SHOPS, "ready", "mart").map(s => s.name), ["delta"]);                    // a tab and a search together
+  assert.deepEqual(filterShops(SHOPS, "broken", "alpha"), []);
+  assert.equal(filterShops(SHOPS, "all", null).length, 4);
+  assert.equal(filterShops(SHOPS, "nonsense", "").length, 4);                                            // an unknown tab shows everything rather than nothing
+});
+
+test("search treats what is typed as text, not as a pattern", () => {
+  assert.deepEqual(filterShops(SHOPS, "all", ".*"), []);
+  assert.deepEqual(filterShops(SHOPS, "all", "("), []);
+});
+
+test("an empty list says why it is empty", () => {
+  assert.match(emptyShopsText("all", "", 0), /No shops yet/);
+  assert.equal(emptyShopsText("all", "zzz", 4), 'No shop matches "zzz".');
+  assert.equal(emptyShopsText("broken", "", 4), "No shop is broken.");
+  assert.equal(emptyShopsText("attention", "", 4), "No shop is needs attention.".replace("is needs attention", "is needs attention"));
+});
+
+test("Ctrl+K and Cmd+K reach the search, and nothing else does", () => {
+  assert.equal(isSearchKey({ key: "k", ctrlKey: true }), true);
+  assert.equal(isSearchKey({ key: "K", metaKey: true }), true);
+  for (const e of [{ key: "k" }, { key: "k", ctrlKey: true, shiftKey: true }, { key: "k", ctrlKey: true, altKey: true }, { key: "j", ctrlKey: true }, null])
+    assert.equal(isSearchKey(e), false, JSON.stringify(e));
+  assert.equal(searchHint("MacIntel"), "⌘ K");
+  assert.equal(searchHint("Win32"), "Ctrl K");
+  assert.equal(searchHint(undefined), "Ctrl K");
+});
+
+test("the notice appears only when something is wrong, and stays dismissed until the numbers change", () => {
+  const shops = [{ problems: 2 }, { problems: 0 }, { problems: 1 }];
+  assert.equal(bannerView({ errors: 0, warnings: 0 }, shops), null);
+  const one = bannerView({ errors: 1, warnings: 2 }, shops);
+  assert.deepEqual(one, { key: "1/2", title: "Some shops cannot take calls properly", sub: "1 error, 2 warnings across 2 shops." });
+  assert.equal(bannerView({ errors: 0, warnings: 1 }, [{ problems: 1 }]).title, "Some shops need a look");
+  assert.equal(bannerView({ errors: 0, warnings: 1 }, [{ problems: 1 }]).sub, "1 warning across 1 shop.");
+  assert.equal(bannerHidden(one, "1/2"), true);                                   // dismissed at these numbers
+  assert.equal(bannerHidden(one, "1/3"), false);                                  // the numbers changed: shown again
+  assert.equal(bannerHidden(one, null), false);
+  assert.equal(bannerHidden(null, null), true);                                   // nothing wrong: nothing to show
+});
+
+test("the activity list uses words a person would, and names a shop by its title", () => {
+  assert.equal(activityLabel("create_shop"), "Shop added");
+  assert.equal(activityLabel("save_stock"), "Stock saved");
+  assert.equal(activityLabel("something_new"), "something_new");
+  assert.equal(activityLabel(undefined), "Change");
+  assert.equal(activityWhere({ shop: "alpha" }, SHOPS), "Alpha Kirana");
+  assert.equal(activityWhere({ shop: "gone" }, SHOPS), "gone");
+  assert.equal(activityWhere({ shop: null }, SHOPS), "");
+});
+
+test("the admin starts dark and a choice made on any page is kept, including 'follow the device'", () => {
+  assert.match(html, /window\.DD_DEFAULT_THEME='dark'/);
+  assert.ok(html.indexOf("DD_DEFAULT_THEME='dark'") < html.indexOf('id="theme-init"'), "the default must be set before the saved theme is read");
+  assert.match(script, /localStorage\.setItem\('dd:theme', t\)/);
+  assert.doesNotMatch(script, /localStorage\.removeItem\('dd:theme'\)/);
+});
+
+test("the dark palette is only in token rules, and the lime accent is the green in dark", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(style, /:root\[data-theme="dark"\]\{[^}]*--green:#C6F135/);
+  assert.match(style, /prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)\{[^}]*--green:#C6F135/);
+});
+
+test("the search box is labelled, takes typing and offers its shortcut", () => {
+  assert.match(html, /<label for="search" class="sr">Search shops<\/label>/);
+  assert.match(html, /<input type="search" id="search"/);
+  assert.match(script, /isSearchKey\(e\)/);
+  assert.match(script, /key === 'Escape'/);
+});
+
+test("the tabs are filters, so they say which one is on", () => {
+  for (const f of ["all", "ready", "attention", "broken"]) assert.match(html, new RegExp(`data-filter="${f}" aria-pressed="${f === "all"}"`));
+  assert.doesNotMatch(html, /role="tab"/);                                       // not claimed as tabs of panels that do not exist
+});
+
+test("the menu has a Workspace label and dismissing the notice hands focus on", () => {
+  assert.match(html, /class="menu-label">Workspace</);
+  assert.match(script, /\$\('h-shops'\)\.focus\(\)/);
+});
+
+test("the call link is the shop's address on this server, with no doubled slash", () => {
+  assert.equal(callLink("http://127.0.0.1:8765", "alpha"), "http://127.0.0.1:8765/s/alpha/");
+  assert.equal(callLink("https://shops.example/", "sri_lakshmi"), "https://shops.example/s/sri_lakshmi/");
+  assert.equal(callLink("", "a1"), "/s/a1/");
+  assert.equal(callLink(undefined, "a1"), "/s/a1/");
+});
+
+test("an overview panel shows the first few and says how many there are in all", () => {
+  assert.deepEqual(previewCount([1, 2, 3, 4, 5, 6], 4), [1, 2, 3, 4]);
+  assert.deepEqual(previewCount([1, 2], 4), [1, 2]);
+  assert.deepEqual(previewCount(undefined, 4), []);
+  assert.deepEqual(previewCount("not a list", 4), []);
+  assert.equal(viewAllText(9, 4), "View all 9");
+  assert.equal(viewAllText(3, 4), "View all");
+  assert.equal(viewAllText(4, 4), "View all");
+});
+
+test("each overview panel links to its full list and the copy button names its shop and has a fallback", () => {
+  assert.match(html, /id="ov-problems-all" href="#problems"/);
+  assert.match(html, /id="ov-activity-all" href="#activity"/);
+  assert.match(script, /'aria-label': 'Copy the call link for '/);
+  assert.match(script, /navigator\.clipboard\.writeText\(url\)/);
+  assert.match(script, /Could not copy automatically\. The link is /);          // no clipboard: the link is shown instead
 });
