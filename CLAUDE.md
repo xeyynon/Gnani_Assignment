@@ -19,7 +19,7 @@ dukaan_dost/   the agent (`python -m dukaan_dost`); app.py is the main process
 shops/         one folder per shop: config.yaml + knowledge/ (file names are fixed); the call link /s/<shop>/ picks the shop
 evaluation/    benchmarks and accuracy tools; results/ is committed
 tests/         offline tests; tests/manual needs real cloud credentials
-scripts/       changelog.mjs
+scripts/       changelog.mjs, check_repo.py, check_docs.py, build_shop_knowledge.py, gnani_smoke_test.py
 MD/            project documentation
 ```
 

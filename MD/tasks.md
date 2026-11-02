@@ -23,7 +23,7 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Prisma v3.0 vs v2.5 on the same clips; `codemix` vs `transcribe`; with and without `x-keyterms`
 - [ ] Check `commit` closes an utterance, and how fast the `transcript` arrives after it
 - [ ] Timbre: check its automatic number reading in Hindi and Telugu (DEC-024); measure its idle timeout
-- [ ] `scripts/gnani_smoke_test.py`: Prisma streaming with latency printed
+- [x] `scripts/gnani_smoke_test.py` written and tested against stand-in servers (2026-11-02): `tts`, `roundtrip` (with `--keyterms`), `stt`, `concurrency`. **Not yet run with a key**
 - [ ] Timbre: Hindi, Telugu and Hinglish WAVs; time to first chunk
 - [ ] Pick the Timbre voice; pick `hi-IN`, `hi-en` or `auto` for Hinglish
 - [ ] Note the credits used per minute of audio
@@ -52,18 +52,28 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Run the same profile on the machine that will run the demo
 - [ ] Only if a function is a visible share of the frame: vectorise it, then consider an optional Cython version with a Python fallback and a parity test
 
+### Step 2e: Fixes found by the research (research_papers.md methods)
+- [x] M1: reply splitter keeps "Rs. 260" in one clip, merges fragments under 8 characters (B-17, `next_sentence()`, 12 tests) (2026-11-02)
+- [x] M2: an interrupted reply is remembered as only what was heard (B-18, `spoken_history.py`, 14 tests) (2026-11-02)
+- [x] Keyword retrieval kept Hindi and Telugu words whole (B-19, 14 tests) (2026-11-02)
+- [x] M5: product names given to Prisma as keyterms when a call starts (2026-11-02)
+- [ ] M4: the rule layer. The model extracts item and quantity; code checks `stock.json`, adds the lines, and writes the order (this is Step 8)
+- [ ] M7: T-WER (English words correct in either script) in the evaluation scoring
+- [ ] M9: count cutoffs and time to first audio together in the evaluation
+- [ ] M8: plain resampling for 8 kHz phone audio, when a phone number exists
+
 ### Step 3: `stt_gnani.py`
-- [ ] Session thread with its own asyncio loop; headers (`x-model: prisma-v3.0`, `lang_code: hi-IN,en-IN,te-IN`); 1,024-byte framing (DEC-023)
-- [ ] `finish()` sends `commit`, collects segments, times out; returns `detected_language_code`
-- [ ] `is_stale` and a concurrency semaphore
-- [ ] Register `STT_PROVIDER=gnani`
-- [ ] `x-keyterms` (≤ 200, JSON-escaped) generated from `products_pricing.md`
+- [x] Session thread with its own asyncio loop; headers sent in **both** spellings (DEC-035); 1,024-byte framing, paced in real time (2026-11-02; tested against a stand-in server only)
+- [x] `finish()` sends `commit` plus trailing silence, joins segments, times out; returns `detected_language_code` (2026-11-02)
+- [x] `is_stale` and a concurrency semaphore (`GNANI_STT_MAX_CONCURRENT_SESSIONS`, default 4 until E5 measures the real cap)
+- [x] Register `STT_PROVIDER=gnani` (2026-11-02)
+- [ ] Generate the keyterms from `products_pricing.md` (needs the shop content). `set_keyterms()` exists; non-ASCII names are skipped because HTTP headers are ASCII
 
 ### Step 4: `tts_gnani.py` and `tts_provider.py`
-- [ ] Warm, persistent WebSocket; one request at a time; recovers after barge-in
-- [ ] `synthesize()` via REST
-- [ ] Thin pre-pass (explicit language, spoken units) per DEC-024, **with unit tests**
-- [ ] `tts_provider.py` (`TTS_PROVIDER`); switch the import in `dukaan_dost/app.py`
+- [ ] Warm, persistent WebSocket. **Not done:** each synthesis opens its own connection (DEC-035). Decide after E2 shows what the handshake costs (B-14)
+- [x] `synthesize()` (2026-11-02): through the documented realtime WebSocket instead of REST, so it reuses the one tested path
+- [x] Thin pre-pass `normalize_text()` with unit tests: `Rs. 260` and `₹45` become `260 rupees` / `45 rupees`, `1,25,000` becomes `125000`. Digits are left to Timbre; spelling them out in Hindi/Telugu waits for E2
+- [x] `tts_provider.py` (`TTS_PROVIDER`); `app.py` imports from it; startup refuses a Gnani provider with no `GNANI_API_KEY` (2026-11-02)
 
 ### Step 5: Gemini with an API key
 - [x] `genai.Client(api_key=…)` when `GEMINI_API_KEY` is set (2026-10-28, Build 1001)
@@ -78,10 +88,12 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Implement it, keeping the per-call language lock
 
 ### Step 7: The shop
-- [ ] `config.yaml` (prompt and fallbacks)
-- [ ] `always_on.md`
-- [ ] `products_pricing.md` (~60 items, Hindi and Telugu names)
-- [ ] `ordering_payment.md`, `delivery_shipping.md`, `faq.md`, the stubs
+- [x] `config.yaml` (prompt and fallbacks in en/hi/te) (2026-11-02)
+- [x] `always_on.md` (2026-11-02)
+- [x] `stock.json` (61 items, English/Hindi/Telugu names, two out of stock) and `products_pricing.md` generated from it by `scripts/build_shop_knowledge.py` (DEC-036, 2026-11-02)
+- [ ] **Surya:** a native speaker checks the Hindi and Telugu names in `stock.json` (B-16)
+- [x] `ordering_payment.md`, `delivery_shipping.md`, `faq.md` and short real content for the other five fixed files (2026-11-02)
+- [ ] Try a real order against the shop with a live Gemini key; tune `system_prompt` (the totals are still worked out by the model, B-15)
 
 ### Step 8: Order summary
 - [ ] Decide how the order state is updated (structured output vs extraction at hang-up) → DEC-006

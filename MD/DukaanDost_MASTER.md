@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-10-28 · **Latest build:** 1003 · **Latest InBul:** InBul12
+**Last updated:** 2026-11-02 · **Latest build:** 1003 · **Latest InBul:** InBul13 · **Uncommitted:** the Gnani backends, the shop content, three fixes and the research (see [session_handover_2026-11-02.md](session_handover_2026-11-02.md))
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -21,19 +21,21 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Area | State |
 |---|---|
 | Base codebase | ✅ In place: the root folder is the latest upstream code (Aug 19, 2026) with client names removed. See [origin.md](origin.md) |
-| Git and versioning | ✅ `main`, with Build 1000 (the baseline) and InBul01 (these docs and the changelog script). See [project_docs_guide.md](project_docs_guide.md) |
+| Git and versioning | ✅ `main`: builds 1000 to 1003 and InBul01 to InBul13, two commits ahead of GitHub. See [project_docs_guide.md](project_docs_guide.md) |
 | Upstream clone out of the folder | ⚠️ The move failed (permission denied); excluded locally meanwhile (DEC-021) |
 | CLAUDE.md in git | ✅ Rewritten without the customer's name and tracked (DEC-022, InBul10) |
 | Repository layout | ✅ Renamed and restructured for Dukaan Dost, ready for a first push (DEC-030). Only a licence choice is left |
-| Gnani API key | ❌ Not registered yet (the config and requirements are ready for it) |
-| Smoke test (Prisma and Timbre) | ❌ Not started |
-| `stt_gnani.py` / `tts_gnani.py` | ❌ Not started |
+| Gnani API key | ❌ Not registered yet. **This blocks every real test** (smoke test, B-07, B-13) |
+| Smoke test (Prisma and Timbre) | 🟡 `scripts/gnani_smoke_test.py` written and tested against stand-in servers; **not run with a key** |
+| `stt_gnani.py` / `tts_gnani.py` / `tts_provider.py` | 🟡 Written (DEC-035), switch with `STT_PROVIDER=gnani` and `TTS_PROVIDER=gnani`; 50 tests against stand-in servers; never run against the real service (B-13) |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a live key run) |
 | Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
 | Shopkeeper dashboard | ✅ Built and checked in a real browser (Build 1003); shows demo data only until the agent writes orders (B-11). Admin dashboard next (DEC-034) |
 | Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
 | Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
-| Shop data (`shops/dukaan_dost/`) | ❌ Not started |
+| Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16); totals still added by the model (B-15) |
+| Research | ✅ [research_papers.md](research_papers.md) (papers and methods M1 to M11) and [pipeline_expectations.md](pipeline_expectations.md) (evidence, targets, experiments E1 to E7) |
+| Fixes from the research | ✅ Price splitting, history after an interruption, Hindi/Telugu retrieval (B-17 to B-19) |
 | Order summary output | ❌ Not started |
 | Evaluation | ❌ Not started |
 | README and SETUP | 🟡 Front page and setup written; results table waits for the eval |
@@ -74,6 +76,9 @@ The live checklist is in [tasks.md](tasks.md).
 | [pain.md](pain.md) | The user's pain and ours |
 | [ci_cd.md](ci_cd.md) | You want the GitHub Actions pipelines, what they check, the one-time GitHub setup and the first push |
 | [deployment.md](deployment.md) | Running it, keys and settings |
+| [pipeline_expectations.md](pipeline_expectations.md) | You want what each stage should do, the evidence, our targets, and the first experiments to run |
+| [research_papers.md](research_papers.md) | You want published papers behind each design choice, and where the literature has gaps |
+| [session_handover_2026-11-02.md](session_handover_2026-11-02.md) | You want the newest hand-over: what was done, what is uncommitted, what is next |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
 | [origin.md](origin.md) | What we inherit from the upstream project |
 | [tried_and_failed.md](tried_and_failed.md) | Approaches that didn't work (not models) |

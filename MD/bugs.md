@@ -44,8 +44,27 @@ The agent does not write orders, loan summaries or credit balances yet, so the s
 ### B-12 · Open (risk) · Sign-in is Basic auth, safe only on localhost or https
 The PIN travels in an HTTP header. On plain http across a network it can be read. The server binds `127.0.0.1` by default; for anything else put TLS in front.
 
+### B-13 · Open (risk) · The Gnani backends have never talked to the real service
+`stt_gnani.py` and `tts_gnani.py` follow the protocol on docs.gnani.ai (read 2026-11-02) and pass 50 tests against stand-in servers that follow the same pages, so they show the code matches the docs, not that the service matches the docs. Known doubts: the Prisma v3.0 model page and the WebSocket page name the headers differently (`x-model`/`lang_code` vs `model`/`language_code`; both are sent); the model page does not mention `commit` though the WebSocket page documents it (trailing silence is sent as a fallback); whether `format=transcribe` suits Hindi and Telugu numbers. Closed by running `scripts/gnani_smoke_test.py` with a key. Needs the key from app.gnani.ai/voice.
+
+### B-14 · Open (risk) · Every TTS sentence opens a new WebSocket
+Each synthesis connects, sends one request and closes (the docs advise one request at a time, and it keeps two sentences from sharing a socket). The TLS and WebSocket handshake adds to time to first audio on every sentence. Unmeasured: experiment E2 shows the cost. If large, keep a small pool of warm connections.
+
+### B-15 · Open · Order totals are still added up by the model
+The shop's prompt tells Gemini to add the line prices carefully, but the rule is that money is computed in code and the model only speaks it (research_papers.md: the model can still get a sum wrong). The code that does it (Step 8: check each item against `stock.json`, add the lines, hand the model the total) is not built. Until it is, a total can be wrong. The evaluation must count wrong totals.
+
+### B-16 · Open · The Hindi and Telugu product names have not been checked by a native speaker
+The names in `shops/dukaan_dost/stock.json` were written by the assistant. Some may be unnatural or wrong. Matters most for Telugu (the "Main Character" award). A wrong name makes retrieval miss that item for a caller who uses the correct word.
+
 ## Fixed, uncommitted
-_None._
+### B-17 · Fixed (uncommitted) · A price was split from its currency word
+The reply splitter cut at every full stop followed by a space, so "Atta ka rate Rs. 260 hai." became "Atta ka rate Rs." and "260 hai.", each spoken as a separate clip with a listening pause between them. `next_sentence()` now skips full stops after abbreviations (Rs, Mr, No, ...) and merges fragments shorter than 8 characters into the next sentence. 12 tests (`tests/test_sentence_split.py`).
+
+### B-18 · Fixed (uncommitted) · An interrupted reply was remembered as fully heard
+The history stored the whole generated reply even when the caller cut in after the first sentence, so the model carried on as if the unheard part had been said ("sugar added"). `spoken_history.py` records which sentences' audio clips played to the end; after an interruption the history keeps only those (a sentence cut off part-way counts as not heard), or drops the turn if nothing was heard. Hooked into the processor and playback threads in `app.py` (one call per place a reply is abandoned). 14 tests (`tests/test_spoken_history.py`); the thread wiring itself is checked by a source test because the threads can't run in a unit test.
+
+### B-19 · Fixed (uncommitted) · Hindi and Telugu words were cut into pieces by keyword retrieval
+`\w+` does not include the vowel signs of Indian scripts, so "आटा" was read as "आट" and the knowledge search was mostly noise for Hindi and Telugu callers. The retriever now treats the Unicode block U+0900 to U+0DFF as word characters. 14 tests (`tests/test_knowledge_retriever.py`).
 
 ## Fixed
 ### B-01 · Fixed in Build 1001 · The startup check missed the example placeholder

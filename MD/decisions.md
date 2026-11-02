@@ -162,3 +162,26 @@ Surya asked for two dashboards: an **admin** dashboard (oversee everything, add 
 - **The admin dashboard needs writes** (add a shop, resolve an error). The server's HTTP layer can't read request bodies, so the plan is to drive the admin page over a WebSocket with JSON commands, which needs no new dependency. Not built yet.
 - **Not built:** the agent doesn't write orders yet (DEC-027 build steps 7 and 8), so until it does the dashboard shows only demo data (`python -m dukaan_dost.demo_data <shop>`), clearly marked as made up (B-11).
 - **Risk to the schedule:** the dashboards and multi-shop support compete with the Gnani integration and the evaluation, which is what the contest judges.
+
+### DEC-035 · Gnani speech backends: how they are built (2026-11-02)
+`stt_gnani.py`, `tts_gnani.py` and `tts_provider.py` follow the same interfaces as the Sarvam and Google backends, selected by `STT_PROVIDER=gnani` and `TTS_PROVIDER=gnani`. Choices, each made from the live docs (read 2026-11-02) and the research in `research_papers.md`:
+- **One WebSocket per utterance (STT), one per sentence (TTS).** The app does its own end-of-speech detection and hands over one utterance at a time, as it did for Sarvam. Simple, and a failed connection can't poison the next turn. Cost: a handshake each time (B-14).
+- **Both header spellings are sent.** The docs disagree with themselves on the names; the WebSocket page says the new name wins when both are sent, so sending both is safe.
+- **Audio pacing.** Frames are exactly 1,024 bytes and sent no faster than real time, except a 0.5 s head start for the recorder's pre-roll (`GNANI_STT_BURST_ALLOWANCE_SEC`), because the docs warn that sustained bursts hurt the server's voice detection.
+- **End of utterance = `commit` plus 0.6 s of trailing silence.** `commit` is documented on the WebSocket page; the silence is a fallback if a server ignores it. Done when every segment the server started has produced its transcript and a short grace (0.3 s) has passed with nothing new.
+- **Language.** No language given: Prisma gets the hint list `hi-IN,en-IN,te-IN` and reports `detected_language_code`. A language given (the app's per-call lock): that one code only. Results tagged with a language the deployment doesn't serve are dropped as noise, as with Sarvam.
+- **TTS over the WebSocket, not REST.** `synthesize()` collects the same stream and wraps it in a 16 kHz WAV, so there is one tested path. It retries once.
+- **Speech text.** `normalize_text()` only handles rupee amounts and Indian digit grouping. Spelling digits as words in Hindi and Telugu is deliberately not built until E2 shows whether Timbre v3.0 needs it (DEC-024).
+- **Keyterms** come from `set_keyterms()`, ASCII only (HTTP headers), capped at 200. Hindi/Telugu script product names can't be boosted this way.
+- **Concurrency.** A semaphore, default 4 sessions, until experiment E5 measures the account's real cap.
+- **Not proven.** Everything above is checked against stand-in servers only (B-13).
+
+### DEC-036 · The shop's stock list is `stock.json`; everything else is generated from it (2026-11-02)
+`shops/<name>/stock.json` is the one source of truth for what a shop sells: SKU, English/Hindi/Telugu names, Latin-script aliases, unit, pack, price, in-stock. `scripts/build_shop_knowledge.py` writes `knowledge/products_pricing.md` from it (one `##` section per item, names in all three scripts so retrieval finds it in any language; an out-of-stock item says so in the text) and a test fails if the generated file is stale. The same file gives the Prisma keyterms (Latin-script names first, then aliases, capped at 200) and will be what the code checks every spoken item against (research method M4).
+- 61 items, two out of stock (paneer, mosquito coil) so that case can be tested.
+- Prices are made up. Brand names (Amul, Maggi, Parle-G, Good Day) are real, as the project brief suggested, with made-up prices.
+- Hindi and Telugu names are unchecked (B-16).
+- The prompt's totals are interim (B-15).
+
+### DEC-037 · Take three small fixes from the research before building the order flow (2026-11-02)
+Reading the code against `research_papers.md` found three real defects, fixed now because each is small and affects every call: the reply splitter (B-17, method M1), the history after an interruption (B-18, method M2) and Hindi/Telugu keyword retrieval (B-19, found while writing the shop content). The bigger research method, the rule layer (M4), is the order flow itself and waits for Step 8.
