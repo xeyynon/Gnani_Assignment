@@ -171,6 +171,7 @@ class StreamingSession:
         self._detected_language = ""
         self._error = None
         self.latest_partial = ""
+        self._result_ready = threading.Event()      # set when the transcript is final; closing the socket may follow
         self._thread = threading.Thread(target=self._run_thread, daemon=True, name="stt-gnani")
         self._thread.start()
 
@@ -179,8 +180,8 @@ class StreamingSession:
 
     def finish(self) -> tuple[str, str]:
         self._sync_queue.put(None)
-        self._thread.join(timeout=STREAMING_FINISH_TIMEOUT_SEC + CONNECT_TIMEOUT_SEC + 2)
-        if self._thread.is_alive():
+        self._result_ready.wait(timeout=STREAMING_FINISH_TIMEOUT_SEC + CONNECT_TIMEOUT_SEC + 2)
+        if not self._result_ready.is_set():
             log.error("[STT-GNANI] Timed out waiting for the result.")
             return "", "ERROR"
         if isinstance(self._error, str) and self._error.startswith("stale"):
@@ -210,6 +211,7 @@ class StreamingSession:
             if self._is_stale is not None and self._is_stale():
                 log.info("[STT-GNANI] Abandoning session while waiting for a slot: its call already ended.")
                 self._error = "stale: call ended before a streaming slot freed up"
+                self._result_ready.set()
                 return
             if _concurrency.acquire(timeout=0.5):
                 break
@@ -218,6 +220,7 @@ class StreamingSession:
         except Exception as e:
             self._error = str(e) or type(e).__name__
         finally:
+            self._result_ready.set()
             _concurrency.release()
 
     async def _run_async(self):
@@ -227,7 +230,8 @@ class StreamingSession:
         loop = asyncio.get_running_loop()
         ws = await asyncio.wait_for(connect(_url(), additional_headers=headers, max_size=None),
                                     timeout=CONNECT_TIMEOUT_SEC)
-        state = {"speech_open": False, "pending": 0, "commit_at": None, "last_event": time.monotonic()}
+        state = {"speech_open": False, "pending": 0, "commit_at": None, "answered": False,
+                 "last_event": time.monotonic()}
         done = asyncio.Event()
 
         async def receiver():
@@ -247,7 +251,13 @@ class StreamingSession:
                         state["speech_open"] = False
                         state["pending"] += 1
                     elif kind == "transcript":
+                        # The docs promise a 'processing' message before each transcript, but the
+                        # real service (checked 2026-11-02) sends speech_start and then the
+                        # transcript only. A transcript therefore also closes the open speech.
                         state["pending"] = max(0, state["pending"] - 1)
+                        state["speech_open"] = False
+                        if state["commit_at"] is not None:
+                            state["answered"] = True
                         text = (msg.get("text") or "").strip()
                         if text:
                             self._segments.append(text)
@@ -314,6 +324,7 @@ class StreamingSession:
         except asyncio.TimeoutError:
             self._error = self._error or "timed out waiting for the transcript"
         finally:
+            self._result_ready.set()                 # the caller can have the answer now; closing is housekeeping
             for t in (send_task, recv_task):
                 t.cancel()
             for t in (send_task, recv_task):
@@ -332,8 +343,10 @@ class StreamingSession:
         produced its transcript, none is still open, and the grace period passed."""
         if state["commit_at"] is None or state["pending"] or state["speech_open"]:
             return
-        if time.monotonic() - state["commit_at"] >= COMMIT_GRACE_SEC:
+        if state["answered"]:                       # the commit produced its transcript: nothing to wait for
             done.set()
+        elif time.monotonic() - state["commit_at"] >= COMMIT_GRACE_SEC:
+            done.set()                              # nothing came back: there was no speech
 
 
 def start_streaming_session(language_code: str | None = None, is_stale=None) -> StreamingSession:

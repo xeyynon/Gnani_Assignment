@@ -66,3 +66,51 @@ test("loud input is clipped, not wrapped around", () => {
   const out = makeResampler(16000, 16000)(new Float32Array([1.5, -1.5, 1, -1]));
   assert.deepEqual(Array.from(out), [32767, -32768, 32767, -32768]);
 });
+
+// ---- the call screen's own helpers, pulled out the way the dashboard test does ----
+const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers"));
+const { langName, clock, rupees, barHeight } = new Function(
+  `${helperSource}; return { langName, clock, rupees, barHeight };`)();
+
+test("language names", () => {
+  assert.equal(langName("hi-IN"), "Hindi");
+  assert.equal(langName("te-in"), "Telugu");
+  assert.equal(langName("en-IN"), "English");
+  assert.equal(langName("hi-en"), "Hinglish");
+  assert.equal(langName("en-GB"), "English");        // falls back to the language part
+  assert.equal(langName("xx-YY"), "");
+  assert.equal(langName(undefined), "");
+});
+
+test("call timer", () => {
+  assert.equal(clock(0), "0:00");
+  assert.equal(clock(134.9), "2:14");
+  assert.equal(clock(-5), "0:00");
+});
+
+test("rupees use Indian digit grouping", () => {
+  assert.equal(rupees(158), "₹158");
+  assert.equal(rupees(125000), "₹1,25,000");
+});
+
+test("waveform bars stay inside their box and are quiet when the level is zero", () => {
+  for (const level of [-1, 0, 0.5, 1, 7]) {
+    for (let i = 0; i < 37; i++) {
+      const hgt = barHeight(level, i, 37, 1234);
+      assert.ok(hgt >= 4 && hgt <= 56, `bar ${i} at level ${level} is ${hgt}`);
+    }
+  }
+  assert.equal(barHeight(0, 18, 37, 999), 4);
+});
+
+test("what the server sends is shown as text, never as HTML", () => {
+  for (const banned of ["innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"]) {
+    assert.ok(!script.includes(banned), `${banned} must not appear in the page script`);
+  }
+});
+
+test("the page handles every message the server can send", () => {
+  for (const type of ["ready", "busy", "stop", "user", "agent", "order"]) {
+    assert.match(script, new RegExp(`m\.type === '${type}'`), `no handler for ${type}`);
+  }
+});

@@ -1,0 +1,64 @@
+{
+  "cmd": "tts",
+  "when": "2026-11-02T13:54:02+05:30",
+  "synthetic_speech_only": true,
+  "data": {
+    "experiment": "E2 tts",
+    "rows": [
+      {
+        "label": "hindi",
+        "language": "hi-IN",
+        "ok": true,
+        "first_chunk_ms": 625.0,
+        "total_ms": 2250,
+        "audio_seconds": 2.48,
+        "error": null
+      },
+      {
+        "label": "telugu",
+        "language": "te-IN",
+        "ok": true,
+        "first_chunk_ms": 516.0000000005311,
+        "total_ms": 2344,
+        "audio_seconds": 3.44,
+        "error": null
+      },
+      {
+        "label": "english",
+        "language": "en-IN",
+        "ok": true,
+        "first_chunk_ms": 530.9999999999491,
+        "total_ms": 2266,
+        "audio_seconds": 3.12,
+        "error": null
+      },
+      {
+        "label": "hinglish",
+        "language": "hi-en",
+        "ok": true,
+        "first_chunk_ms": 530.9999999999491,
+        "total_ms": 2078,
+        "audio_seconds": 2.4,
+        "error": null
+      },
+      {
+        "label": "hindi_number",
+        "language": "hi-IN",
+        "ok": true,
+        "first_chunk_ms": 515.0000000003274,
+        "total_ms": 2078,
+        "audio_seconds": 2.08,
+        "error": null
+      },
+      {
+        "label": "english_number",
+        "language": "en-IN",
+        "ok": true,
+        "first_chunk_ms": 561.9999999998981,
+        "total_ms": 2203,
+        "audio_seconds": 2.32,
+        "error": null
+      }
+    ]
+  }
+}

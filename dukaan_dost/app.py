@@ -80,7 +80,8 @@ from dukaan_dost.validator import validate_reply
 from dukaan_dost.spoken_history import SpokenTracker
 from dukaan_dost import stock as _stock
 from dukaan_dost.stt_provider import set_keyterms as _set_stt_keyterms
-from dukaan_dost.llm_gemini import warmup as _llm_warmup
+from dukaan_dost.llm_provider import LLM_PROVIDER as _LLM_PROVIDER, warmup as _llm_warmup
+from dukaan_dost import llm_groq as _llm_groq
 
 # ─────────────────────────────────────────────────────
 # CONFIG — only edit this section
@@ -154,7 +155,11 @@ SHOP_DIR = PROJECT_ROOT / "shops" / SHOP_NAME
 # with there (2.5 flash-lite 404s in asia-south1 for the upstream
 # project). LLM_MODEL overrides either; LLM_THINKING_LEVEL tunes 3.x
 # thinking (see llm_gemini._thinking_config).
+#
+# 2026-11-02: LLM_PROVIDER=groq runs the same conversation on Groq instead (llm_groq.py), since
+# there was no Gemini key yet; its default model is llama-3.3-70b-versatile.
 LLM_MODEL    = os.getenv("LLM_MODEL") or (
+    _llm_groq.DEFAULT_MODEL if _LLM_PROVIDER == "groq" else
     "gemini-3.5-flash-lite" if os.environ.get("GEMINI_API_KEY") else "gemini-2.5-flash"
 )
 LLM_TOKENS   = int(os.getenv("LLM_TOKENS", "100"))  # 2026-08-01: capped 150->100 for shorter,
@@ -3201,6 +3206,23 @@ def _gemini_credentials_ok() -> bool:
     return bool(project) and "your-project-id" not in project
 
 
+def _llm_problem() -> str | None:
+    """A message if the chosen language model has no credentials, else None."""
+    if _LLM_PROVIDER == "groq":
+        if not _llm_groq.api_key():
+            return ("LLM_PROVIDER is groq but GROQ_API_KEY is not set. Get a key at "
+                    "https://console.groq.com/keys and put it in .env.")
+        return None
+    if not _gemini_credentials_ok():
+        return ("No Gemini credentials configured. Either set GEMINI_API_KEY "
+                "(Google AI Studio key, no Google Cloud project needed), or copy "
+                "local_config.example.py to local_config.py and fill in your own "
+                "Google Cloud project ID/location "
+                "(or set GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION env vars). "
+                "To use Groq instead, set LLM_PROVIDER=groq and GROQ_API_KEY in .env.")
+    return None
+
+
 def _speech_key_problem() -> str | None:
     """A message if a chosen speech provider is missing its key, else None."""
     if "gnani" in (_STT_PROVIDER, _TTS_PROVIDER) and not os.environ.get("GNANI_API_KEY"):
@@ -3218,14 +3240,9 @@ def main():
     # project; only the Vertex path does. "your-project-id" matches both
     # placeholders ("...-here" in this file, "...-or-number-here" in the
     # example config); the old check matched only the first.
-    if not _gemini_credentials_ok():
-        sys.exit(
-            "No Gemini credentials configured. Either set GEMINI_API_KEY "
-            "(Google AI Studio key, no Google Cloud project needed), or copy "
-            "local_config.example.py to local_config.py and fill in your own "
-            "Google Cloud project ID/location "
-            "(or set GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION env vars)."
-        )
+    problem = _llm_problem()
+    if problem:
+        sys.exit(problem)
 
     problem = _speech_key_problem()
     if problem:
@@ -3260,7 +3277,9 @@ def main():
     )
 
     log.info("Dukaan Dost")
-    if _llm_gemini.api_key():
+    if _LLM_PROVIDER == "groq":
+        log.info(f"LLM={LLM_MODEL} (Groq) | User location={USER_LOCATION}")
+    elif _llm_gemini.api_key():
         log.info(f"LLM={LLM_MODEL} (Gemini API key) | User location={USER_LOCATION}")
     else:
         log.info(f"LLM={LLM_MODEL} (Vertex AI) | Project={os.environ['GOOGLE_CLOUD_PROJECT']} | "

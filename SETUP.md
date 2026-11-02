@@ -13,10 +13,11 @@ pip install -r requirements.txt
 `webrtcvad-wheels` in the requirements installs prebuilt on all three systems.
 
 ## 2. Keys
+Put your keys in **`.env`** in the project folder (gitignored; copy `.env.example` if it is missing). It also holds `STT_PROVIDER` and `TTS_PROVIDER`, which must be set before the program starts, so use `.env` or real environment variables for those. A variable already set in your shell wins over `.env`.
 ```bash
-cp local_config.example.py local_config.py     # gitignored; never commit it
+cp .env.example .env        # then edit .env; never commit it
 ```
-Fill in the keys you need:
+(`local_config.py`, copied from `local_config.example.py`, still works for the keys.) Fill in the keys you need:
 
 | Key | When | Get it from |
 |---|---|---|

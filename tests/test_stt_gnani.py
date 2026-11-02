@@ -74,9 +74,10 @@ def make_server(rec, on_commit=None, on_silence=None, on_connect=None, silence_f
     return FakeServer(handler)
 
 
-async def reply(ws, text, lang="hi-IN"):
+async def reply(ws, text, lang="hi-IN", with_processing=True):
     await ws.send(json.dumps({"type": "speech_start", "utterance_id": "u"}))
-    await ws.send(json.dumps({"type": "processing"}))
+    if with_processing:
+        await ws.send(json.dumps({"type": "processing"}))
     await ws.send(json.dumps({"type": "transcript", "text": text, "is_final": True,
                               "detected_language_code": lang, "segment_index": 1}))
 
@@ -271,6 +272,9 @@ def test_the_slot_is_given_back_after_a_session():
     before = stt_gnani._concurrency._value
     with make_server(rec) as s:
         run(s)
+        deadline = time.monotonic() + 3                 # finish() returns on the answer; the socket closes just after
+        while stt_gnani._concurrency._value != before and time.monotonic() < deadline:
+            time.sleep(0.02)
     assert stt_gnani._concurrency._value == before
 
 
@@ -303,3 +307,17 @@ def test_an_unknown_provider_is_rejected(monkeypatch):
     finally:
         monkeypatch.delenv("STT_PROVIDER")
         importlib.reload(stt_provider)
+
+
+def test_a_server_that_never_sends_processing_finishes_quickly():
+    """The real service sends speech_start and then the transcript, with no 'processing' in between
+    (observed 2026-11-02). Waiting for one made every utterance take the full timeout."""
+    rec = Recorder()
+
+    async def on_commit(ws):
+        await reply(ws, "do kilo atta", "hi-IN", with_processing=False)
+
+    with make_server(rec, on_commit) as s:
+        t0 = time.monotonic()
+        assert run(s) == ("do kilo atta", "hi-IN")
+        assert time.monotonic() - t0 < 1.5            # not the 3 s test timeout
