@@ -8,9 +8,8 @@ Every bug gets an id, `B-NN`, and moves through three sections:
 Fixes to bugs found upstream, before this repo existed, are listed at the end for reference.
 
 ## Open
-### B-02 · Open (design risk) · The LLM forgets items in long orders
-`LLM_HISTORY = 3` (past exchanges kept in the prompt) and `LLM_TOKENS = 100` are hardcoded for a Q&A bot. A 10-item order spans far more than 3 exchanges, so by the read-back Gemini can't see the early items, and 100 tokens may cut off a long read-back.
-**Fix:** give the prompt an explicit "order so far" block (DEC-006), make `LLM_HISTORY` an env var, and allow more tokens for the read-back turn.
+### B-02 · Fixed (uncommitted) · The model forgot items in long orders
+Every order turn now shows the model the order so far (items and quantities), so the history length no longer matters for the cart. `LLM_HISTORY` stays at 3.
 
 ### B-04 · Open (risk) · Greeting and messages assume English first
 The greeting is `"Hello! Welcome to {SHOP_NAME}…"`, and the STT-failure apology is English only. Prisma needs a language before the first word.
@@ -38,25 +37,39 @@ They parse, their jobs are wired correctly and the scripts they call are tested,
 **Fix:** watch the first run after the first push and fix what is red (task in [tasks.md](tasks.md)).
 
 
-### B-11 · Open · The dashboard has nothing real to show yet
-The agent does not write orders, loan summaries or credit balances yet, so the shopkeeper dashboard only shows the demo data from `python -m dukaan_dost.demo_data <shop>`, marked as made up. The data format is fixed (`store.py`) and tested, so this is the writer's job (task in [tasks.md](tasks.md)).
+### B-11 · Fixed (uncommitted) · The dashboard had nothing real to show
+The agent now writes `orders/<shop>/order_<id>.json` (and a readable `.txt`) when a call ends, in the format `store.py` documents; the dashboard reads them (tested: `test_the_dashboard_can_read_what_the_agent_wrote`). Loan summaries and credit balances are still not written.
 
 ### B-12 · Open (risk) · Sign-in is Basic auth, safe only on localhost or https
 The PIN travels in an HTTP header. On plain http across a network it can be read. The server binds `127.0.0.1` by default; for anything else put TLS in front.
 
-### B-13 · Open (risk) · The Gnani backends have never talked to the real service
-`stt_gnani.py` and `tts_gnani.py` follow the protocol on docs.gnani.ai (read 2026-11-02) and pass 50 tests against stand-in servers that follow the same pages, so they show the code matches the docs, not that the service matches the docs. Known doubts: the Prisma v3.0 model page and the WebSocket page name the headers differently (`x-model`/`lang_code` vs `model`/`language_code`; both are sent); the model page does not mention `commit` though the WebSocket page documents it (trailing silence is sent as a fallback); whether `format=transcribe` suits Hindi and Telugu numbers. Closed by running `scripts/gnani_smoke_test.py` with a key. Needs the key from app.gnani.ai/voice.
+### B-13 · Partly closed · The Gnani backends and the real service
+Run against the real service on 2026-11-02 (`gnani_smoke_test.py`, results in `evaluation/results/`): the headers, 1,024-byte framing, `commit`, the 16 kHz raw audio and the digit reading all work, in Hindi, Telugu, English and Hinglish. Found and fixed: the real service never sends the `processing` message the docs describe (B-22). Still open: behaviour under noise and at 8 kHz, long utterances, the concurrent-session limit (`gnani_smoke_test.py concurrency` has not been run), the credit cost, and whether `format=transcribe` or `codemix` suits Hinglish better.
 
 ### B-14 · Open (risk) · Every TTS sentence opens a new WebSocket
-Each synthesis connects, sends one request and closes (the docs advise one request at a time, and it keeps two sentences from sharing a socket). The TLS and WebSocket handshake adds to time to first audio on every sentence. Unmeasured: experiment E2 shows the cost. If large, keep a small pool of warm connections.
+Each synthesis connects, sends one request and closes (the docs advise one request at a time, and it keeps two sentences from sharing a socket). Measured 2026-11-02: the first audio arrives about 515 to 625 ms after the request, handshake included. How much of that is the handshake is not separated out. If a warm connection saves 100 ms or more, keep a small pool.
 
-### B-15 · Open · Order totals are still added up by the model
-The shop's prompt tells Gemini to add the line prices carefully, but the rule is that money is computed in code and the model only speaks it (research_papers.md: the model can still get a sum wrong). The code that does it (Step 8: check each item against `stock.json`, add the lines, hand the model the total) is not built. Until it is, a total can be wrong. The evaluation must count wrong totals.
+### B-15 · Fixed (uncommitted) · Order totals were added up by the model
+The code now does all the arithmetic (`order_session.py`) and writes the amounts into the spoken reply, so what the caller hears is what the dashboard shows. The model is told never to state amounts; if it does, a warning is logged. The model can still pick the wrong item or quantity, so order accuracy is what the evaluation measures.
 
 ### B-16 · Open · The Hindi and Telugu product names have not been checked by a native speaker
 The names in `shops/dukaan_dost/stock.json` were written by the assistant. Some may be unnatural or wrong. Matters most for Telugu (the "Main Character" award). A wrong name makes retrieval miss that item for a caller who uses the correct word.
 
-## Fixed, uncommitted
+### B-20 · Open (risk) · Groq's limits on this account are tight
+The account's chat models are `openai/gpt-oss-120b`, `openai/gpt-oss-20b` and `qwen/qwen3.8-27b` (the Llama models in the docs are not available to it). Limits seen in the response headers: 8,000 tokens a minute (shared by the gpt-oss models) and 1,000 requests a day. An order turn is about 2,000 tokens, so about four turns a minute: fine for one caller, not for running the 20 evaluation scripts back to back or for several callers. The evaluation runner must pace itself (about 20 seconds a turn worked). A retry doubles a turn's tokens. Shrinking the prompt (the persona text and the examples) would help. Fallback: Gemini (`LLM_PROVIDER=gemini`) once a key exists.
+
+### B-23 · Open (risk) · The model sometimes breaks the answer format
+On the Qwen preview model about a quarter of order turns came back as plain words or broken fragments ('{done', '{"opts'), even with a strict schema, and some retries hit the rate limit. On `openai/gpt-oss-20b` and `120b` it did not happen in about 25 real calls, so the default is now gpt-oss-20b. The safety net stays: Groq's JSON mode returns the plain text, the conversation manager asks once more, and otherwise the fallback message is spoken, never the plain words. The placeholders are `[LINES]` and `[ORDER]` because `{ORDER}` was once answered as the bare text.
+
+### B-24 · Open (risk) · The model can still misread or drop an item
+Seen on real calls: "do kilo chini" read as 1 kilo (Qwen/gpt-oss-20b, before the number-word list was added), and "dragon fruit and two packets of Parle-G" adding nothing (before the one-op-per-item rule). Both were fixed in the instructions and then worked, but a few conversations prove little: the evaluation measures order accuracy (items and quantities) on 20 scripts and decides how big this risk is.
+
+### B-21 · Fixed by design (uncommitted) · The model suggested unrelated alternatives for an out-of-stock item
+It offered besan or bhujia for paneer. On a turn that touches the order the model's own words are no longer spoken (DEC-039): the code says only that the item is not available. No alternative is offered at all now; adding code-chosen alternatives by category would be an improvement, not a fix.
+
+### B-22 · Fixed (uncommitted) · Every utterance waited about 9 seconds for the transcript
+`stt_gnani.py` waited for the `processing` message before finishing. The real service sends `speech_start` and then the `transcript`, with no `processing` in between, so every utterance ran into the timeout. A transcript now also closes the open speech, an answer to the `commit` ends the wait at once, and `finish()` returns when the answer is ready without waiting for the socket to close. Measured: the wait after the caller stops fell from about 9,000 ms to about 400 ms. Two tests added (the case itself, and the slot being freed after the socket closes).
+
 ### B-17 · Fixed (uncommitted) · A price was split from its currency word
 The reply splitter cut at every full stop followed by a space, so "Atta ka rate Rs. 260 hai." became "Atta ka rate Rs." and "260 hai.", each spoken as a separate clip with a listening pause between them. `next_sentence()` now skips full stops after abbreviations (Rs, Mr, No, ...) and merges fragments shorter than 8 characters into the next sentence. 12 tests (`tests/test_sentence_split.py`).
 

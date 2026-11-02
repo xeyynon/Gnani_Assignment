@@ -18,13 +18,15 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Fix B-01 (the placeholder project check) (2026-10-28, Build 1001)
 
 ### Step 2: Smoke test
-- [ ] Read the account's concurrent-session and request limits on app.gnani.ai (B-07)
+- [ ] Read the account's concurrent-session and request limits on app.gnani.ai (B-07), or run `gnani_smoke_test.py concurrency`
 - [ ] Note the credit cost per minute of STT and per sentence of TTS (not published)
-- [ ] Prisma v3.0 vs v2.5 on the same clips; `codemix` vs `transcribe`; with and without `x-keyterms`
-- [ ] Check `commit` closes an utterance, and how fast the `transcript` arrives after it
-- [ ] Timbre: check its automatic number reading in Hindi and Telugu (DEC-024); measure its idle timeout
+- [x] With and without key terms (2026-11-02): 61 main English names help, 200 with Latin aliases hurt (DEC-038)
+- [ ] Prisma v3.0 vs v2.5 on the same clips; `codemix` vs `transcribe`
+- [x] `commit` closes an utterance; the transcript arrives about 0.4 s later (2026-11-02, smoke test)
+- [x] Timbre reads digits correctly in Hindi, Telugu, Hinglish and English (2026-11-02, DEC-038)
+- [ ] Timbre: measure its idle timeout
 - [x] `scripts/gnani_smoke_test.py` written and tested against stand-in servers (2026-11-02): `tts`, `roundtrip` (with `--keyterms`), `stt`, `concurrency`. **Not yet run with a key**
-- [ ] Timbre: Hindi, Telugu and Hinglish WAVs; time to first chunk
+- [x] Timbre: Hindi, Telugu and Hinglish WAVs; first chunk 515 to 625 ms (2026-11-02, saved in `evaluation/results/`)
 - [ ] Pick the Timbre voice; pick `hi-IN`, `hi-en` or `auto` for Hinglish
 - [ ] Note the credits used per minute of audio
 
@@ -75,6 +77,12 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Thin pre-pass `normalize_text()` with unit tests: `Rs. 260` and `₹45` become `260 rupees` / `45 rupees`, `1,25,000` becomes `125000`. Digits are left to Timbre; spelling them out in Hindi/Telugu waits for E2
 - [x] `tts_provider.py` (`TTS_PROVIDER`); `app.py` imports from it; startup refuses a Gnani provider with no `GNANI_API_KEY` (2026-11-02)
 
+### Step 5a: Groq as the language model for now (DEC-038)
+- [x] `llm_groq.py`, `llm_provider.py`, `LLM_PROVIDER`, startup check, 22 tests (2026-11-02)
+- [x] Tried the real shop conversation on Qwen: digits spoken, totals right, unlisted items declined (informal)
+- [ ] Pace the evaluation to Groq's 8,000 tokens a minute (B-20)
+- [ ] Switch back to Gemini when a key exists; compare the two on the evaluation set
+
 ### Step 5: Gemini with an API key
 - [x] `genai.Client(api_key=…)` when `GEMINI_API_KEY` is set (2026-10-28, Build 1001)
 - [x] Make the startup project check conditional (2026-10-28, Build 1001)
@@ -95,11 +103,19 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] `ordering_payment.md`, `delivery_shipping.md`, `faq.md` and short real content for the other five fixed files (2026-11-02)
 - [ ] Try a real order against the shop with a live Gemini key; tune `system_prompt` (the totals are still worked out by the model, B-15)
 
-### Step 8: Order summary
-- [ ] Decide how the order state is updated (structured output vs extraction at hang-up) → DEC-006
-- [ ] Raise or rework `LLM_HISTORY=3` so long orders aren't forgotten (B-02)
-- [ ] Write `orders/<shop>/order_<call_id>.json` and `.txt`; check against the stock list
-- [ ] Optional: a small order viewer page
+### Step 8: The order flow (DEC-039)
+- [x] Decide how the order state is updated: the model returns a JSON note per turn, the code applies it (DEC-006, DEC-039) (2026-11-02)
+- [x] `order_session.py`: stock check, quantity rules, rounding, sentences in en/hi/te, order and `.txt` files; 59 tests (2026-11-02)
+- [x] `order_turn.py`: instructions, strict JSON schema, tolerant reader, reply assembly; `ask_json` on Groq and Gemini; 42 tests (2026-11-02)
+- [x] The agent: a fresh order per call, the order saved at hang-up / shutdown / next call, `order` events to the call page; 9 tests (2026-11-02)
+- [x] `LLM_HISTORY=3` is enough for orders: the model is shown the order so far every turn (B-02, DEC-039)
+- [x] Tried with the real model on Hinglish, Telugu and English orders (informal runs, not saved; see the hand-over)
+- [x] The code speaks on every turn that touches the order; prices from the stock list; the shop's own closing sentence; unsold items named (DEC-039)
+- [ ] Reduce the prompt (about 2,000 tokens a turn) so more turns fit in Groq's 8,000 a minute (B-20)
+- [ ] Optional: offer an in-stock alternative chosen by code, by category (B-21 is closed by saying nothing)
+- [ ] Save a scripted order conversation as a repeatable evaluation run (the runs so far were informal)
+- [ ] Hindi and Telugu wording of the code-spoken sentences checked by a native speaker (B-16)
+- [ ] Optional: a small order viewer page (the shopkeeper dashboard already shows the orders)
 
 ### Step 8b: Udhaar ledger (DEC-026; the first thing cut if time runs short)
 - [ ] Synthetic customer list (~15 names, credit limits, opening balances) in the knowledge files
@@ -122,10 +138,11 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Shop registry, PIN sign-in with lock-out, order/loan/ledger file format, demo data (2026-10-28, Build 1003)
 - [x] Many shops, one agent: the call link `/s/<shop>/` picks the shop (2026-10-28, Build 1003)
 - [x] Shopkeeper dashboard: orders, credit book, loan enquiries, live; checked in a real browser at desktop and phone widths (2026-10-28, Build 1003)
-- [ ] The agent writes orders, loan summaries and credit balances at hang-up, so the dashboard shows real calls (B-11; with build steps 7 and 8)
+- [x] The agent writes orders at hang-up, so the dashboard shows real calls (B-11, 2026-11-02). Loan summaries and credit balances are still to come
 - [x] Call page redesign: call screen, timer, states, live transcript, order panel (empty until step 8), plain error messages (2026-11-02; needs a build)
 - [x] Dashboard redesign to the same look: side menu, icon tiles with change since yesterday, 7-day sales chart, needs-attention list, "soon" for Quick actions, Stock & prices, Reports (2026-11-02; needs a build)
-- [ ] The agent sends `order` messages so the call page's Current order fills in (with build step 8)
+- [x] The agent sends `order` messages so the call page's Current order fills in (2026-11-02, needs a build)
+- [x] Pages rebuilt as components (shared atoms, panels and scripts; one organism per panel), composed when served (2026-11-02, DEC-040; needs a build)
 - [ ] Shopkeeper labels in Hindi and Telugu
 - [x] `python -m dukaan_dost.preview`: look at the dashboard with made-up data and no keys (2026-10-28, InBul13)
 - [ ] Try the dashboard on a real phone

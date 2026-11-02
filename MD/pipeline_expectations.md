@@ -223,3 +223,25 @@ When two sources disagree, we measure it ourselves and say which source we measu
 - Gnani, [how to benchmark an STT API for Indian languages](https://gnani.ai/resources/research/how-to-benchmark-stt-api-indian-languages) (vendor article; its figures are Gnani's own).
 - Third-party model latency: [OrcaRouter comparison](https://www.orcarouter.ai/compare/gemini-2.5-flash-lite-vs-gemini-3.6-flash), [Artificial Analysis, Gemini 3.1 Flash-Lite](https://artificialanalysis.ai/models/gemini-3-1-flash-lite-preview/providers).
 - All other papers: [research_papers.md](research_papers.md).
+
+---
+
+## 8. First measurements on the real services (2026-11-02)
+
+From `scripts/gnani_smoke_test.py`; the saved runs are in `evaluation/results/` (`smoke_tts_*`, `smoke_roundtrip_*`). **Six synthetic sentences, Timbre speech, 16 kHz, clean, one run each: indicative only, optimistic, and not enough for any claim in the README.**
+
+| Measurement | Result | Expected (section 2) |
+|---|---|---|
+| Timbre: request to first audio chunk (Hindi, Telugu, English, Hinglish) | 515 to 625 ms, new connection each time | "A few hundred milliseconds": a little higher |
+| Timbre: whole 2 to 3 s sentence | 2.1 to 2.3 s | not predicted |
+| Prisma: wait after the caller stops (with `commit`) | about 400 to 490 ms, after fixing B-22 | not predicted; before the fix 9 s |
+| Prisma: Hindi and Telugu clean sentences | word-for-word right (WER 0 on both), digits written as digits | "low WER": met on this tiny set |
+| Prisma: numbers | "two" is written "2"; "डेढ़ लाख" becomes "1,50,000" or "1.5 लाख"; so plain WER overstates the error (mean 0.32) | T-WER and number handling needed in the scoring |
+| Prisma: Hinglish | Hindi words in Devanagari, English words in Latin script ("2 किलो atta और 1 liter oil") | script mixing: T-WER needed |
+| Timbre reading digits | 120, 165, 285, 88, 253 and 1,250 came back as the same numbers, in Telugu, Hindi, Hinglish and English | settles DEC-024 for amounts |
+| Key terms (E4) | 200 terms with Latin aliases: "muge" fixed to "Maggi", but "एक लीटर" became "8 लीटर" and "బియ్యం" became "biyyam". 61 main names only: brands right, no damage | direction only: tune on the evaluation set |
+| Prisma response messages | `connected`, `speech_start`, `transcript` (with `latency` 294 to 480 ms); no `processing` | the docs promise `processing` |
+
+**Not yet measured:** the concurrent-session limit (E5), 8 kHz and noisy audio (E3), the credit cost, Gemini first-token time (E1), and the whole loop end to end. Groq's first sentence took 300 to 1,300 ms in an informal run that was not saved.
+
+**Update to the budget in 2.5:** speech recogniser about 0.4 s after the caller stops, synthesis about 0.5 s to first audio, plus the language model's first sentence (0.3 to 1.3 s on Groq) and the 650 ms voice-detector wait: roughly 1.9 to 2.9 s to first audio. Consistent with the 1.5 to 3 s hypothesis; still to be measured end to end.
