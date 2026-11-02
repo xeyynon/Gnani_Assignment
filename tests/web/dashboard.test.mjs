@@ -9,8 +9,8 @@ const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // The pure helpers sit between two markers so they can be tested without a DOM.
 const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers ---- */"));
-const { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate } = new Function(
-  `${helperSource}; return { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate };`)();
+const { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus } = new Function(
+  `${helperSource}; return { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus };`)();
 
 test("the page script is valid JavaScript", () => {
   new Function(script);
@@ -81,4 +81,46 @@ test("status and payment labels", () => {
   assert.equal(statusLabel(undefined), "Confirmed");
   assert.equal(paymentLabel("udhaar"), "On credit");
   assert.equal(paymentLabel("upi"), "UPI");
+});
+
+test("the greeting follows the hour", () => {
+  assert.equal(greeting(6), "Good morning!");
+  assert.equal(greeting(12), "Good afternoon!");
+  assert.equal(greeting(16), "Good afternoon!");
+  assert.equal(greeting(17), "Good evening!");
+});
+
+test("today against yesterday never divides by zero", () => {
+  assert.deepEqual(change(24, 20), { text: "▲ +20% vs yesterday", dir: "up" });
+  assert.deepEqual(change(8, 10), { text: "▼ -20% vs yesterday", dir: "down" });
+  assert.deepEqual(change(10, 10), { text: "same as yesterday", dir: "" });
+  assert.deepEqual(change(5, 0), { text: "nothing yesterday", dir: "" });
+  assert.deepEqual(change(0, 0), { text: "no change", dir: "" });
+  assert.deepEqual(change(undefined, null), { text: "no change", dir: "" });
+});
+
+test("bar labels and heights", () => {
+  assert.equal(shortRupees(950), "₹950");
+  assert.equal(shortRupees(1000), "₹1k");
+  assert.equal(shortRupees(4820), "₹4.8k");
+  assert.equal(barPercent(50, 100), 50);
+  assert.equal(barPercent(0, 100), 2);               // a zero day still shows a sliver
+  assert.equal(barPercent(5, 0), 2);                 // and an all-zero week does not divide by zero
+});
+
+test("what needs the shopkeeper: problem orders and customers near their limit", () => {
+  const orders = [{ status: "confirmed", total: 100 }, { status: "incomplete", customer: "Suresh", total: 300 },
+                  { status: "credit_pending", customer: "Anita", total: 260 }, { status: "credit_pending", total: 50 }];
+  const ledger = [{ name: "Anita", balance: 1900, credit_limit: 2000 }, { name: "Ramesh", balance: 685, credit_limit: 2000 },
+                  { name: "Nobody", balance: 0, credit_limit: 0 }];
+  const out = attention(orders, ledger);
+  assert.deepEqual(out.map(a => a.title), ["Suresh: incomplete order", "Anita: credit pending", "A caller: credit pending", "Anita: credit near the limit"]);
+  assert.equal(out[3].tag, "₹1,900 / ₹2,000");
+  assert.deepEqual(attention([], []), []);
+  assert.deepEqual(attention(undefined, undefined), []);
+});
+
+test("the call line", () => {
+  assert.equal(callStatus([]), "No call right now");
+  assert.equal(callStatus([{ seconds: 75 }]), "A customer is on a call (1:15)");
 });

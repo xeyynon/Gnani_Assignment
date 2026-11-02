@@ -247,3 +247,29 @@ def test_the_real_recorder_consumes_audio_sent_by_the_page(server, caller, monke
         assert not t.is_alive()
     finally:
         app._shutdown.clear()
+
+
+# ---- events for the page's live transcript ---------------------------------
+def test_an_event_reaches_the_page_as_json(server, caller):
+    server.send_event({"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"})
+    assert json.loads(caller.recv(timeout=3)) == {"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"}
+    server.send_event({"type": "agent", "reply": 3, "text": "Theek hai."})
+    assert json.loads(caller.recv(timeout=3))["reply"] == 3
+
+
+def test_events_keep_their_order(server, caller):
+    for n in range(5):
+        server.send_event({"type": "agent", "reply": n, "text": str(n)})
+    assert [json.loads(caller.recv(timeout=3))["reply"] for _ in range(5)] == [0, 1, 2, 3, 4]
+
+
+def test_an_event_with_no_call_is_a_quiet_no_op(server):
+    server.send_event({"type": "user", "text": "nobody is listening"})   # must not raise or block
+
+
+def test_an_event_to_a_call_that_has_gone_is_a_quiet_no_op(server):
+    with connect(f"ws://127.0.0.1:{server.port}/ws") as ws:
+        ws.recv(timeout=3)
+        assert wait_for(lambda: server.find_call()[0] is not None)
+    assert wait_for(lambda: server.find_call()[0] is None)
+    server.send_event({"type": "user", "text": "too late"})

@@ -20,7 +20,7 @@ import re
 import yaml
 
 from .knowledge_retriever import get_core_context, get_relevant_context_maybe_cached
-from .llm_gemini import ask as gemini_ask, stream as gemini_stream
+from .llm_provider import ask as gemini_ask, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
 from .validator import validate_reply
 
 log = logging.getLogger("conversation_manager")

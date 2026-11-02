@@ -60,6 +60,16 @@ def build(now: datetime):
               "udhaar", language="te-IN", before=0),
         order("d08", at(days=1, hours=4), None, _items(("BREAD-400", "Bread", 2, "loaf", 45),), "upi"),
     ]
+    for n, (days, rows, pay) in enumerate([                 # earlier days, so the sales trend has something to show
+        (2, [("RICE-1KG", "Rice", 3, "kg", 60), ("DAL-TOOR-1KG", "Toor dal", 1, "kg", 145)], "cash"),
+        (2, [("MILK-500", "Milk", 4, "packet", 30)], "upi"),
+        (3, [("ATTA-5KG", "Atta (5 kg)", 2, "bag", 260), ("OIL-1L", "Sunflower oil", 1, "litre", 165)], "upi"),
+        (4, [("SUGAR-1KG", "Sugar", 3, "kg", 44), ("TEA-250", "Tea", 1, "pack", 120)], "cash"),
+        (4, [("MAGGI-70", "Maggi noodles", 6, "pack", 14)], "cash"),
+        (5, [("RICE-1KG", "Rice", 4, "kg", 60), ("SALT-1KG", "Salt", 2, "kg", 22)], "upi"),
+        (6, [("SOAP-100", "Soap", 5, "bar", 38), ("BREAD-400", "Bread", 3, "loaf", 45)], "cash"),
+    ]):
+        orders.append(order(f"d{10 + n}", at(days=days, hours=3 + n), None, _items(*rows), pay))
     orders[2]["balance_after"] = 900 + orders[2]["total"]
 
     loans = []

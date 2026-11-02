@@ -123,6 +123,9 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Many shops, one agent: the call link `/s/<shop>/` picks the shop (2026-10-28, Build 1003)
 - [x] Shopkeeper dashboard: orders, credit book, loan enquiries, live; checked in a real browser at desktop and phone widths (2026-10-28, Build 1003)
 - [ ] The agent writes orders, loan summaries and credit balances at hang-up, so the dashboard shows real calls (B-11; with build steps 7 and 8)
+- [x] Call page redesign: call screen, timer, states, live transcript, order panel (empty until step 8), plain error messages (2026-11-02; needs a build)
+- [x] Dashboard redesign to the same look: side menu, icon tiles with change since yesterday, 7-day sales chart, needs-attention list, "soon" for Quick actions, Stock & prices, Reports (2026-11-02; needs a build)
+- [ ] The agent sends `order` messages so the call page's Current order fills in (with build step 8)
 - [ ] Shopkeeper labels in Hindi and Telugu
 - [x] `python -m dukaan_dost.preview`: look at the dashboard with made-up data and no keys (2026-10-28, InBul13)
 - [ ] Try the dashboard on a real phone

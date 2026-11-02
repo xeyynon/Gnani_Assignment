@@ -46,6 +46,8 @@ SENTENCES = [
 
 
 def load_key():
+    from dukaan_dost import envfile
+    envfile.load()                       # the project's .env
     if os.environ.get("GNANI_API_KEY"):
         return
     try:
@@ -57,7 +59,7 @@ def load_key():
         pass
     if not os.environ.get("GNANI_API_KEY"):
         sys.exit("GNANI_API_KEY is not set. Register at https://app.gnani.ai/voice, then put the key in "
-                 "the environment or local_config.py.")
+                 "the .env file (GNANI_API_KEY=...).")
 
 
 def words(text: str) -> list:

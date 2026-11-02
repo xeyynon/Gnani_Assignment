@@ -159,6 +159,17 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
     customers.sort(key=lambda c: (-c["balance"], c["name"]))
     owing = [c for c in customers if c["balance"] > 0]
 
+    def day_sales(day):
+        return sum(_int(o.get("total")) for o in orders
+                   if o["_when"].astimezone(IST).date() == day and o.get("status") != "incomplete")
+
+    def day_orders(day):
+        return sum(1 for o in orders if o["_when"].astimezone(IST).date() == day)
+
+    yesterday = today - timedelta(days=1)
+    trend = [{"date": (today - timedelta(days=n)).isoformat(), "sales": day_sales(today - timedelta(days=n)),
+              "orders": day_orders(today - timedelta(days=n))} for n in range(6, -1, -1)]
+
     return {
         "shop": shop,
         "generated_at": now.isoformat(),
@@ -166,12 +177,15 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
             "orders_today": len(todays),
             "sales_today": sum(_int(o.get("total")) for o in todays if o.get("status") != "incomplete"),
             "orders_total": len(orders),
+            "orders_yesterday": day_orders(yesterday),
+            "sales_yesterday": day_sales(yesterday),
             "udhaar_outstanding": sum(c["balance"] for c in owing),
             "customers_owing": len(owing),
             "loans_today": sum(1 for l in loans if l["_when"].astimezone(IST).date() == today),
             "loans_total": len(loans),
             "needs_attention": sum(1 for o in orders if o.get("status") in ATTENTION),
         },
+        "trend": trend,
         "orders": [_public_order(o) for o in orders[:limit]],
         "loans": [_public_loan(l) for l in loans[:limit]],
         "ledger": customers,
