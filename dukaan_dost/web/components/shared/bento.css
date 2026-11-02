@@ -1,0 +1,10 @@
+  /* A bento grid: unequal cells that fit together, one hero. On a phone it is two columns, then one. The wrappers around the
+     panels (.cols, .stack) and the tile row dissolve (display:contents), so every cell is placed directly on the grid;
+     each page places its own cells with b-* classes. */
+  [data-page=overview]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch}
+  [data-page=overview] #tiles,[data-page=overview] .cols,[data-page=overview] .stack{display:contents}
+  [data-page=overview] .hello,[data-page=overview] .panel,[data-page=overview] .tile.hero{grid-column:1/-1}
+  [data-page=overview] .hello{order:-2}
+  [data-page=overview] .tile.hero{order:-1}                    /* the big number first when the cells stack */
+  @media (max-width:520px){[data-page=overview]{grid-template-columns:minmax(0,1fr)}[data-page=overview] #tiles>.tile{grid-column:1/-1}}
+  @media (min-width:1001px){[data-page=overview]{grid-template-columns:repeat(12,minmax(0,1fr))}}

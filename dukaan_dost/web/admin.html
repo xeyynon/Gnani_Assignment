@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{include:shared/theme-init.html}}
+{{include:shared/menu-init.html}}
+<title>{{SHOP}}: every shop at a glance</title>
+<style>
+  /* The admin dashboard. Layout concept: the same side menu and top bar as a shop's dashboard, then one row of totals across
+     every shop, the shops with a state each, and a separate list of what is wrong. Same palette and the same components.
+     This file only says which components the page is made of; each one lives in web/components/ (see webpage.py). */
+{{include:shared/tokens.css}}
+{{include:shared/base.css}}
+{{include:shared/atoms.css}}
+{{include:shared/panel.css}}
+{{include:shared/theme-button.css}}
+{{include:shared/glass.css}}
+{{include:shared/shell.css}}
+{{include:shared/side-menu.css}}
+{{include:shared/topbar.css}}
+{{include:shared/notices.css}}
+{{include:shared/icon-tile.css}}
+{{include:shared/tile.css}}
+{{include:shared/status-pill.css}}
+{{include:shared/lists.css}}
+{{include:shared/forms.css}}
+{{include:shared/skeleton.css}}
+{{include:admin/layout.css}}
+{{include:shared/brutal.css}}
+</style>
+</head>
+<body>
+{{include:shared/icons.html}}
+
+<div class="shell">
+{{include:admin/side-menu.html}}
+
+  <main>
+{{include:admin/topbar.html}}
+
+    <div data-page="overview">
+{{include:admin/stat-tiles.html}}
+{{include:admin/shops.html}}
+    </div>
+
+    <div data-page="problems" hidden>
+{{include:admin/problems.html}}
+    </div>
+
+    <div data-page="add" hidden>
+{{include:admin/add-shop.html}}
+    </div>
+
+    <div data-page="edit" hidden>
+{{include:admin/edit-shop.html}}
+    </div>
+  </main>
+</div>
+
+<script>
+'use strict';
+/* ---- helpers (pure; tested in Node) ---- */
+{{include:shared/format.js}}
+{{include:shared/keys.js}}
+{{include:shared/theme-helpers.js}}
+{{include:shared/menu-helpers.js}}
+{{include:admin/helpers.js}}
+/* ---- end helpers ---- */
+
+{{include:shared/dom.js}}
+
+{{include:shared/views.js}}
+{{include:shared/menu.js}}
+
+/* ---- drawing ---- */
+{{include:shared/tile.js}}
+{{include:admin/stat-tiles.js}}
+{{include:admin/shops.js}}
+{{include:admin/problems.js}}
+{{include:shared/lists.js}}
+{{include:shared/skeleton.js}}
+{{include:admin/loading.js}}
+
+/* ---- the data: draw what the server sent, say how fresh it is, ask again every 5 seconds ---- */
+function render(d) {
+  document.querySelector('main').removeAttribute('aria-busy');
+  const now = new Date();
+  $('today').textContent = 'Today, ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  renderTiles(d.totals);
+  fill('shops', d.shops, shopCard, 'No shops yet. Each folder under shops/ with a config.yaml is a shop.');
+  fill('problems', d.problems, problemCard, 'Nothing is wrong with any shop.');
+  fill('solved', d.solved, solvedCard, 'Nothing has been marked solved.');
+  fillTemplates(d.shops);
+  const nav = $('navproblems'); nav.textContent = String(d.problems.length); nav.hidden = !d.problems.length;
+  const live = d.shops.flatMap(s => s.live);
+  $('calls').replaceChildren(h('span', { class: 'dot' + (live.length ? '' : ' idle') }), liveText(live));
+  $('calls').className = 'chip' + (live.length ? ' on' : '');
+}
+
+{{include:admin/commands.js}}
+{{include:admin/add-shop.js}}
+{{include:admin/edit-shop.js}}
+
+{{include:shared/poll.js}}
+
+{{include:shared/theme.js}}
+renderLoading();
+function route() { const v = viewFromHash(); if (v.name === 'edit') { if (/^[a-z0-9][a-z0-9_-]{1,39}$/.test(v.part)) openEditor(v.part); else location.hash = '#overview'; } }
+window.addEventListener('hashchange', route);
+showView();
+route();
+setInterval(tick, 1000);
+poll(location.origin + '/admin/data', render, 5000);
+</script>
+</body>
+</html>
