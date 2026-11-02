@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-11-02 (evening) · **Latest build:** 1003 · **Latest InBul:** InBul13 · **Uncommitted:** the Gnani backends, the shop content, three fixes and the research (see [session_handover_2026-11-02.md](session_handover_2026-11-02.md))
+**Last updated:** 2026-11-02 (night) · **Latest build:** 1008 · **Latest InBul:** InBul17 · **Uncommitted:** nothing. The last push to GitHub was Build 1006; builds 1007 and 1008 and InBul15 to InBul17 are local (see [session_handover_2026-11-02.md](session_handover_2026-11-02.md))
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -21,7 +21,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Area | State |
 |---|---|
 | Base codebase | ✅ In place: the root folder is the latest upstream code (Aug 19, 2026) with client names removed. See [origin.md](origin.md) |
-| Git and versioning | ✅ `main`: builds 1000 to 1003 and InBul01 to InBul13, two commits ahead of GitHub. See [project_docs_guide.md](project_docs_guide.md) |
+| Git and versioning | ✅ `main`: builds 1000 to 1008 and InBul01 to InBul16; GitHub has everything up to Build 1006. See [project_docs_guide.md](project_docs_guide.md) |
 | Upstream clone out of the folder | ⚠️ The move failed (permission denied); excluded locally meanwhile (DEC-021) |
 | CLAUDE.md in git | ✅ Rewritten without the customer's name and tracked (DEC-022, InBul10) |
 | Repository layout | ✅ Renamed and restructured for Dukaan Dost, ready for a first push (DEC-030). Only a licence choice is left |
@@ -31,10 +31,11 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a key) |
 | Groq as the language model | ✅ `LLM_PROVIDER=groq` in `.env` for now (DEC-038). Default `openai/gpt-oss-20b`; tight limits (B-20) |
 | Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
-| Shopkeeper dashboard | ✅ Built and checked in a real browser (Build 1003); shows demo data only until the agent writes orders (B-11). Admin dashboard next (DEC-034) |
+| Shopkeeper dashboard | ✅ Built (Build 1003), rebuilt from components in the new look with a hideable menu and a fair comparison with yesterday (Build 1007); shows real orders now that the agent writes them (Build 1008), loan summaries and credit balances still not written. Not tried on a real phone. Admin dashboard next (DEC-034) |
+| Web pages (call page and dashboard) | ✅ Built from components that the server stitches together (DEC-040), in a mix of bento grid, glass, hard-edged accents and minimalism (DEC-041), with a theme switch (Auto, Light, Dark) and a hideable menu (Build 1007). Not tried on a real phone or in a real call (B-08) |
 | Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
 | Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
-| Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16); totals still added by the model (B-15) |
+| Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16) |
 | Research | ✅ [research_papers.md](research_papers.md) (papers and methods M1 to M11) and [pipeline_expectations.md](pipeline_expectations.md) (evidence, targets, experiments E1 to E7) |
 | Fixes from the research | ✅ Price splitting, history after an interruption, Hindi/Telugu retrieval (B-17 to B-19) |
 | Order flow and order files | ✅ Built, tested (558 tests) and tried with the real model in Hinglish, Telugu and English (DEC-039): the model reads the order, the code checks the stock list, does every sum and says every amount, and writes `orders/<shop>/`. Model: Groq gpt-oss-20b. Udhaar balances not yet; accuracy not yet measured (B-24) |

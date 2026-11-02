@@ -139,10 +139,10 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Many shops, one agent: the call link `/s/<shop>/` picks the shop (2026-10-28, Build 1003)
 - [x] Shopkeeper dashboard: orders, credit book, loan enquiries, live; checked in a real browser at desktop and phone widths (2026-10-28, Build 1003)
 - [x] The agent writes orders at hang-up, so the dashboard shows real calls (B-11, 2026-11-02). Loan summaries and credit balances are still to come
-- [x] Call page redesign: call screen, timer, states, live transcript, order panel (empty until step 8), plain error messages (2026-11-02; needs a build)
-- [x] Dashboard redesign to the same look: side menu, icon tiles with change since yesterday, 7-day sales chart, needs-attention list, "soon" for Quick actions, Stock & prices, Reports (2026-11-02; needs a build)
-- [x] The agent sends `order` messages so the call page's Current order fills in (2026-11-02, needs a build)
-- [x] Pages rebuilt as components (shared atoms, panels and scripts; one organism per panel), composed when served (2026-11-02, DEC-040; needs a build)
+- [x] Call page redesign: call screen, timer, states, live transcript, order panel (empty until step 8), plain error messages (2026-11-02; Build 1007)
+- [x] Dashboard redesign to the same look: side menu, icon tiles with change since yesterday, 7-day sales chart, needs-attention list, "soon" for Quick actions, Stock & prices, Reports (2026-11-02; Build 1007)
+- [x] The agent sends `order` messages so the call page's Current order fills in (2026-11-02, Build 1008)
+- [x] Pages rebuilt as components (shared atoms, panels and scripts; one organism per panel), composed when served (2026-11-02, DEC-040; Build 1007)
 - [ ] Shopkeeper labels in Hindi and Telugu
 - [x] `python -m dukaan_dost.preview`: look at the dashboard with made-up data and no keys (2026-10-28, InBul13)
 - [ ] Try the dashboard on a real phone

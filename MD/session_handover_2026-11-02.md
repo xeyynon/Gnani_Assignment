@@ -48,12 +48,12 @@ Surya added the Gnani and Groq keys to `.env` (a loader in `dukaan_dost/envfile.
 - **Groq as the language model** (`llm_groq.py`, `llm_provider.py`, DEC-038). The account's usable models are Qwen and gpt-oss; Qwen is the default. Tight limits (B-20).
 - **Shop prompt changed to digits.** Timbre reads digits correctly; the model spells numbers wrongly. Checked on the real stack: totals were right on two orders.
 - **Key terms narrowed** to the 61 main English names after the long list caused errors.
-- Still true: **nothing from this section is committed** on top of Build 1004 / InBul14. Changed files include `stt_gnani.py`, `stock.py`, `config.yaml`, `app.py`, new `llm_groq.py`, `llm_provider.py`, `envfile.py`, tests and docs.
+- Committed afterwards: the Groq provider, the `.env` loader and the Prisma wait fix went into Build 1005, and the rest of this section into Build 1008. Changed files include `stt_gnani.py`, `stock.py`, `config.yaml`, `app.py`, new `llm_groq.py`, `llm_provider.py`, `envfile.py`, tests and docs.
 
 Next: the order flow (Step 8). It needs the Groq pacing in mind: the 20 evaluation scripts at about 5 turns a minute will take time (B-20).
 
 ## Evening: the order flow (DEC-039)
-Built the order flow, the biggest piece left. **Nothing in this section is committed.**
+Built the order flow, the biggest piece left. **Committed in Build 1008.**
 - `order_session.py` (stock check, quantity rules, rounding, sentences in three languages, files), `order_turn.py` (instructions, strict JSON schema, reply assembly), JSON mode (`ask_json`) in both model backends, the conversation manager's order path, and the hooks in `app.py` (a fresh order per call, saved at hang-up). The call page's order panel is fed by `order` events.
 - **What changed in behaviour:** the model no longer speaks free text during an order. It returns a JSON note; the code applies it and says the amounts. So a total a caller hears is always the dashboard's total (B-15 closed, B-11 closed for orders).
 - **Tests:** 513 Python and 31 page tests pass (about 110 new, in `test_order_session.py`, `test_order_turn.py`, `test_order_app.py`, plus Groq JSON-mode tests).
@@ -67,3 +67,18 @@ Six-turn Hinglish, four-turn Telugu and five-turn English orders on the real Gro
 - **What the real runs changed:** the code now speaks the whole reply on any turn that touches the order (the model narrated changes twice, with totals of its own such as 209 beside the real 265, and invented a delivery time and an address); prices come from the stock list; the shop's own closing sentence is said when payment is chosen; unsold items are named; the placeholders became square brackets; the knowledge search ignores everyday words (it had missed ghee); the instructions list the Hindi and Telugu number words and say one op per item named.
 - **First-sentence time:** about 0.6 to 1.3 s (one first turn took 3 s). Not a saved measurement.
 - **Still weak:** a few conversations prove little (B-24). The model's own words are still used for questions about the shop, where it sometimes answers in English during a Hindi call.
+
+## Night: the pages as components, a new look, and the commits (Builds 1005 to 1008, InBul15 to InBul17)
+Surya asked for UI and UX work and, along the way, for the pages to follow the component-by-component structure they use elsewhere.
+- **Build 1005 and 1006** (pushed): the call page as a call screen with a live transcript (the server now sends `user` and `agent` messages through `Transport.send_event`), the dashboard with a side menu, tiles, a sales chart and a needs-attention list, and one shared palette.
+- **Build 1007** (not pushed): the pages **built from components** (`dukaan_dost/web/components/`, composed by `dukaan_dost/webpage.py`, DEC-040), a **mix of bento, glass, hard-edged accents and minimalism** (DEC-041), a **theme switch** (Auto, Light, Dark; `T`), a **hideable menu** (curved drawer; `B`), loading placeholders, and a **fair comparison with yesterday** (up to the same time of day). Documented in [frontend.md](frontend.md). One tile was removed on the way: "Needs you" repeated the attention panel, so its count is a badge in that panel's heading.
+- **Build 1008** (not pushed): the order flow (DEC-039), written in another session and committed in this one at Surya's request. The code was not reviewed line by line here; the tests pass and its authors' notes are above.
+- **InBul16** (written in another session while this one ran) holds the records for the order flow and the Groq choice; **InBul17** is this session's final doc updates.
+- **InBul15:** the smoke runs after the Prisma wait fix. Two earlier runs that measured the 9-second wait bug were removed (still in Build 1005's history).
+- **Checks run before committing:** 558 Python tests, 49 page tests, the docs and repository checks, a scan of every changed file for keys and audio (none), and `.env` confirmed ignored.
+- **Things to know:**
+  - `tests/test_order_turn.py::test_not_sold_names_are_cleaned_and_junk_is_ignored` failed twice in one full run and passed in the next four; cause unknown. Treat as flaky until it shows again.
+  - The shell tool used here turns a double backslash into a single one; files are written with the Write tool instead (an earlier colour test was silently broken by it; see [frontend.md](frontend.md), "UI rules").
+  - Not tried: a real phone, a real call through the new call page (B-08), contrast measured with a tool.
+
+Next: push when Surya says; try the call page with a real call and the real order flow; the evaluation (20 scripts, saved results); the udhaar check; native-speaker review of the Hindi and Telugu sentences.
