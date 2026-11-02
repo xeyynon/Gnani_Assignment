@@ -1,0 +1,34 @@
+  aside{background:var(--surface);border:1px solid var(--line);border-left:0;border-radius:0 30px 30px 0;margin:10px 0;padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:10px;height:calc(100vh - 20px);overflow:hidden;min-width:0}
+  .menu-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 16px 8px}
+  .menu-head .brand{min-width:0}
+  .menu-btn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0;flex:none}
+  .menu-btn:hover{color:var(--ink)}
+  .menu-btn svg{width:18px;height:18px}
+  .menu-show{display:none}
+  html[data-menu=closed] .menu-show{display:inline-grid}
+  nav{display:flex;flex-direction:column;gap:3px}
+  .nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:15px;border:0;background:none;text-align:left;width:100%}
+  .nav:hover{background:var(--surface2)}
+  .nav[aria-current=page]{background:var(--green-soft);color:var(--green-ink);font-weight:600}
+  .nav[aria-disabled=true]{color:var(--muted);cursor:default}
+  .nav[aria-disabled=true]:hover{background:none}
+  .nav .n{margin-left:auto;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-ink);border-radius:999px;padding:0 8px}
+  /* Hidden: the column closes and the menu slides out to the left (visibility waits until it has gone, so it leaves the tab order too). */
+  @media (min-width:901px){
+    html[data-menu=closed] .shell{grid-template-columns:0 minmax(0,1fr)}
+    html[data-menu=closed] aside{transform:translateX(-110%);visibility:hidden}
+  }
+  @media (min-width:901px) and (prefers-reduced-motion:no-preference){
+    .shell{transition:grid-template-columns .3s cubic-bezier(.2,.8,.2,1)}
+    aside{transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s}
+    html[data-menu=closed] aside{transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s}
+  }
+  @media (max-width:900px){
+    aside{position:static;height:auto;margin:0;flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px;border:0;border-bottom:1px solid var(--line);border-radius:0 0 26px 26px}
+    .menu-head{padding:0 4px}
+    aside .brand span{display:none}
+    nav{flex-direction:row;flex-wrap:wrap;gap:4px}
+    .nav{white-space:nowrap;padding:8px 12px;width:auto}
+    .nav[aria-disabled=true]{display:none}
+    html[data-menu=closed] aside{display:none}
+  }

@@ -1,0 +1,2 @@
+  .themebtn{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:var(--radius-button);font-size:14px}
+  .themebtn:hover{color:var(--ink)}

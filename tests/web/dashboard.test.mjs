@@ -2,15 +2,15 @@
 //   node --test tests/web/
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { composedPage } from "./composed.mjs";
 
-const html = readFileSync(new URL("../../dukaan_dost/web/dashboard.html", import.meta.url), "utf8");
+const html = composedPage("dashboard");
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // The pure helpers sit between two markers so they can be tested without a DOM.
 const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers ---- */"));
-const { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus } = new Function(
-  `${helperSource}; return { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus };`)();
+const { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus, trendHasData, nextTheme, themeLabel, isPlainKey, menuOpen } = new Function(
+  `${helperSource}; return { rupees, itemsSummary, relTime, limitUsed, statusLabel, paymentLabel, fmtDate, greeting, change, shortRupees, barPercent, attention, callStatus, trendHasData, nextTheme, themeLabel, isPlainKey, menuOpen };`)();
 
 test("the page script is valid JavaScript", () => {
   new Function(script);
@@ -123,4 +123,99 @@ test("what needs the shopkeeper: problem orders and customers near their limit",
 test("the call line", () => {
   assert.equal(callStatus([]), "No call right now");
   assert.equal(callStatus([{ seconds: 75 }]), "A customer is on a call (1:15)");
+});
+
+// ---- rules both pages follow ----
+const tokenFree = (src) => src.replace(/:root[^{]*\{[^}]*\}/g, "");           // drop the token rules themselves
+
+test("no colour is written outside the tokens", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  const left = tokenFree(style).match(/#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\(/g);
+  assert.equal(left, null, `literal colours outside the token rules: ${left}`);
+});
+
+test("the theme is applied before the page paints, under the same key on both pages", () => {
+  const init = html.match(/<script id="theme-init">([\s\S]*?)<\/script>/);
+  assert.ok(init, "missing the head script that sets the saved theme");
+  assert.ok(html.indexOf('id="theme-init"') < html.indexOf("<style>"), "the theme script must run before the CSS");
+  assert.match(init[1], /dd:theme/);
+  assert.match(script, /localStorage\.setItem\('dd:theme'/);
+  new Function(init[1]);
+});
+
+test("dark tokens apply by device unless Light is chosen, and when Dark is chosen", () => {
+  assert.match(html, /prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)\{/);
+  assert.match(html, /:root\[data-theme="dark"\]\{/);
+});
+
+test("touch targets are 44px on a coarse pointer", () => {
+  assert.match(html, /@media \(pointer:coarse\)\{[^}]*min-height:44px/);
+});
+
+test("theme and shortcut helpers", () => {
+  assert.equal(nextTheme("auto"), "light");
+  assert.equal(nextTheme("light"), "dark");
+  assert.equal(nextTheme("dark"), "auto");
+  assert.equal(nextTheme("nonsense"), "auto");
+  assert.equal(themeLabel("dark"), "Dark");
+  assert.equal(themeLabel(undefined), "Auto");
+  const key = (over) => ({ target: { tagName: "BODY" }, ...over });
+  assert.equal(isPlainKey(key({})), true);
+  assert.equal(isPlainKey(key({ ctrlKey: true })), false);       // browser shortcuts still work
+  assert.equal(isPlainKey(key({ metaKey: true })), false);
+  assert.equal(isPlainKey(key({ altKey: true })), false);
+  assert.equal(isPlainKey(key({ repeat: true })), false);        // holding a key must not flap the theme
+  assert.equal(isPlainKey(key({ defaultPrevented: true })), false);
+  assert.equal(isPlainKey(key({ target: { tagName: "INPUT", type: "text" } })), false);   // never while typing
+  assert.equal(isPlainKey(key({ target: { tagName: "TEXTAREA" } })), false);
+  assert.equal(isPlainKey(key({ target: { tagName: "INPUT", type: "checkbox" } })), true);
+});
+
+test("the comparison says which yesterday it is", () => {
+  assert.deepEqual(change(12, 10, "vs this time yesterday"), { text: "▲ +20% vs this time yesterday", dir: "up" });
+  assert.equal(change(12, 10).text, "▲ +20% vs yesterday");               // the default wording is unchanged
+});
+
+test("a week with no sales is an empty state, not seven zero bars", () => {
+  assert.equal(trendHasData([]), false);
+  assert.equal(trendHasData(undefined), false);
+  assert.equal(trendHasData([{ sales: 0 }, { sales: 0 }]), false);
+  assert.equal(trendHasData([{ sales: 0 }, { sales: 50 }]), true);
+});
+
+test("loading is not drawn as emptiness, and a section change moves focus", () => {
+  assert.match(script, /function renderLoading\(/);
+  assert.match(script, /renderLoading\(\);\s*showView\(\);/);          // skeletons are on screen before the first answer
+  assert.match(script, /hashchange', \(\) => showView\(true\)/);
+  assert.match(html, /<h2 id="hello" tabindex="-1">/);
+});
+
+test("the menu is open unless it was hidden on purpose", () => {
+  assert.equal(menuOpen(null), true);
+  assert.equal(menuOpen(undefined), true);
+  assert.equal(menuOpen("open"), true);
+  assert.equal(menuOpen("closed"), false);
+  assert.equal(menuOpen("garbage"), true);               // a bad stored value never traps the user without a menu
+});
+
+test("a hidden menu is applied before the page paints, under the same key the page saves", () => {
+  const init = html.match(/<script id="menu-init">([\s\S]*?)<\/script>/);
+  assert.ok(init, "missing the head script that restores a hidden menu");
+  assert.ok(html.indexOf('id="menu-init"') < html.indexOf("<style>"), "it must run before the CSS");
+  assert.match(init[1], /dd:menu/);
+  assert.match(script, /localStorage\.setItem\('dd:menu'/);
+  new Function(init[1]);
+});
+
+test("the menu can be hidden and brought back, by button and by key, and focus is handed on", () => {
+  assert.match(html, /id="menuhide"[^>]*aria-expanded="true"[^>]*aria-controls="sidemenu"/);
+  assert.match(html, /id="menushow"[^>]*aria-expanded="true"[^>]*aria-controls="sidemenu"/);
+  assert.match(html, /<aside id="sidemenu">/);
+  assert.match(script, /\(open \? \$\('menuhide'\) : \$\('menushow'\)\)\.focus\(\)/);
+  assert.match(script, /key\.toLowerCase\(\) === 'b'/);
+  assert.match(html, /html\[data-menu=closed\] aside\{transform:translateX\(-110%\);visibility:hidden\}/);   // slides out to the left, and leaves the tab order
+});
+
+test("the menu has the curved right end", () => {
+  assert.match(html, /aside\{[^}]*border-radius:0 30px 30px 0/);
 });

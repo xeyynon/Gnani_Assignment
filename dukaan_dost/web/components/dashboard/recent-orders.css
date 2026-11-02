@@ -1,0 +1,11 @@
+  .orow{display:grid;grid-template-columns:76px minmax(0,.8fr) minmax(0,1.6fr) 64px 118px;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+  .orow.head{border-top:0;padding:0 0 6px;font-size:13px;color:var(--muted)}
+  .orow .num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .orow > *{min-width:0;overflow-wrap:anywhere}
+  .fresh{background:var(--green-soft);border-radius:8px}
+  @media (max-width:640px){
+    .orow.head{display:none}
+    .orow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who status" "items items" "time total"}
+    .orow .c-who{grid-area:who}.orow .c-status{grid-area:status;text-align:right}.orow .c-items{grid-area:items}
+    .orow .c-time{grid-area:time}.orow .c-total{grid-area:total}
+  }

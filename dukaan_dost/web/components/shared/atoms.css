@@ -1,0 +1,15 @@
+  .mark{width:40px;height:40px;border-radius:12px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;flex:none}
+  .mark svg{width:23px;height:23px}
+  .mark.sm{width:36px;height:36px;border-radius:10px}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .brand b{display:block;font-size:16px;line-height:1.2}
+  .brand span{font-size:12px;color:var(--muted)}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--chip-bg,var(--surface));font-size:14px;color:var(--muted)}
+  .chip.on{background:var(--green-soft);border-color:transparent;color:var(--green-ink)}
+  .chip b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+  .dot.off{background:var(--warn)}
+  .dot.idle,.chip:not(.on) .dot{background:var(--muted)}
+  .tag{font-size:12px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:1px 9px;white-space:nowrap}
+  .soon{margin-left:auto;font-size:11px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:0 7px;white-space:nowrap}
+  .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;font-size:14px}

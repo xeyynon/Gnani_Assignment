@@ -3,415 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{include:shared/theme-init.html}}
+{{include:dashboard/menu-init.html}}
 <title>{{SHOP}}: orders and credit</title>
 <style>
-  /* Layout concept: a side menu (a top row on a phone), then a greeting and the four numbers a shopkeeper
-     wants first, the latest orders beside what needs them, and a week of sales. Same calm palette as the call page.
-     Status is carried by a coloured pill, not by words alone. */
-  :root{--bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F1F5F9;--ink:#0F172A;--muted:#475569;--line:#E2E8F0;--green:#16803D;--green-hover:#11632F;--green-soft:#E8F6EC;--green-ink:#11632F;--blue:#1D4ED8;--blue-soft:#DBEAFE;--credit:#7C3AED;--credit-soft:#F3E8FF;--amber:#B45309;--amber-soft:#FEF3C7;--warn:#B91C1C;--warn-soft:#FEE2E2;--end:#DC2626;--radius-card:14px;--radius-button:9px;--shadow-card:0 1px 3px rgb(15 23 42 / 6%)}
-  @media (prefers-color-scheme:dark){:root{--bg:#0B1220;--surface:#111A2B;--surface2:#1A2438;--ink:#E2E8F0;--muted:#94A3B8;--line:#243047;--green:#4CC38A;--green-hover:#6FD3A1;--green-soft:#14301F;--green-ink:#86E0AE;--blue:#7AA7FF;--blue-soft:#14233F;--credit:#C4A1FF;--credit-soft:#2A1B47;--amber:#FBBF24;--amber-soft:#3A2A0C;--warn:#F87171;--warn-soft:#3B1717;--end:#DC2626;--shadow-card:none}}
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,"Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
-  h1,h2,h3,p{margin:0}
-  svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-  [hidden]{display:none!important}
-  button{font:inherit;cursor:pointer}
-  a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
-
-  .shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
-  @media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr)}}
-
-  /* the side menu */
-  aside{background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
-  .brand{display:flex;align-items:center;gap:11px;padding:2px 8px 16px}
-  .mark{width:40px;height:40px;border-radius:12px;background:var(--green-soft);color:var(--green);display:grid;place-items:center}
-  .mark svg{width:23px;height:23px}
-  .brand b{display:block;font-size:16px;line-height:1.2}
-  .brand span{font-size:12px;color:var(--muted)}
-  nav{display:flex;flex-direction:column;gap:3px}
-  .nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:15px;border:0;background:none;text-align:left;width:100%}
-  .nav:hover{background:var(--surface2)}
-  .nav[aria-current=page]{background:var(--green-soft);color:var(--green-ink);font-weight:600}
-  .nav[aria-disabled=true]{color:var(--muted);cursor:default}
-  .nav[aria-disabled=true]:hover{background:none}
-  .nav .n{margin-left:auto;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-ink);border-radius:999px;padding:0 8px}
-  .soon{margin-left:auto;font-size:11px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:0 7px;white-space:nowrap}
-  @media (max-width:900px){
-    aside{position:static;height:auto;flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}
-    .brand{padding:0 4px}.brand span{display:none}
-    nav{flex-direction:row;flex-wrap:wrap;gap:4px}
-    .nav{white-space:nowrap;padding:8px 12px;width:auto}
-    .nav[aria-disabled=true]{display:none}
-  }
-
-  /* the page */
-  main{padding:0 24px 56px;min-width:0}
-  @media (max-width:600px){main{padding:0 14px 48px}}
-  .top{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--line)}
-  .shop{display:flex;align-items:center;gap:10px;min-width:0}
-  .shop .mark{width:36px;height:36px;border-radius:10px}
-  .shop h1{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .topright{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:14px;color:var(--muted)}
-  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14px;color:var(--muted)}
-  .chip.on{background:var(--green-soft);border-color:transparent;color:var(--green-ink)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
-  .dot.off{background:var(--warn)}
-  .dot.idle{background:var(--muted)}
-  .live{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
-  .banner{margin-top:14px;padding:9px 13px;border-radius:10px;font-size:14px;background:var(--amber-soft);border:1px solid var(--amber);color:var(--amber)}
-  .banner.bad{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
-  .banner button{margin-left:8px;font-weight:600;padding:5px 14px;border-radius:8px;border:1px solid var(--warn);background:var(--surface);color:var(--warn)}
-  .hello{margin-top:22px}
-  .hello h2{font-size:clamp(24px,4vw,30px);letter-spacing:-.01em}
-  .hello p{color:var(--muted)}
-
-  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px;margin-top:18px}
-  .tile{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 16px;min-width:0;background:var(--surface)}
-  .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none}
-  .ico svg{width:24px;height:24px}
-  .ico.sage{background:var(--green-soft);color:var(--green)}
-  .ico.blue{background:var(--blue-soft);color:var(--blue)}
-  .ico.credit{background:var(--credit-soft);color:var(--credit)}
-  .ico.amber{background:var(--amber-soft);color:var(--amber)}
-  .ico.warn{background:var(--warn-soft);color:var(--warn)}
-  .tile .k{font-size:14px;color:var(--muted)}
-  .tile .v{font-size:26px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-  .tile .s{font-size:13px;color:var(--muted)}
-  .s.up{color:var(--green-ink)}.s.down{color:var(--warn)}
-  .tile.attn .v{color:var(--warn)}
-
-  .cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;margin-top:16px;align-items:start}
-  @media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
-  .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:16px 18px;min-width:0}
-  .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-  .ph h3{font-size:16px;display:flex;align-items:center;gap:9px}
-  .ph h3 svg{color:var(--green)}
-  .link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--green-ink);font-weight:600;background:none;border:0;padding:4px 0}
-  .link svg{width:16px;height:16px}
-
-  /* recent orders */
-  .orow{display:grid;grid-template-columns:76px minmax(0,.8fr) minmax(0,1.6fr) 64px 118px;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
-  .orow.head{border-top:0;padding:0 0 6px;font-size:13px;color:var(--muted)}
-  .orow .num{text-align:right;font-variant-numeric:tabular-nums}
-  .orow > *{min-width:0;overflow-wrap:anywhere}
-  .who{font-weight:600}
-  .muted{font-size:13px;color:var(--muted)}
-  @media (max-width:640px){
-    .orow.head{display:none}
-    .orow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who status" "items items" "time total"}
-    .orow .c-who{grid-area:who}.orow .c-status{grid-area:status;text-align:right}.orow .c-items{grid-area:items}
-    .orow .c-time{grid-area:time}.orow .c-total{grid-area:total}
-  }
-  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
-  .pill.confirmed{background:var(--green-soft);border-color:transparent;color:var(--green-ink)}
-  .pill.credit_pending{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
-  .pill.incomplete{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
-  .pill.pay{background:var(--surface2);color:var(--muted);border-color:transparent}
-  .pill.pay.credit{background:var(--credit-soft);color:var(--credit)}
-  .fresh{background:var(--green-soft);border-radius:8px}
-
-  /* needs attention */
-  .alert{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
-  .alert:first-of-type{border-top:0}
-  .alert .ico{width:34px;height:34px;border-radius:9px}
-  .alert .ico svg{width:19px;height:19px}
-  .alert .t{flex:1;min-width:0;overflow-wrap:anywhere}
-  .alert .tag2{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
-  .tag2.warn{background:var(--warn-soft);color:var(--warn)}.tag2.amber{background:var(--amber-soft);color:var(--amber)}
-
-  .actions{display:flex;flex-direction:column;gap:8px}
-  .act{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--muted);font-weight:600;text-align:left;width:100%}
-  .act:disabled{cursor:not-allowed}
-  .act .soon{margin-left:auto}
-
-  /* the week */
-  .trend{display:flex;align-items:flex-end;gap:8px;height:190px;padding-top:6px}
-  .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
-  .col .val{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-  .col .bar{width:100%;max-width:56px;border-radius:7px 7px 0 0;background:var(--blue-soft);min-height:3px}
-  .col.today .bar{background:var(--blue)}
-  .col.today .val{color:var(--blue);font-weight:700}
-  .col .day{font-size:12px;color:var(--muted);white-space:nowrap}
-
-  /* the lists on their own pages */
-  .stackl{display:flex;flex-direction:column;gap:10px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
-  .card.fresh{border-color:var(--green);background:var(--green-soft)}
-  .row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
-  .total{font-weight:700;font-variant-numeric:tabular-nums}
-  details>summary{cursor:pointer;list-style:none}
-  details>summary::-webkit-details-marker{display:none}
-  details[open]>summary{margin-bottom:8px}
-  table{border-collapse:collapse;width:100%;font-size:14px}
-  td{padding:4px 0;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
-  td.num{text-align:right;font-variant-numeric:tabular-nums}
-  .meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:6px}
-  .meter>i{display:block;height:100%;background:var(--green)}
-  .meter.high>i{background:var(--warn)}
-  .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;font-size:14px}
-  .tag{font-size:12px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:1px 8px}
-  .pagehead{margin:22px 0 12px}
-  .pagehead h2{font-size:22px}
-  @media (prefers-reduced-motion:no-preference){.card,.fresh{transition:background .3s,border-color .3s}}
+  /* The shopkeeper dashboard. Layout concept: a side menu (a top row on a phone), then a greeting and the four numbers
+     a shopkeeper wants first, the latest orders beside what needs them, and a week of sales. Same palette as the call
+     page. Status is carried by a coloured pill with a label, not by colour alone.
+     This file only says which components the page is made of; each one lives in web/components/ (see webpage.py). */
+{{include:shared/tokens.css}}
+{{include:shared/base.css}}
+{{include:shared/atoms.css}}
+{{include:shared/panel.css}}
+{{include:shared/theme-button.css}}
+{{include:shared/glass.css}}
+{{include:dashboard/layout.css}}
+{{include:dashboard/side-menu.css}}
+{{include:dashboard/topbar.css}}
+{{include:dashboard/notices.css}}
+{{include:dashboard/greeting.css}}
+{{include:dashboard/icon-tile.css}}
+{{include:dashboard/stat-tiles.css}}
+{{include:dashboard/status-pill.css}}
+{{include:dashboard/recent-orders.css}}
+{{include:dashboard/attention.css}}
+{{include:dashboard/quick-actions.css}}
+{{include:dashboard/sales-trend.css}}
+{{include:dashboard/lists.css}}
+{{include:dashboard/skeleton.css}}
+{{include:shared/brutal.css}}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.6-5h14.8L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></symbol>
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
-  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M6 6h15l-1.6 9H7.6z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></symbol>
-  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14a5 5 0 0 1 5.5 5"/></symbol>
-  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.7 10v8M14.3 10v8M19 10v8"/><path d="M3 21h18"/></symbol>
-  <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5"/><path d="M12 12v9"/></symbol>
-  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></symbol>
-  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18h.01"/></symbol>
-  <symbol id="i-rupee" viewBox="0 0 24 24"><path d="M7 5h10M7 9h10"/><path d="M8 5c6 0 6 6 0 6H7l7 8"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></symbol>
-  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></symbol>
-</svg>
+{{include:shared/icons.html}}
 
 <div class="shell">
-  <aside>
-    <div class="brand"><div class="mark"><svg class="i"><use href="#i-store"/></svg></div><div><b>Dukaan Dost</b><span>Voice ordering</span></div></div>
-    <nav aria-label="Sections">
-      <a class="nav" href="#overview" data-view="overview"><svg class="i"><use href="#i-home"/></svg>Dashboard</a>
-      <a class="nav" href="#orders" data-view="orders"><svg class="i"><use href="#i-cart"/></svg>Orders<span class="n" id="navorders" hidden></span></a>
-      <a class="nav" href="#credit" data-view="credit"><svg class="i"><use href="#i-users"/></svg>Credit book (udhaar)</a>
-      <a class="nav" href="#loans" data-view="loans"><svg class="i"><use href="#i-bank"/></svg>Loan enquiries</a>
-      <span class="nav" aria-disabled="true"><svg class="i"><use href="#i-box"/></svg>Stock &amp; prices<span class="soon">soon</span></span>
-      <span class="nav" aria-disabled="true"><svg class="i"><use href="#i-chart"/></svg>Reports<span class="soon">soon</span></span>
-    </nav>
-  </aside>
+{{include:dashboard/side-menu.html}}
 
   <main>
-    <div class="top">
-      <div class="shop"><div class="mark"><svg class="i"><use href="#i-store"/></svg></div><h1 id="title">{{SHOP}}</h1></div>
-      <div class="topright">
-        <span class="chip" id="calls" aria-live="polite"><span class="dot idle"></span>No call right now</span>
-        <span class="live"><span class="dot" id="dot"></span><span id="updated">Loading...</span></span>
-        <span id="today"></span>
-      </div>
-    </div>
-    <div id="notices"></div>
+{{include:dashboard/topbar.html}}
 
     <div data-page="overview">
-      <div class="hello"><h2 id="hello">Hello!</h2><p>Here is how your shop is doing today.</p></div>
-      <section class="tiles" id="tiles" aria-label="Today at a glance"></section>
+{{include:dashboard/greeting.html}}
+{{include:dashboard/stat-tiles.html}}
       <div class="cols">
         <div class="stack">
-          <section class="panel" aria-labelledby="h-recent">
-            <div class="ph"><h3 id="h-recent"><svg class="i"><use href="#i-cart"/></svg>Recent orders</h3>
-              <button class="link" type="button" data-go="orders">View all orders<svg class="i"><use href="#i-arrow"/></svg></button></div>
-            <div id="recent"></div>
-          </section>
-          <section class="panel" aria-labelledby="h-trend">
-            <div class="ph"><h3 id="h-trend"><svg class="i"><use href="#i-chart"/></svg>Sales, last 7 days</h3></div>
-            <div class="trend" id="trend" role="img" aria-label="Sales for each of the last seven days"></div>
-          </section>
+{{include:dashboard/recent-orders.html}}
+{{include:dashboard/sales-trend.html}}
         </div>
         <div class="stack">
-          <section class="panel" aria-labelledby="h-attn">
-            <div class="ph"><h3 id="h-attn"><svg class="i" style="color:var(--warn)"><use href="#i-alert"/></svg>Needs your attention</h3></div>
-            <div id="attn"></div>
-          </section>
-          <section class="panel" aria-labelledby="h-act">
-            <div class="ph"><h3 id="h-act">Quick actions</h3></div>
-            <div class="actions">
-              <button class="act" type="button" disabled><svg class="i"><use href="#i-box"/></svg>Add or update stock<span class="soon">soon</span></button>
-              <button class="act" type="button" disabled><svg class="i"><use href="#i-users"/></svg>Add customer or credit<span class="soon">soon</span></button>
-              <button class="act" type="button" disabled><svg class="i"><use href="#i-chart"/></svg>View today's report<span class="soon">soon</span></button>
-            </div>
-          </section>
+{{include:dashboard/attention.html}}
+{{include:dashboard/quick-actions.html}}
         </div>
       </div>
     </div>
 
-    <div data-page="orders" hidden><div class="pagehead"><h2>Orders</h2></div><div class="stackl" id="orders"></div></div>
-    <div data-page="credit" hidden><div class="pagehead"><h2>Credit book (udhaar)</h2></div><div class="stackl" id="ledger"></div></div>
-    <div data-page="loans" hidden><div class="pagehead"><h2>Loan enquiries</h2></div><div class="stackl" id="loans"></div></div>
+{{include:dashboard/orders-page.html}}
+{{include:dashboard/credit-page.html}}
+{{include:dashboard/loans-page.html}}
   </main>
 </div>
 
 <script>
 'use strict';
 /* ---- helpers (pure; tested in Node) ---- */
-const nf = new Intl.NumberFormat('en-IN');
-function rupees(n) { return '₹' + nf.format(Math.round(Number(n) || 0)); }
-function itemsSummary(items, max) {
-  max = max || 3;
-  const parts = (items || []).slice(0, max).map(i => (i.qty != null ? i.qty + (i.unit ? ' ' + i.unit : '') + ' ' : '') + i.name);
-  const more = (items || []).length - max;
-  return parts.join(', ') + (more > 0 ? ' +' + more + ' more' : '');
-}
-function relTime(iso, now) {
-  const t = new Date(iso), n = now || new Date();
-  if (isNaN(t)) return '';
-  const mins = Math.round((n - t) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return mins + ' min ago';
-  const clock = t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-  if (t.toDateString() === n.toDateString()) return Math.round(mins / 60) + ' h ago, ' + clock;
-  const y = new Date(n); y.setDate(n.getDate() - 1);
-  if (t.toDateString() === y.toDateString()) return 'yesterday ' + clock;
-  return t.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ' ' + clock;
-}
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function fmtDate(iso) {                       // 'YYYY-MM-DD' -> '28 Oct', without any time-zone shift
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
-  return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : '';
-}
-function callStatus(live) {                  // [{seconds}] -> the line shown at the top
-  if (!live || !live.length) return 'No call right now';
-  const s = live[0].seconds, t = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  return (live.length > 1 ? live.length + ' calls' : 'A customer is on a call') + ' (' + t + ')';
-}
-function limitUsed(balance, limit) { return limit > 0 ? Math.max(0, Math.min(1, balance / limit)) : 0; }
-const STATUS = { confirmed: 'Confirmed', credit_pending: 'Credit pending', incomplete: 'Incomplete' };
-function statusLabel(s) { return STATUS[s] || 'Confirmed'; }
-function paymentLabel(p) { return { cash: 'Cash', upi: 'UPI', udhaar: 'On credit' }[p] || (p || ''); }
-function greeting(hour) { return hour < 12 ? 'Good morning!' : hour < 17 ? 'Good afternoon!' : 'Good evening!'; }
-function change(now, before) {               // today against yesterday -> {text, dir}; no percentage from a zero
-  now = Number(now) || 0; before = Number(before) || 0;
-  if (!before) return { text: now ? 'nothing yesterday' : 'no change', dir: '' };
-  const pct = Math.round((now - before) / before * 100);
-  if (!pct) return { text: 'same as yesterday', dir: '' };
-  return { text: (pct > 0 ? '▲ +' : '▼ ') + pct + '% vs yesterday', dir: pct > 0 ? 'up' : 'down' };
-}
-function shortRupees(n) {                    // for labels above the bars
-  n = Math.round(Number(n) || 0);
-  return n >= 1000 ? '₹' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '₹' + n;
-}
-function barPercent(value, max) { return max > 0 ? Math.max(2, Math.round((Number(value) || 0) / max * 100)) : 2; }
-function attention(orders, ledger) {         // what needs the shopkeeper, most urgent first
-  const out = [];
-  (orders || []).forEach(o => {
-    if (o.status === 'incomplete') out.push({ kind: 'warn', title: (o.customer || 'Walk-in caller') + ': incomplete order', tag: rupees(o.total) });
-    else if (o.status === 'credit_pending') out.push({ kind: 'amber', title: (o.customer || 'A caller') + ': credit pending', tag: rupees(o.total) });
-  });
-  (ledger || []).forEach(c => {
-    if (limitUsed(c.balance, c.credit_limit) >= 0.9) out.push({ kind: 'warn', title: c.name + ': credit near the limit', tag: rupees(c.balance) + ' / ' + rupees(c.credit_limit) });
-  });
-  return out;
-}
+{{include:shared/format.js}}
+{{include:shared/keys.js}}
+{{include:shared/theme-helpers.js}}
+{{include:dashboard/helpers.js}}
 /* ---- end helpers ---- */
 
-/* Everything below builds the page from text nodes, never from HTML strings: order data
-   contains text a caller chose (names, items), and must not be able to inject markup. */
-function h(tag, attrs) {
-  const e = document.createElement(tag);
-  for (const k in (attrs || {})) {
-    if (k === 'class') e.className = attrs[k];
-    else if (k === 'text') e.textContent = attrs[k];
-    else e.setAttribute(k, attrs[k]);
-  }
-  for (let i = 2; i < arguments.length; i++) {
-    const c = arguments[i];
-    if (c == null || c === false) continue;
-    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
-  }
-  return e;
-}
-const SVG = document.querySelector('svg').namespaceURI;     // the sprite's own, so no address is written here
-function icon(name) {
-  const s = document.createElementNS(SVG, 'svg'); s.setAttribute('class', 'i');
-  const u = document.createElementNS(SVG, 'use'); u.setAttribute('href', '#i-' + name); s.appendChild(u);
-  return s;
-}
-const $ = id => document.getElementById(id);
+{{include:shared/dom.js}}
 const seen = new Set(), freshUntil = {}; let firstLoad = true, lastOk = 0, signedOut = false, failed = false, lastData = null;
 
-/* ---- the pages ---- */
-const VIEWS = ['overview', 'orders', 'credit', 'loans'];
-function showView() {
-  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
-  document.querySelectorAll('[data-page]').forEach(p => { p.hidden = p.dataset.page !== v; });
-  document.querySelectorAll('.nav[data-view]').forEach(a => { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-}
-window.addEventListener('hashchange', showView);
-document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { location.hash = b.dataset.go; }));
+{{include:dashboard/views.js}}
+{{include:dashboard/menu.js}}
 
 /* ---- drawing ---- */
-function tile(iconName, tone, key, value, sub, subCls, cls) {
-  return h('div', { class: 'tile' + (cls ? ' ' + cls : '') },
-    h('div', { class: 'ico ' + tone }, icon(iconName)),
-    h('div', null, h('div', { class: 'k', text: key }), h('div', { class: 'v', text: value }), sub ? h('div', { class: 's' + (subCls ? ' ' + subCls : ''), text: sub }) : null));
-}
-function renderTiles(s, needs) {
-  const o = change(s.orders_today, s.orders_yesterday), m = change(s.sales_today, s.sales_yesterday);
-  $('tiles').replaceChildren(
-    tile('cart', 'sage', 'Orders today', String(s.orders_today), o.text, o.dir),
-    tile('rupee', 'blue', 'Sales today', rupees(s.sales_today), m.text, m.dir),
-    tile('users', 'credit', 'Owed on credit', rupees(s.udhaar_outstanding), s.customers_owing + (s.customers_owing === 1 ? ' customer' : ' customers')),
-    tile('alert', 'warn', 'Needs you', String(needs.length), needs.length ? 'to look at' : 'nothing waiting', '', needs.length ? 'attn' : ''));
-}
-function recentRow(o) {
-  const fresh = (freshUntil[o.id] || 0) > Date.now();
-  return h('div', { class: 'orow' + (fresh ? ' fresh' : '') },
-    h('span', { class: 'c-time muted', text: relTime(o.time) }),
-    h('span', { class: 'c-who who', text: o.customer || 'Walk-in caller' }),
-    h('span', { class: 'c-items', text: itemsSummary(o.items, 2) }),
-    h('span', { class: 'c-total num total', text: rupees(o.total) }),
-    h('span', { class: 'c-status' }, h('span', { class: 'pill ' + o.status, text: statusLabel(o.status) })));
-}
-function renderRecent(orders) {
-  if (!orders.length) { $('recent').replaceChildren(h('div', { class: 'empty', text: 'No orders yet. They appear here within seconds of a call ending.' })); return; }
-  const head = h('div', { class: 'orow head' }, h('span', { text: 'When' }), h('span', { text: 'Customer' }), h('span', { text: 'Order' }), h('span', { class: 'num', text: 'Total' }), h('span', { text: 'Status' }));
-  $('recent').replaceChildren(head, ...orders.slice(0, 5).map(recentRow));
-}
-function renderAttention(list) {
-  if (!list.length) { $('attn').replaceChildren(h('div', { class: 'empty', text: 'Nothing needs you right now.' })); return; }
-  $('attn').replaceChildren(...list.slice(0, 6).map(a => h('div', { class: 'alert' },
-    h('div', { class: 'ico ' + a.kind }, icon('alert')), h('span', { class: 't', text: a.title }), h('span', { class: 'tag2 ' + a.kind, text: a.tag }))));
-}
-function renderTrend(days) {
-  const max = Math.max(0, ...days.map(d => d.sales));
-  $('trend').replaceChildren(...days.map((d, i) => h('div', { class: 'col' + (i === days.length - 1 ? ' today' : '') },
-    h('span', { class: 'val', text: shortRupees(d.sales) }),
-    h('div', { class: 'bar', style: 'height:' + barPercent(d.sales, max) * 0.72 + '%' }),
-    h('span', { class: 'day', text: i === days.length - 1 ? 'Today' : fmtDate(d.date) }))));
-  $('trend').setAttribute('aria-label', 'Sales for each of the last seven days: ' + days.map(d => fmtDate(d.date) + ' ' + rupees(d.sales)).join(', '));
-}
-function orderCard(o) {
-  const detail = h('div', null,
-    h('table', null, h('tbody', null, ...o.items.map(i => h('tr', null,
-      h('td', { text: i.name }), h('td', { text: i.qty != null ? i.qty + (i.unit ? ' ' + i.unit : '') : '' }), h('td', { class: 'num', text: rupees(i.line_total) }))))),
-    o.payment === 'udhaar' && o.balance_after != null ? h('p', { class: 'muted', text: 'Credit balance ' + rupees(o.balance_before) + ' → ' + rupees(o.balance_after) }) : null,
-    o.delivery ? h('p', { class: 'muted', text: 'Delivery: ' + o.delivery }) : null);
-  const summary = h('summary', null,
-    h('div', { class: 'row' }, h('span', { class: 'who', text: o.customer || 'Walk-in caller' }), h('span', { class: 'pill ' + o.status, text: statusLabel(o.status) })),
-    h('div', { text: itemsSummary(o.items) }),
-    h('div', { class: 'row' }, h('span', { class: 'muted', text: relTime(o.time) }),
-      h('span', null, h('span', { class: 'pill pay' + (o.payment === 'udhaar' ? ' credit' : ''), text: paymentLabel(o.payment) }), ' ', h('span', { class: 'total', text: rupees(o.total) }))));
-  return h('div', { class: 'card' + ((freshUntil[o.id] || 0) > Date.now() ? ' fresh' : '') }, h('details', null, summary, detail));
-}
-function ledgerRow(c) {
-  const used = limitUsed(c.balance, c.credit_limit);
-  const extra = c.promise_date ? 'Promised ' + fmtDate(c.promise_date) : (c.last_purchase ? 'Last bought ' + fmtDate(c.last_purchase) : '');
-  return h('div', { class: 'card' },
-    h('div', { class: 'row' }, h('span', { class: 'who', text: c.name }), h('span', { class: 'total', text: rupees(c.balance) })),
-    h('div', { class: 'meter' + (used >= 0.9 ? ' high' : '') }, h('i', { style: 'width:' + Math.round(used * 100) + '%' })),
-    h('div', { class: 'row' }, h('span', { class: 'muted', text: 'limit ' + rupees(c.credit_limit) }), h('span', { class: 'muted', text: extra })));
-}
-function loanCard(l) {
-  const body = l.covered === false
-    ? h('p', { class: 'muted', text: 'Project cost ' + rupees(l.project_cost) + ' is above ₹50 lakh, so no scheme applies.' })
-    : h('div', null,
-        h('div', { text: rupees(l.margin_money) + ' margin → ' + rupees(l.project_cost) + ' project → ' + rupees(l.loan_amount) + ' loan' }),
-        h('div', { class: 'muted', text: l.scheme + ', ' + l.annual_rate_pct + '% a year' }),
-        h('div', { class: 'total', text: rupees(l.monthly_instalment) + ' × ' + l.repayment_months + ' months' }),
-        h('div', { class: 'muted', text: 'after a ' + l.moratorium_months + '-month moratorium' }));
-  return h('div', { class: 'card' },
-    h('div', { class: 'row' }, h('span', { class: 'who', text: [l.business, l.place].filter(Boolean).join(', ') || 'Loan enquiry' }), h('span', { class: 'tag', text: 'indicative' })),
-    body, h('div', { class: 'muted', text: relTime(l.time) }));
-}
-function fill(id, items, make, emptyText) {
-  $(id).replaceChildren(...(items.length ? items.map(make) : [h('div', { class: 'empty', text: emptyText })]));
-}
+{{include:dashboard/stat-tiles.js}}
+{{include:dashboard/recent-orders.js}}
+{{include:dashboard/attention.js}}
+{{include:dashboard/sales-trend.js}}
+{{include:dashboard/orders-page.js}}
+{{include:dashboard/credit-page.js}}
+{{include:dashboard/loans-page.js}}
+{{include:dashboard/lists.js}}
+{{include:dashboard/skeleton.js}}
+
+/* ---- the data: draw what the server sent, say how fresh it is, ask again every 3 seconds ---- */
 function render(d) {
   lastData = d;
+  document.querySelector('main').removeAttribute('aria-busy');
   document.title = d.title + ': orders and credit';
   $('title').textContent = d.title;
   const now = new Date();
@@ -419,7 +101,7 @@ function render(d) {
   $('today').textContent = 'Today, ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
   d.orders.forEach(o => { if (!seen.has(o.id)) { seen.add(o.id); if (!firstLoad) freshUntil[o.id] = Date.now() + 8000; } });
   const needs = attention(d.orders, d.ledger);
-  renderTiles(d.summary, needs);
+  renderTiles(d.summary);
   renderRecent(d.orders);
   renderAttention(needs);
   renderTrend(d.trend || []);
@@ -470,6 +152,9 @@ async function poll() {
   tick();
   setTimeout(poll, 3000);
 }
+
+{{include:shared/theme.js}}
+renderLoading();
 showView();
 setInterval(tick, 1000);
 poll();

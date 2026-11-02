@@ -1,0 +1,5 @@
+  .top{position:sticky;top:10px;z-index:5;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid var(--line);border-radius:20px}
+  .shop{display:flex;align-items:center;gap:10px;min-width:0}
+  .shop h1{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topright{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:14px;color:var(--muted)}
+  .live{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
