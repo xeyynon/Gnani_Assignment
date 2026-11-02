@@ -8,8 +8,11 @@ Three pages, all served by the agent on one port. Two exist; the admin one is pl
 | Shopkeeper dashboard | `/s/<shop>/dashboard` | The shop's owner, with the shop's PIN | Built (Build 1003) |
 | Admin dashboard | `/admin` | You, with the admin password | Planned (DEC-034) |
 
+## Design system (both pages)
+One palette, chosen 2026-11-02: white cards on a pale slate page (`#F8FAFC`), **Kirana Green** `#16803D` as the brand colour, blue for sales and "processing", violet for credit (udhaar), amber for pending, red for errors and the end-call button (`#DC2626`). Status is always a coloured pill **with a label**, never colour alone. Cards have a 14 px radius, buttons 9 px, a 1 px `#E2E8F0` border and a very light shadow; no gradients. Dark themes follow the device. Text is Inter when installed, otherwise the system font (the pages load nothing from outside, so Inter cannot be fetched). The tokens sit at the top of each page's `<style>`; keep them identical in both.
+
 ## The call page
-`dukaan_dost/web/index.html`. A call screen on the left, what the caller needs beside it. Light, muted palette (warm off-white, one soft green) with a matching dark theme; icons are inline SVG because the pages load nothing from outside.
+`dukaan_dost/web/index.html`. A call screen on the left, what the caller needs beside it. The shared palette below, with a matching dark theme; icons are inline SVG because the pages load nothing from outside.
 - **The call screen:** a status chip with the call timer, the language heard so far, a shop mark, a large state line, a waveform, and the controls. **Start call** becomes **End call**; **Mute** appears during a call.
 - **States** (worked out by the page itself from what it is doing): listening (the waveform follows the caller's own microphone), thinking (after the caller's words arrive, until the first reply clip; given up after 12 s because not every turn gets a spoken reply), speaking (the waveform follows the agent's voice), muted, ended.
 - **Live transcript:** what the caller said and what the agent said, one bubble per reply. A reply cut off by the caller is marked "(interrupted)". The agent's text is shown when it is queued for speech, a moment before it is heard.
@@ -21,7 +24,7 @@ Three pages, all served by the agent on one port. Two exist; the admin one is pl
 - Needs `localhost` or `https`. **Still not tried with a real microphone in a real browser** (B-08). Checked as a render in headless Chrome at 1280, 700 and 390 px wide, light and dark, with the states driven by script: no horizontal overflow.
 
 ## The shopkeeper dashboard
-`dukaan_dost/web/dashboard.html`, data from `/s/<shop>/dashboard/data`. Redesigned 2026-11-02 to match the call page (same calm palette, light and dark).
+`dukaan_dost/web/dashboard.html`, data from `/s/<shop>/dashboard/data`. Redesigned 2026-11-02 to match the call page (same palette, light and dark).
 - **Side menu** (a wrapped row on a phone): Dashboard, Orders, Credit book (udhaar), Loan enquiries. **Stock & prices** and **Reports** are shown as "soon". The sections are views of one page, switched by the address fragment (`#orders`), so the data keeps polling.
 - **Dashboard view:** a greeting, then four tiles with icons: orders today and sales today (each against yesterday; no percentage from a zero), owed on credit, and what needs the shopkeeper. Below: the five latest orders, the needs-attention list, a 7-day sales chart, and **Quick actions** (add stock, add customer or credit, today's report), which are disabled and marked "soon" because the server cannot take writes yet (DEC-034).
 - **Needs attention** is worked out in the page: incomplete orders, credit-pending orders, and customers at 90% or more of their credit limit. Stock levels are not included: the stock list only says in stock or out, with no counts.

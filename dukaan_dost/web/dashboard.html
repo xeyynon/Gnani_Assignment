@@ -8,15 +8,11 @@
   /* Layout concept: a side menu (a top row on a phone), then a greeting and the four numbers a shopkeeper
      wants first, the latest orders beside what needs them, and a week of sales. Same calm palette as the call page.
      Status is carried by a coloured pill, not by words alone. */
-  :root{--bg:#F4F3EE;--surface:#FCFBF8;--surface2:#EEEDE6;--ink:#27302B;--muted:#667069;--line:#E1DFD6;
-    --sage:#4A7A5B;--sage-soft:#E4EDE6;--sage-ink:#2F5A40;
-    --amber:#9A6A12;--amber-soft:#F3EAD3;--warn:#B0453A;--warn-soft:#F5E3DF;--slate:#4F6478;--slate-soft:#E3E9EF}
-  @media (prefers-color-scheme:dark){:root{--bg:#171A18;--surface:#202422;--surface2:#2A2F2C;--ink:#E5E9E5;--muted:#98A39C;--line:#333A36;
-    --sage:#8BBB9C;--sage-soft:#26342B;--sage-ink:#A9D2B8;
-    --amber:#E0B867;--amber-soft:#382F18;--warn:#F08C7F;--warn-soft:#3F2420;--slate:#9DB5CC;--slate-soft:#25303A}}
+  :root{--bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F1F5F9;--ink:#0F172A;--muted:#475569;--line:#E2E8F0;--green:#16803D;--green-hover:#11632F;--green-soft:#E8F6EC;--green-ink:#11632F;--blue:#1D4ED8;--blue-soft:#DBEAFE;--credit:#7C3AED;--credit-soft:#F3E8FF;--amber:#B45309;--amber-soft:#FEF3C7;--warn:#B91C1C;--warn-soft:#FEE2E2;--end:#DC2626;--radius-card:14px;--radius-button:9px;--shadow-card:0 1px 3px rgb(15 23 42 / 6%)}
+  @media (prefers-color-scheme:dark){:root{--bg:#0B1220;--surface:#111A2B;--surface2:#1A2438;--ink:#E2E8F0;--muted:#94A3B8;--line:#243047;--green:#4CC38A;--green-hover:#6FD3A1;--green-soft:#14301F;--green-ink:#86E0AE;--blue:#7AA7FF;--blue-soft:#14233F;--credit:#C4A1FF;--credit-soft:#2A1B47;--amber:#FBBF24;--amber-soft:#3A2A0C;--warn:#F87171;--warn-soft:#3B1717;--end:#DC2626;--shadow-card:none}}
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,"Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
   h1,h2,h3,p{margin:0}
   svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
   [hidden]{display:none!important}
@@ -29,17 +25,17 @@
   /* the side menu */
   aside{background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
   .brand{display:flex;align-items:center;gap:11px;padding:2px 8px 16px}
-  .mark{width:40px;height:40px;border-radius:12px;background:var(--sage-soft);color:var(--sage);display:grid;place-items:center}
+  .mark{width:40px;height:40px;border-radius:12px;background:var(--green-soft);color:var(--green);display:grid;place-items:center}
   .mark svg{width:23px;height:23px}
   .brand b{display:block;font-size:16px;line-height:1.2}
   .brand span{font-size:12px;color:var(--muted)}
   nav{display:flex;flex-direction:column;gap:3px}
   .nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:15px;border:0;background:none;text-align:left;width:100%}
   .nav:hover{background:var(--surface2)}
-  .nav[aria-current=page]{background:var(--sage-soft);color:var(--sage-ink);font-weight:600}
+  .nav[aria-current=page]{background:var(--green-soft);color:var(--green-ink);font-weight:600}
   .nav[aria-disabled=true]{color:var(--muted);cursor:default}
   .nav[aria-disabled=true]:hover{background:none}
-  .nav .n{margin-left:auto;font-size:12px;font-weight:600;background:var(--sage-soft);color:var(--sage-ink);border-radius:999px;padding:0 8px}
+  .nav .n{margin-left:auto;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-ink);border-radius:999px;padding:0 8px}
   .soon{margin-left:auto;font-size:11px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:0 7px;white-space:nowrap}
   @media (max-width:900px){
     aside{position:static;height:auto;flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}
@@ -58,8 +54,8 @@
   .shop h1{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .topright{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:14px;color:var(--muted)}
   .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14px;color:var(--muted)}
-  .chip.on{background:var(--sage-soft);border-color:transparent;color:var(--sage-ink)}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sage);flex:none}
+  .chip.on{background:var(--green-soft);border-color:transparent;color:var(--green-ink)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
   .dot.off{background:var(--warn)}
   .dot.idle{background:var(--muted)}
   .live{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
@@ -71,27 +67,28 @@
   .hello p{color:var(--muted)}
 
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px;margin-top:18px}
-  .tile{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;background:var(--surface)}
+  .tile{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 16px;min-width:0;background:var(--surface)}
   .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none}
   .ico svg{width:24px;height:24px}
-  .ico.sage{background:var(--sage-soft);color:var(--sage)}
-  .ico.slate{background:var(--slate-soft);color:var(--slate)}
+  .ico.sage{background:var(--green-soft);color:var(--green)}
+  .ico.blue{background:var(--blue-soft);color:var(--blue)}
+  .ico.credit{background:var(--credit-soft);color:var(--credit)}
   .ico.amber{background:var(--amber-soft);color:var(--amber)}
   .ico.warn{background:var(--warn-soft);color:var(--warn)}
   .tile .k{font-size:14px;color:var(--muted)}
   .tile .v{font-size:26px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .tile .s{font-size:13px;color:var(--muted)}
-  .s.up{color:var(--sage-ink)}.s.down{color:var(--warn)}
+  .s.up{color:var(--green-ink)}.s.down{color:var(--warn)}
   .tile.attn .v{color:var(--warn)}
 
   .cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;margin-top:16px;align-items:start}
   @media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr)}}
   .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:16px 18px;min-width:0}
   .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
   .ph h3{font-size:16px;display:flex;align-items:center;gap:9px}
-  .ph h3 svg{color:var(--sage)}
-  .link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--sage-ink);font-weight:600;background:none;border:0;padding:4px 0}
+  .ph h3 svg{color:var(--green)}
+  .link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--green-ink);font-weight:600;background:none;border:0;padding:4px 0}
   .link svg{width:16px;height:16px}
 
   /* recent orders */
@@ -108,11 +105,12 @@
     .orow .c-time{grid-area:time}.orow .c-total{grid-area:total}
   }
   .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
-  .pill.confirmed{background:var(--sage-soft);border-color:transparent;color:var(--sage-ink)}
+  .pill.confirmed{background:var(--green-soft);border-color:transparent;color:var(--green-ink)}
   .pill.credit_pending{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
   .pill.incomplete{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
-  .pill.pay{background:var(--surface2);color:var(--muted)}
-  .fresh{background:var(--sage-soft);border-radius:8px}
+  .pill.pay{background:var(--surface2);color:var(--muted);border-color:transparent}
+  .pill.pay.credit{background:var(--credit-soft);color:var(--credit)}
+  .fresh{background:var(--green-soft);border-radius:8px}
 
   /* needs attention */
   .alert{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
@@ -132,15 +130,15 @@
   .trend{display:flex;align-items:flex-end;gap:8px;height:190px;padding-top:6px}
   .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
   .col .val{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-  .col .bar{width:100%;max-width:56px;border-radius:7px 7px 0 0;background:var(--sage-soft);min-height:3px}
-  .col.today .bar{background:var(--sage)}
-  .col.today .val{color:var(--sage-ink);font-weight:700}
+  .col .bar{width:100%;max-width:56px;border-radius:7px 7px 0 0;background:var(--blue-soft);min-height:3px}
+  .col.today .bar{background:var(--blue)}
+  .col.today .val{color:var(--blue);font-weight:700}
   .col .day{font-size:12px;color:var(--muted);white-space:nowrap}
 
   /* the lists on their own pages */
   .stackl{display:flex;flex-direction:column;gap:10px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
-  .card.fresh{border-color:var(--sage);background:var(--sage-soft)}
+  .card.fresh{border-color:var(--green);background:var(--green-soft)}
   .row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
   .total{font-weight:700;font-variant-numeric:tabular-nums}
   details>summary{cursor:pointer;list-style:none}
@@ -150,7 +148,7 @@
   td{padding:4px 0;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
   td.num{text-align:right;font-variant-numeric:tabular-nums}
   .meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:6px}
-  .meter>i{display:block;height:100%;background:var(--sage)}
+  .meter>i{display:block;height:100%;background:var(--green)}
   .meter.high>i{background:var(--warn)}
   .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;font-size:14px}
   .tag{font-size:12px;color:var(--muted);border:1px dashed var(--muted);border-radius:999px;padding:1px 8px}
@@ -345,8 +343,8 @@ function renderTiles(s, needs) {
   const o = change(s.orders_today, s.orders_yesterday), m = change(s.sales_today, s.sales_yesterday);
   $('tiles').replaceChildren(
     tile('cart', 'sage', 'Orders today', String(s.orders_today), o.text, o.dir),
-    tile('rupee', 'slate', 'Sales today', rupees(s.sales_today), m.text, m.dir),
-    tile('users', 'amber', 'Owed on credit', rupees(s.udhaar_outstanding), s.customers_owing + (s.customers_owing === 1 ? ' customer' : ' customers')),
+    tile('rupee', 'blue', 'Sales today', rupees(s.sales_today), m.text, m.dir),
+    tile('users', 'credit', 'Owed on credit', rupees(s.udhaar_outstanding), s.customers_owing + (s.customers_owing === 1 ? ' customer' : ' customers')),
     tile('alert', 'warn', 'Needs you', String(needs.length), needs.length ? 'to look at' : 'nothing waiting', '', needs.length ? 'attn' : ''));
 }
 function recentRow(o) {
@@ -386,7 +384,7 @@ function orderCard(o) {
     h('div', { class: 'row' }, h('span', { class: 'who', text: o.customer || 'Walk-in caller' }), h('span', { class: 'pill ' + o.status, text: statusLabel(o.status) })),
     h('div', { text: itemsSummary(o.items) }),
     h('div', { class: 'row' }, h('span', { class: 'muted', text: relTime(o.time) }),
-      h('span', null, h('span', { class: 'pill pay', text: paymentLabel(o.payment) }), ' ', h('span', { class: 'total', text: rupees(o.total) }))));
+      h('span', null, h('span', { class: 'pill pay' + (o.payment === 'udhaar' ? ' credit' : ''), text: paymentLabel(o.payment) }), ' ', h('span', { class: 'total', text: rupees(o.total) }))));
   return h('div', { class: 'card' + ((freshUntil[o.id] || 0) > Date.now() ? ' fresh' : '') }, h('details', null, summary, detail));
 }
 function ledgerRow(c) {
