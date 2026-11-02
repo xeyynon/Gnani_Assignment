@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{include:admin/theme-default.html}}
 {{include:shared/theme-init.html}}
 {{include:shared/menu-init.html}}
 <title>{{SHOP}}: every shop at a glance</title>
@@ -26,6 +27,7 @@
 {{include:shared/lists.css}}
 {{include:shared/forms.css}}
 {{include:shared/skeleton.css}}
+{{include:admin/theme.css}}
 {{include:admin/layout.css}}
 {{include:shared/brutal.css}}
 </style>
@@ -40,12 +42,18 @@
 {{include:admin/topbar.html}}
 
     <div data-page="overview">
+{{include:admin/banner.html}}
 {{include:admin/stat-tiles.html}}
 {{include:admin/shops.html}}
+{{include:admin/overview-panels.html}}
     </div>
 
     <div data-page="problems" hidden>
 {{include:admin/problems.html}}
+    </div>
+
+    <div data-page="activity" hidden>
+{{include:admin/activity.html}}
     </div>
 
     <div data-page="add" hidden>
@@ -78,6 +86,8 @@
 {{include:admin/stat-tiles.js}}
 {{include:admin/shops.js}}
 {{include:admin/problems.js}}
+{{include:admin/activity.js}}
+{{include:admin/overview-panels.js}}
 {{include:shared/lists.js}}
 {{include:shared/skeleton.js}}
 {{include:admin/loading.js}}
@@ -87,8 +97,12 @@ function render(d) {
   document.querySelector('main').removeAttribute('aria-busy');
   const now = new Date();
   $('today').textContent = 'Today, ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  lastData = d;
   renderTiles(d.totals);
-  fill('shops', d.shops, shopCard, 'No shops yet. Each folder under shops/ with a config.yaml is a shop.');
+  renderShops();
+  renderBanner(d);
+  renderOverviewPanels(d);
+  fill('activity', d.activity || [], activityCard, 'Nothing has been changed from this page yet.');
   fill('problems', d.problems, problemCard, 'Nothing is wrong with any shop.');
   fill('solved', d.solved, solvedCard, 'Nothing has been marked solved.');
   fillTemplates(d.shops);
@@ -100,6 +114,7 @@ function render(d) {
 
 {{include:admin/commands.js}}
 {{include:admin/add-shop.js}}
+{{include:admin/banner.js}}
 {{include:admin/edit-shop.js}}
 
 {{include:shared/poll.js}}
