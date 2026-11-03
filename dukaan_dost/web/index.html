@@ -20,6 +20,7 @@
 {{include:call/header.css}}
 {{include:call/call-card.css}}
 {{include:call/order-panel.css}}
+{{include:call/loan-panel.css}}
 {{include:call/transcript.css}}
 {{include:call/tips.css}}
 {{include:shared/brutal.css}}
@@ -36,6 +37,7 @@
 
     <div class="stack">
 {{include:call/order-panel.html}}
+{{include:call/loan-panel.html}}
 {{include:call/transcript.html}}
 {{include:call/tips.html}}
     </div>
@@ -103,9 +105,12 @@ function say(text, bad) { notice = { text, bad: !!bad }; render(); }
 
 {{include:call/order-panel.js}}
 
+{{include:call/loan-panel.js}}
+
 function resetScreen() {
   resetTranscript();
   resetOrder();
+  resetLoan();
   $('langtext').textContent = 'Language: detected as you speak';
 }
 
@@ -164,6 +169,7 @@ function onMessage(ev) {
     }
     else if (m.type === 'agent') { showThinking(false); agentSaid(m.reply, m.text); if (state === 'thinking') { clearTimeout(thinkTimer); } }
     else if (m.type === 'order') renderOrder(m);
+    else if (m.type === 'loan') renderLoan(m);
     return;
   }
   const id = new DataView(ev.data).getUint32(0);

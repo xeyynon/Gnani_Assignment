@@ -69,8 +69,8 @@ test("loud input is clipped, not wrapped around", () => {
 
 // ---- the call screen's own helpers, pulled out the way the dashboard test does ----
 const helperSource = script.slice(script.indexOf("/* ---- helpers"), script.indexOf("/* ---- end helpers"));
-const { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey } = new Function(
-  `${helperSource}; return { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey };`)();
+const { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey, loanView } = new Function(
+  `${helperSource}; return { langName, clock, rupees, barHeight, nextTheme, themeLabel, isPlainKey, loanView };`)();
 
 test("language names", () => {
   assert.equal(langName("hi-IN"), "Hindi");
@@ -110,7 +110,7 @@ test("what the server sends is shown as text, never as HTML", () => {
 });
 
 test("the page handles every message the server can send", () => {
-  for (const type of ["ready", "busy", "stop", "user", "agent", "order"]) {
+  for (const type of ["ready", "busy", "stop", "user", "agent", "order", "loan"]) {
     assert.match(script, new RegExp(`m\.type === '${type}'`), `no handler for ${type}`);
   }
 });
@@ -165,4 +165,73 @@ test("a button that disappears hands keyboard focus on, and Mute shows its key",
   assert.match(script, /focusIfLost\(\$\('hang'\)\)/);
   assert.match(script, /focusIfLost\(\$\('start'\)\)/);
   assert.match(html, /Mute \(M\)/);
+});
+
+// ---- the loan panel: a quote the agent sent, laid out as it came ----
+const QUOTE = { type: "loan", heard_amount: 100000, kind: "margin_money", business: "kirana", place: "Nandyal",
+  margin_money: 100000, project_cost: 1000000, covered: true, scheme: "Term Loan Scheme", annual_rate_pct: 8, loan_amount: 900000,
+  own_contribution: 100000, monthly_instalment: 15438, repayment_months: 78, moratorium_months: 6, total_repayment: 1204164, total_interest: 304164, indicative: true };
+
+test("a covered quote is laid out exactly as the calculator gave it", () => {
+  const v = loanView(QUOTE);
+  assert.equal(v.covered, true);
+  assert.equal(v.where, "kirana, Nandyal");
+  assert.deepEqual(v.rows, [["Project cost", "₹10,00,000"], ["Your margin money", "₹1,00,000"], ["Loan", "₹9,00,000"],
+    ["Scheme", "Term Loan Scheme, 8% a year"], ["Total interest", "₹3,04,164"]]);
+  assert.deepEqual(v.emi, { amount: "₹15,438", months: 78, after: "after a 6-month moratorium" });
+  assert.equal(v.note, "");
+});
+
+test("the page shows the figures it was given and never works one out", () => {
+  const odd = loanView({ ...QUOTE, monthly_instalment: 99999, loan_amount: 12345, project_cost: 777777 });
+  assert.equal(odd.emi.amount, "₹99,999");                                       // not recomputed from the loan
+  assert.equal(odd.rows.find(r => r[0] === "Loan")[1], "₹12,345");
+  assert.equal(odd.rows[0][1], "₹7,77,777");
+});
+
+test("a capped loan says the caller puts in more than the margin", () => {
+  const v = loanView({ ...QUOTE, margin_money: 450000, project_cost: 4500000, loan_amount: 4500000, own_contribution: 500000 });
+  assert.equal(v.note, "The loan is capped, so you put in ₹5,00,000.");
+  assert.equal(loanView({ ...QUOTE, own_contribution: 100000 }).note, "");
+});
+
+test("a project above the scheme limit says no scheme applies and shows no loan figures", () => {
+  const v = loanView({ type: "loan", business: "", place: "", margin_money: 6000000, project_cost: 60000000, covered: false, scheme: null,
+    annual_rate_pct: null, loan_amount: null, own_contribution: null, monthly_instalment: null, repayment_months: null, moratorium_months: null,
+    total_interest: null, indicative: true });
+  assert.equal(v.covered, false);
+  assert.equal(v.emi, null);
+  assert.deepEqual(v.rows, [["Project cost", "₹6,00,00,000"], ["Your margin money", "₹60,00,000"]]);
+  assert.match(v.note, /no scheme applies/);
+  assert.equal(v.where, "");
+});
+
+test("no moratorium is said plainly, and a missing instalment shows no instalment box", () => {
+  assert.equal(loanView({ ...QUOTE, moratorium_months: 0 }).emi.after, "no moratorium");
+  assert.equal(loanView({ ...QUOTE, monthly_instalment: null }).emi, null);
+});
+
+test("an event with no usable figures changes nothing", () => {
+  for (const bad of [null, undefined, {}, { type: "loan" }, { project_cost: "1000000" }, { project_cost: NaN }, "loan"]) assert.equal(loanView(bad), null, String(bad));
+});
+
+test("free text in an event is shown as text and a missing value never prints as undefined or NaN", () => {
+  const v = loanView({ ...QUOTE, business: "<img src=x onerror=1>", place: null, total_interest: undefined });
+  assert.equal(v.where, "<img src=x onerror=1>");                                  // it is a string here; the page puts it in a text node
+  assert.ok(!JSON.stringify(v).match(/undefined|NaN|null/));
+  assert.match(script, /h\('div', 'loanwhere', v\.where\)/);
+});
+
+test("the panel is on the page, is always labelled indicative, resets for each call and speaks changes politely", () => {
+  assert.match(html, /<section class="panel b-loan" aria-labelledby="h-loan">/);
+  assert.match(html, /<span class="tag">indicative<\/span>/);
+  assert.match(html, /id="loan" aria-live="polite"/);
+  assert.match(script, /Indicative only\. These figures come from the scheme terms this project uses, not from a bank or the government\./);
+  assert.match(script, /resetOrder\(\);\s*resetLoan\(\);/);
+});
+
+test("the panel does no arithmetic of its own", () => {
+  const panel = script.slice(script.indexOf("/* ---- the loan quote so far"), script.indexOf("function resetLoan"));
+  assert.doesNotMatch(panel, /[^/*]\s[*+\-/]\s\d|Math\./);
+  assert.doesNotMatch(panel, /\.toFixed|parseFloat|reduce\(/);
 });
