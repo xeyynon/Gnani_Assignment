@@ -26,6 +26,7 @@ Rules:
     python -m dukaan_dost.webpage index        # print the composed call page
     python -m dukaan_dost.webpage dashboard    # print the composed dashboard
     python -m dukaan_dost.webpage admin        # print the composed admin page
+    python -m dukaan_dost.webpage login        # print the composed sign-in page (placeholders unfilled)
 """
 
 import re
@@ -81,9 +82,9 @@ def included_names(source: str, root: Path | None = None, _depth: int = 0) -> se
 
 
 def main(argv: list) -> int:
-    page = {"index": "index.html", "dashboard": "dashboard.html", "admin": "admin.html"}.get(argv[0] if argv else "")
+    page = {"index": "index.html", "dashboard": "dashboard.html", "admin": "admin.html", "login": "login.html"}.get(argv[0] if argv else "")
     if page is None:
-        print("usage: python -m dukaan_dost.webpage index|dashboard|admin", file=sys.stderr)
+        print("usage: python -m dukaan_dost.webpage index|dashboard|admin|login", file=sys.stderr)
         return 2
     sys.stdout.buffer.write(load(WEB / page).encode("utf-8"))      # bytes, so a Windows console code page cannot break it
     return 0

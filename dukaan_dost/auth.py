@@ -8,8 +8,10 @@ accounts and no database.
     which is gitignored. A shop with no PIN cannot sign in: there is no default PIN.
   - The admin password comes from the ADMIN_PASSWORD setting (env var or
     local_config.py), never from a file in the repo. Unset means no admin access.
-  - The browser sends them with HTTP Basic auth. The user name is the shop name
-    (or "admin"); only the password is secret. Use https once this leaves localhost.
+  - A script sends them with HTTP Basic auth. The user name is the shop name (or
+    "admin"); only the password is secret. A person uses the sign-in page instead, which
+    sends the same header once and gets a session cookie back (SessionStore, DEC-050).
+    Use https once this leaves localhost.
   - Wrong guesses are throttled: 5 failures from one address for one shop locks that
     pair for a minute.
 
@@ -33,6 +35,10 @@ from .shops import PROJECT_ROOT, valid_name
 
 AUTH_FILE = PROJECT_ROOT / "data" / "auth.json"
 MIN_PIN_LENGTH = 4
+SESSION_COOKIE = "dd_session"
+SESSION_TTL_SEC = 12 * 3600               # a browser session: until the tab's browser closes, and at most this long on the server
+REMEMBER_TTL_SEC = 30 * 24 * 3600         # "keep me signed in on this device"
+MAX_SESSIONS = 500
 _SCRYPT = dict(n=2 ** 14, r=8, p=1, dklen=32)
 _lock = threading.Lock()
 
@@ -119,6 +125,72 @@ def parse_basic(header: str | None):
     return (user, password) if sep else None
 
 
+def cookie_value(header: str | None, name: str = SESSION_COOKIE):
+    """The value of one cookie from a `Cookie:` header, or None."""
+    for part in (header or "").split(";"):
+        key, sep, value = part.strip().partition("=")
+        if sep and key == name:
+            return value
+    return None
+
+
+def session_cookie(token: str, max_age: int | None = None, secure: bool = False) -> str:
+    """The Set-Cookie value for a signed-in browser: not readable by scripts, never sent from another site."""
+    parts = [f"{SESSION_COOKIE}={token}", "Path=/", "HttpOnly", "SameSite=Strict"]
+    if max_age is not None:
+        parts.append(f"Max-Age={int(max_age)}")
+    if secure:
+        parts.append("Secure")
+    return "; ".join(parts)
+
+
+def clear_cookie(secure: bool = False) -> str:
+    return session_cookie("", 0, secure)
+
+
+def scope_allows(scope, shop: str | None) -> bool:
+    """May a session of this scope open this page? The admin may open any shop; a shop only its own. `shop` None means the admin page."""
+    if scope == "admin":
+        return True
+    return shop is not None and scope == f"shop:{shop}"
+
+
+class SessionStore:
+    """Signed-in browsers. A token is random, held only in memory (a restart signs everyone out) and bound to one scope:
+    "admin" or "shop:<name>". It proves the page was signed in; it is not the PIN, and it dies at its time limit or on sign-out."""
+
+    def __init__(self, clock=time.monotonic, max_sessions: int = MAX_SESSIONS):
+        self._clock, self._max = clock, max_sessions
+        self._sessions = {}                       # token -> (scope, expires)
+        self._lock = threading.Lock()
+
+    def issue(self, scope: str, ttl: float = SESSION_TTL_SEC) -> str:
+        now = self._clock()
+        with self._lock:
+            self._sessions = {t: v for t, v in self._sessions.items() if v[1] > now}
+            while len(self._sessions) >= self._max:             # never grow without bound: drop the one nearest its end
+                self._sessions.pop(min(self._sessions, key=lambda t: self._sessions[t][1]))
+            token = secrets.token_urlsafe(32)
+            self._sessions[token] = (scope, now + ttl)
+            return token
+
+    def scope_of(self, token):
+        if not isinstance(token, str) or not token:
+            return None
+        with self._lock:
+            entry = self._sessions.get(token)
+            if entry is None:
+                return None
+            if entry[1] <= self._clock():
+                del self._sessions[token]
+                return None
+            return entry[0]
+
+    def revoke(self, token) -> None:
+        with self._lock:
+            self._sessions.pop(token, None)
+
+
 class Throttle:
     """Locks a key for `lock_sec` after `max_failures` wrong guesses in a row."""
 
@@ -151,6 +223,17 @@ class Throttle:
         with self._lock:
             self._failures.pop(key, None)
             self._locked_until.pop(key, None)
+
+    def remaining(self, key) -> int:
+        """Wrong guesses left before the lock."""
+        with self._lock:
+            return max(0, self.max_failures - self._failures.get(key, 0))
+
+    def seconds_left(self, key) -> int:
+        """Seconds until a locked key may try again (0 if it is not locked)."""
+        with self._lock:
+            until = self._locked_until.get(key)
+            return 0 if until is None else max(0, int(until - self._clock() + 0.999))
 
 
 def _main(argv) -> int:
