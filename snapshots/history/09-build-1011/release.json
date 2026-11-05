@@ -1,0 +1,13 @@
+{
+ "label": "09-build-1011",
+ "rev": "build-1011",
+ "commit": "ce5900e",
+ "date": "2026-11-03",
+ "title": "The call page shows the loan quote",
+ "ran_code_of": "build-1011",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin"
+ ]
+}

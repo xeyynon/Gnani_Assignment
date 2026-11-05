@@ -66,6 +66,7 @@ A build report says **what changed**. `decisions.md` says **why**. `bugs.md` lin
 4. `git add MD/builds CHANGELOG.md`.
 5. `git commit` with **the same title** as in step 3, and a real body: what, why, verified. No attribution or co-author lines.
 6. `node scripts/changelog.mjs --tag` pins `build-N` on that commit. It checks that the commit title matches the report, and it does not modify files.
+7. **If the build changes how a page looks**, record it on screen too: `python scripts/ui_check/snapshot_release.py build-N <NN>-build-N`, add an entry for that folder in `snapshots/history/changes.json`, run `python scripts/ui_check/history_index.py`, and commit `snapshots/` as an InBul. [`snapshots/CHANGES.md`](../snapshots/CHANGES.md) is the release-by-release picture of the UI (how it works: `MD/frontend.md`, "The history of the UI").
 
 Title style: plain words, what the product now does (for example "The order flow: the model reads the order and the code does the money"). No "feat:" prefixes, no number.
 
@@ -122,6 +123,8 @@ This is the guide Surya pasted at the start of the project, from their other pro
 The same material, organised for this project, is in [project_docs_guide.md](project_docs_guide.md) sections 2 to 4.
 
 ## 12. What is specific to this project
+- **Branches (2026-11-06): three, no more by default.** `main` is what is finished and merged. `ui-ux-upgrade` is the one branch for every change to how the pages look or work for a person (the call page, the shop dashboard, the admin page, the sign-in page, the palette, the snapshots of them), and it is merged into `main` through a pull request when a build is ready. `backend-fixes-and-evaluation` is the same for the agent, the evaluation and the docs behind them. A fourth branch is made only for something that must not travel with either, such as an experiment that may be thrown away or a change that is risky enough to want its own review; delete it when it is merged. A merged branch is deleted straight away (git keeps its commits in `main`), so the list stays short. Earlier one-off branches (`admin-dashboard`, `admin-dark-ui`, `call-loan-panel`, `frontend-audit`, `agent-work`) were merged and removed.
+- **The two sessions share one folder, so they share one checked-out branch.** Switching branch changes the files under the other session. Until each has its own folder (`git worktree add ../Gnani-ui ui-ux-upgrade`), switch only when the other session is idle, and stage by file name, never `git add -A`.
 - **Two sessions work at once** (2026-11-02 onward): one on the pages and their look and feel, one on everything behind them. Each commits only its own files, and each takes the next free number when it commits. If two changes touch the same file, one waits.
 - **Next free id means: look at the tags again just before committing.** Another session may have taken `build-1010` or `InBul18` since you last looked. `--next-internal` and `--pending` read the current tags, so use them and do not guess the number.
 - **Bug and decision numbers** (`B-NN`, `DEC-NNN`) have the same problem: check the end of the file before using the next one. This happened on 2026-11-03, when two bugs were given the same id and one was renumbered.

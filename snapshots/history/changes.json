@@ -1,0 +1,99 @@
+{
+  "01-build-1002": {
+    "title": "The first call page: a browser tab you call from",
+    "summary": "One white card on a pale page with the name, one sentence, a thin progress bar, Start call and Hang up buttons, an 'agent silent' tag and three tips.",
+    "visible": [
+      "This is the first page there is: the project became software-only (no Raspberry Pi) and the call moved to a browser tab.",
+      "Nothing else exists yet: no dashboard, no order panel, no transcript, no dark-mode switch (it follows the device)."
+    ],
+    "not_looked_at": "a call in progress (the page needs a live agent behind it)."
+  },
+  "02-build-1003": {
+    "title": "The shopkeeper dashboard appears",
+    "summary": "A new dashboard page: a made-up-data notice, four figures (orders today, sales today, owed on credit, needs you), then Orders on the left and the Credit book with limit bars and Loan enquiries on the right.",
+    "visible": [
+      "New page: the shopkeeper's dashboard, one long page of plain cards with no menu.",
+      "The call page now carries the shop's name (each shop has its own call link)."
+    ],
+    "not_looked_at": "the sign-in, which is the browser's own prompt and cannot be photographed."
+  },
+  "03-build-1004": {
+    "title": "The dashboard shows a call in progress",
+    "summary": "A green strip, 'A customer is on a call' with how long it has lasted, appears under the notice while someone is calling.",
+    "visible": [
+      "Dashboard: the green live-call strip. Everything else on both pages looks the same as the release before."
+    ]
+  },
+  "04-build-1005": {
+    "title": "A call screen, and a dashboard with a menu",
+    "summary": "The call page becomes a call screen (ring, status chips, timer, waveform dots, live transcript, order panel) and the dashboard gets a side menu, icon tiles with change since yesterday, a 7-day sales chart and a needs-attention list.",
+    "visible": [
+      "Call page: from one card to a two-column screen: the call on the left; Current order, Live transcript and tips on the right.",
+      "Dashboard: a side menu (Dashboard, Orders, Credit book, Loan enquiries, and two 'soon' items), a greeting, tiles with icons and '% vs yesterday', Recent orders as a table, Needs your attention, Quick actions, Sales last 7 days.",
+      "The look is warm cream with muted green."
+    ],
+    "not_looked_at": "the call in progress (waveform, transcript filling) and the dashboard's other views."
+  },
+  "05-build-1006": {
+    "title": "One palette for both pages (Kirana Green)",
+    "summary": "Both pages move to white cards on a pale slate page: green for the brand, blue for sales, violet for credit, amber for pending, red for errors.",
+    "visible": [
+      "Colour only: the layout is the same as the release before.",
+      "Dashboard: icon tiles are green, blue, violet and red; the sales bars are blue instead of green."
+    ]
+  },
+  "06-build-1007": {
+    "title": "Built from components: bento grid, glass and a drawer menu",
+    "summary": "A new look: a bento grid with one big hero Sales tile, glass menu and bars over soft colour glows, hard-edged accents on the main button and figure, a drawer menu that can be hidden, and a Light / Dark / Auto switch.",
+    "visible": [
+      "Dashboard: three tiles with Sales today as the big hero, a floating curved side menu with a hide button, a Dark button in the top bar, glows behind the glass, a Sales chart beside Needs your attention.",
+      "Call page: the same new look, with a Light / Dark button.",
+      "Under the surface: the pages are now built from small components (a change you cannot see)."
+    ]
+  },
+  "07-build-1009": {
+    "title": "The admin page appears",
+    "summary": "A new /admin page in the same look: four tiles (shops, calls now, to fix, orders today) and a list of every shop with its state and Edit, Shop dashboard and Call page buttons.",
+    "visible": [
+      "New page: Admin, with a menu of Overview, Problems and Add a shop.",
+      "Each shop has a state pill (Ready, Needs attention, Broken) and the number of problems."
+    ],
+    "not_looked_at": "this release's Add a shop, Edit and Problems views (today's versions of them are in snapshots/latest/admin/)."
+  },
+  "08-build-1010": {
+    "title": "The admin page goes dark, with search, tabs and a notice",
+    "summary": "The admin page starts dark with near-black surfaces and a lime accent, and gets a search box, filter tabs with counts, a dismissable notice, overview panels, an Activity view and a Copy call link button.",
+    "visible": [
+      "Admin: near-black and lime instead of the green glass look; a Workspace label in the menu; a search box (Ctrl K); All / Ready / Needs attention / Broken tabs; a 'Some shops cannot take calls properly' notice; Needs attention and Recent activity panels at the bottom.",
+      "The shop pages (call page and dashboard) are unchanged."
+    ]
+  },
+  "09-build-1011": {
+    "title": "The call page shows the loan quote",
+    "summary": "A Loan guidance panel appears on the call page. It is empty until a caller asks about a loan, then it shows the project cost, margin money, loan, scheme and rate, total interest and the monthly instalment, marked indicative.",
+    "visible": [
+      "Call page: a new 'Loan guidance' card between Current order and Live transcript, with an 'indicative' tag.",
+      "The loan figures are not visible in this release's pictures, because they only appear during a call; see the quote states in snapshots/latest/call-page/."
+    ]
+  },
+  "10-build-1012": {
+    "title": "One neutral charcoal palette on every page",
+    "summary": "All pages share one flat palette (charcoal in dark, off-white in light, one calm green): the coloured glows, the glass blur and the admin's lime accent are gone.",
+    "visible": [
+      "Every page: no coloured glows behind the cards and no blurred glass; surfaces are solid.",
+      "Dark mode is charcoal, not navy. The admin page is no longer near-black and lime: it matches the other pages.",
+      "The Start call button has a clear near-white edge in dark mode (it looked notched before).",
+      "Bigger tap targets for the Auto-scroll switch, the admin search box, the hide-menu button and the notice close button (small, hard to see in a picture)."
+    ]
+  },
+  "11-build-1015": {
+    "title": "A sign-in page instead of the browser's box",
+    "summary": "Opening a dashboard while signed out now shows a proper sign-in card (PIN field with a show button, 'keep me signed in', tries left and a lockout countdown); the dashboard and admin top bars get a Sign out button.",
+    "visible": [
+      "New pages: Shop sign-in and Admin sign-in (the admin's starts dark).",
+      "Dashboard and Admin: a 'Sign out' button next to the theme button in the top bar.",
+      "Everything else looks the same as the release before."
+    ],
+    "not_looked_at": "a real phone keyboard, a real password manager, and https. The sign-in error and locked states are in snapshots/latest/sign-in-shop/."
+  }
+}

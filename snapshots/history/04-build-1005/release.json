@@ -1,0 +1,12 @@
+{
+ "label": "04-build-1005",
+ "rev": "build-1005",
+ "commit": "263a32a",
+ "date": "2026-11-02",
+ "title": "Call page and dashboard redesign, with a live transcript",
+ "ran_code_of": "build-1005",
+ "pages": [
+  "call-page",
+  "dashboard"
+ ]
+}
