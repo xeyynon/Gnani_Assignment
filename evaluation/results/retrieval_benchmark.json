@@ -1,0 +1,167 @@
+{
+  "phrases": 76,
+  "items_asked": 133,
+  "methods": {
+    "keyword (existing search)": {
+      "item_recall": 0.895,
+      "items_found": 119,
+      "items_asked": 133,
+      "phrases_fully_covered": "64/76",
+      "avg_items_returned": 4.2,
+      "ms_per_phrase": 3.3
+    },
+    "ngram top 3": {
+      "item_recall": 0.977,
+      "items_found": 130,
+      "items_asked": 133,
+      "phrases_fully_covered": "73/76",
+      "avg_items_returned": 2.5,
+      "ms_per_phrase": 3.18
+    },
+    "ngram top 5": {
+      "item_recall": 0.992,
+      "items_found": 132,
+      "items_asked": 133,
+      "phrases_fully_covered": "75/76",
+      "avg_items_returned": 3.3,
+      "ms_per_phrase": 3.18
+    },
+    "ngram top 8": {
+      "item_recall": 1.0,
+      "items_found": 133,
+      "items_asked": 133,
+      "phrases_fully_covered": "76/76",
+      "avg_items_returned": 3.6,
+      "ms_per_phrase": 3.26
+    }
+  },
+  "by_source": {
+    "keyword (existing search)": {
+      "heard": 0.81,
+      "variant": 1.0,
+      "holdout": 0.872
+    },
+    "ngram top 3": {
+      "heard": 0.929,
+      "variant": 1.0,
+      "holdout": 1.0
+    },
+    "ngram top 5": {
+      "heard": 0.976,
+      "variant": 1.0,
+      "holdout": 1.0
+    },
+    "ngram top 8": {
+      "heard": 1.0,
+      "variant": 1.0,
+      "holdout": 1.0
+    }
+  },
+  "misses": {
+    "keyword (existing search)": [
+      {
+        "text": "2 किलो छेनी और 1 लीटर sunflower oil से है।",
+        "missing": [
+          "SUGAR-1KG"
+        ]
+      },
+      {
+        "text": "आधा किलो प्याज और एक किलो आलू चाहिए।",
+        "missing": [
+          "ONION-1KG"
+        ]
+      },
+      {
+        "text": "1.5 किलो छीनी चाहिए।",
+        "missing": [
+          "SUGAR-1KG"
+        ]
+      },
+      {
+        "text": "मुझे 3 पैकेट चाय पत्ती और 1 किलो चीनी दीजिए।",
+        "missing": [
+          "TEA-250"
+        ]
+      },
+      {
+        "text": "అర కిలో ఉల్లిపాయలు మరియు ఒక కిలో బంగాళాదుంపలు కావాలి.",
+        "missing": [
+          "POTATO-1KG"
+        ]
+      },
+      {
+        "text": "ఒక కిలో కందిపప్పు మరియు 2 సబ్బులు కావాలి.",
+        "missing": [
+          "SOAP-100"
+        ]
+      },
+      {
+        "text": "Give me 0.5 kilo of onions and a loaf of bread.",
+        "missing": [
+          "ONION-1KG"
+        ]
+      },
+      {
+        "text": "Make it 1 kilo of onions.",
+        "missing": [
+          "ONION-1KG"
+        ]
+      },
+      {
+        "text": "shakkar aur chaval dena",
+        "missing": [
+          "SUGAR-1KG",
+          "RICE-1KG"
+        ]
+      },
+      {
+        "text": "pyaaj tamatar aloo",
+        "missing": [
+          "ONION-1KG"
+        ]
+      },
+      {
+        "text": "ek kilo atte ka packet",
+        "missing": [
+          "ATTA-5KG"
+        ]
+      },
+      {
+        "text": "कॉफी और चाय",
+        "missing": [
+          "COFFEE-100",
+          "TEA-250"
+        ]
+      }
+    ],
+    "ngram top 3": [
+      {
+        "text": "2 किलो छेनी और 1 लीटर sunflower oil से है।",
+        "missing": [
+          "SUGAR-1KG"
+        ]
+      },
+      {
+        "text": "2 किलो आटा और 8 लीटर तेल चाहिए।",
+        "missing": [
+          "OIL-1L"
+        ]
+      },
+      {
+        "text": "2 కిలోల బియ్యం మరియు 1 లీటర్ నూనె కావాలి.",
+        "missing": [
+          "OIL-1L"
+        ]
+      }
+    ],
+    "ngram top 5": [
+      {
+        "text": "2 కిలోల బియ్యం మరియు 1 లీటర్ నూనె కావాలి.",
+        "missing": [
+          "OIL-1L"
+        ]
+      }
+    ],
+    "ngram top 8": []
+  }
+}

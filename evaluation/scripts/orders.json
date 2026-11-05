@@ -1,0 +1,639 @@
+{
+ "calls": [
+  {
+   "id": "h01",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish"
+   ],
+   "turns": [
+    {
+     "text": "Do kilo cheeni aur ek litre sunflower oil chahiye",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash, mera naam Ramesh hai",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash",
+    "customer": "Ramesh"
+   }
+  },
+  {
+   "id": "h02",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "brands"
+   ],
+   "turns": [
+    {
+     "text": "Ek packet Maggi aur do packet Parle-G dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Aur ek Amul butter bhi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas, UPI se dunga",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "MAGGI-70": 1,
+     "PARLEG-100": 2,
+     "BUTTER-100": 1
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "h03",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "Aadha kilo pyaz aur ek kilo aloo chahiye",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ONION-1KG": 0.5,
+     "POTATO-1KG": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "h04",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "change"
+   ],
+   "turns": [
+    {
+     "text": "Teen kilo chawal aur ek kilo toor dal dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Chawal ek kilo kam kar do",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas, cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 2,
+     "DAL-TOOR-1KG": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "h05",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "removal",
+    "credit"
+   ],
+   "turns": [
+    {
+     "text": "Ek ghee aur do packet namak dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Namak nahi chahiye, hata do",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Udhaar pe, mera naam Anita",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "GHEE-500": 1
+    },
+    "payment": "udhaar",
+    "customer": "Anita"
+   }
+  },
+  {
+   "id": "h06",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "out_of_stock"
+   ],
+   "turns": [
+    {
+     "text": "Paneer aur ek packet bread dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "BREAD-400": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "h07",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "not_sold"
+   ],
+   "turns": [
+    {
+     "text": "Ek kilo aam aur do packet Maggi dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "UPI",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "MAGGI-70": 2
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "h08",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "hinglish",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "Dedh kilo cheeni chahiye",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 1.5
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "d01",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "hindi"
+   ],
+   "turns": [
+    {
+     "text": "दो किलो आटा और एक लीटर तेल चाहिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "बस इतना ही",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "कैश",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ATTA-5KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "d02",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "hindi"
+   ],
+   "turns": [
+    {
+     "text": "मुझे तीन पैकेट चायपत्ती और एक किलो चीनी दीजिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "बस, यूपीआई से",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "TEA-250": 3,
+     "SUGAR-1KG": 1
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "d03",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "hindi",
+    "change",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "एक किलो बासमती चावल और आधा किलो टमाटर चाहिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "टमाटर एक किलो कर दीजिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "बस इतना ही",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "कैश",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "BASMATI-1KG": 1,
+     "TOMATO-1KG": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "t01",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "telugu"
+   ],
+   "turns": [
+    {
+     "text": "రెండు కిలోల బియ్యం మరియు ఒక లీటర్ నూనె కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "క్యాష్",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "t02",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "telugu",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "అర కిలో ఉల్లిపాయలు మరియు ఒక కిలో బంగాళదుంపలు కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "యూపీఐ",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ONION-1KG": 0.5,
+     "POTATO-1KG": 1
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "t03",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "telugu",
+    "change"
+   ],
+   "turns": [
+    {
+     "text": "మూడు కిలోల చక్కెర మరియు ఒక ప్యాకెట్ టీ పొడి కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "చక్కెర రెండు కిలోలు చేయండి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "క్యాష్",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 2,
+     "TEA-250": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "t04",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "telugu",
+    "credit"
+   ],
+   "turns": [
+    {
+     "text": "ఒక కిలో కందిపప్పు మరియు రెండు సబ్బులు కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అప్పు మీద, నా పేరు లక్ష్మి",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "DAL-TOOR-1KG": 1,
+     "SOAP-100": 2
+    },
+    "payment": "udhaar",
+    "customer": "లక్ష్మి"
+   }
+  },
+  {
+   "id": "t05",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "telugu",
+    "out_of_stock"
+   ],
+   "turns": [
+    {
+     "text": "పనీర్ మరియు ఒక ప్యాకెట్ పెరుగు కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "క్యాష్",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "CURD-400": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "e01",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "english"
+   ],
+   "turns": [
+    {
+     "text": "I want two kilos of rice and one litre of sunflower oil",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Cash please",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "e02",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "english",
+    "not_sold"
+   ],
+   "turns": [
+    {
+     "text": "One packet of Maggi, two packets of Parle-G and a dragon fruit",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "I will pay by UPI",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "MAGGI-70": 1,
+     "PARLEG-100": 2
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "e03",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "english",
+    "change",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "Give me half a kilo of onions and a loaf of bread",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Make it one kilo of onions",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That's all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ONION-1KG": 1,
+     "BREAD-400": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "e04",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "english",
+    "removal",
+    "out_of_stock",
+    "credit"
+   ],
+   "turns": [
+    {
+     "text": "One ghee and a paneer please",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Add three trays of eggs",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Remove the eggs",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "On credit, my name is Ramesh",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "GHEE-500": 1
+    },
+    "payment": "udhaar",
+    "customer": "Ramesh"
+   }
+  }
+ ]
+}
