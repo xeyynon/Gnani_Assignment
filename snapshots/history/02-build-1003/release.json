@@ -1,0 +1,12 @@
+{
+ "label": "02-build-1003",
+ "rev": "build-1003",
+ "commit": "4deedcc",
+ "date": "2026-10-28",
+ "title": "Shopkeeper dashboard, and one agent for many shops",
+ "ran_code_of": "86d706a",
+ "pages": [
+  "call-page",
+  "dashboard"
+ ]
+}

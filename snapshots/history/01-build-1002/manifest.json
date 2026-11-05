@@ -1,0 +1,42 @@
+[
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "landing",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/01-landing/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "landing",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/01-landing/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "landing",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/01-landing/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "landing",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/01-landing/dark-desktop-1280.png",
+  "overflow": false
+ }
+]
