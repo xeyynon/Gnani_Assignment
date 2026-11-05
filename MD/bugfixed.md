@@ -4,6 +4,7 @@ A dated log of every fix, newest first. [bugs.md](bugs.md) is the register (what
 
 | Date | Bug | Fix | Proof (test or run) | Commit | Build or InBul |
 |---|---|---|---|---|---|
+| 2026-11-05 | B-86 | Every call after the first was deaf (a regression from the B-64 fix, in Build 1013) | `tests/test_lifecycle_fixes.py`; three live calls in a row, 3 of 3 exact | Build 1014 | Build 1014 |
 | 2026-11-05 | B-84 | The laptop went to sleep in the middle of an evaluation run and the run ended half done | see the entry in [bugs.md](bugs.md) (tests named there) | InBul21 | InBul21 |
 | 2026-11-05 | B-80 | The repository's own hygiene check failed on a committed test file, so GitHub's CI would have been red | see the entry in [bugs.md](bugs.md) (tests named there) | e8cde76 | Build 1013 |
 | 2026-11-05 | B-81 | The spare Timbre connection was thrown away between sentences of a paced run, adding about a second to every reply | see the entry in [bugs.md](bugs.md) (tests named there) | e8cde76 | Build 1013 |
