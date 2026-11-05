@@ -1,0 +1,13 @@
+{
+ "label": "07-build-1009",
+ "rev": "build-1009",
+ "commit": "96aae4b",
+ "date": "2026-11-03",
+ "title": "The admin dashboard: look after every shop from one page",
+ "ran_code_of": "build-1009",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin"
+ ]
+}

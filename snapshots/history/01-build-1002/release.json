@@ -1,0 +1,11 @@
+{
+ "label": "01-build-1002",
+ "rev": "build-1002",
+ "commit": "b1fbbc2",
+ "date": "2026-10-28",
+ "title": "Run as software only: call from a browser, Raspberry Pi support removed",
+ "ran_code_of": "build-1002",
+ "pages": [
+  "call-page"
+ ]
+}

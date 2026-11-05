@@ -1,0 +1,12 @@
+{
+ "label": "06-build-1007",
+ "rev": "build-1007",
+ "commit": "5f45a9a",
+ "date": "2026-11-02",
+ "title": "Pages built from components, with a bento and glass design, a hideable menu and a fair yesterday comparison",
+ "ran_code_of": "build-1007",
+ "pages": [
+  "call-page",
+  "dashboard"
+ ]
+}

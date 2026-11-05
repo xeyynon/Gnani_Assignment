@@ -1,0 +1,13 @@
+{
+ "label": "08-build-1010",
+ "rev": "build-1010",
+ "commit": "0659a91",
+ "date": "2026-11-03",
+ "title": "The admin page gets a dark look, search, filter tabs, a notice, an activity view and overview panels",
+ "ran_code_of": "build-1010",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin"
+ ]
+}

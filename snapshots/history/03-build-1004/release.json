@@ -1,0 +1,12 @@
+{
+ "label": "03-build-1004",
+ "rev": "build-1004",
+ "commit": "ae14356",
+ "date": "2026-11-02",
+ "title": "Gnani speech backends, the demo shop, and fixes found by the research",
+ "ran_code_of": "build-1004",
+ "pages": [
+  "call-page",
+  "dashboard"
+ ]
+}

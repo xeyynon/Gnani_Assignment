@@ -118,6 +118,7 @@ function render(d) {
 {{include:shared/poll.js}}
 
 {{include:shared/theme.js}}
+{{include:shared/signout.js}}
 renderLoading();
 function route() { const v = viewFromHash(); if (v.name === 'edit') { if (/^[a-z0-9][a-z0-9_-]{1,39}$/.test(v.part)) openEditor(v.part); else location.hash = '#overview'; } }
 window.addEventListener('hashchange', route);
