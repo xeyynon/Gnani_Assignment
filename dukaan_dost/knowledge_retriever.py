@@ -149,7 +149,7 @@ def get_core_context(shop_dir: Path) -> str:
     return core_path.read_text(encoding="utf-8")
 
 
-def get_relevant_context(shop_dir: Path, transcript: str) -> str:
+def get_relevant_context(shop_dir: Path, transcript: str, skip: tuple = ()) -> str:
     """
     Scores every section of every topic file in knowledge/ against the
     transcript and returns the top-matching sections, up to
@@ -166,6 +166,8 @@ def get_relevant_context(shop_dir: Path, transcript: str) -> str:
     knowledge_dir = shop_dir / "knowledge"
 
     for filename in KNOWLEDGE_FILES:
+        if filename in skip:
+            continue
         file_path = knowledge_dir / filename
         if not file_path.exists():
             continue

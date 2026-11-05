@@ -80,6 +80,8 @@ from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefet
 from dukaan_dost.validator import validate_reply
 from dukaan_dost.spoken_history import SpokenTracker
 from dukaan_dost.order_session import OrderSession
+from dukaan_dost.loan_session import LoanSession
+from dukaan_dost import credit as _credit
 from dukaan_dost import stock as _stock
 from dukaan_dost.stt_provider import set_keyterms as _set_stt_keyterms
 from dukaan_dost.llm_provider import LLM_PROVIDER as _LLM_PROVIDER, warmup as _llm_warmup
@@ -851,6 +853,7 @@ _spoken     = SpokenTracker()
 # The order being taken on the current call (order_session.py). Created when a call starts, written
 # to orders/<shop>/ when it ends. None while no call is up or the shop has no stock list.
 _order      = None
+_loan       = None      # loan guidance on the same call (loan_session.py); becomes active when the caller asks for it
 _order_lock = threading.Lock()
 
 # Bumped at every call boundary. Queued audio and queued replies carry
@@ -972,22 +975,39 @@ def _set_active_shop() -> None:
 
 def _start_order(shop: str) -> None:
     """A new, empty order for the call that just started (if the shop has a stock list)."""
-    global _order
+    global _order, _loan
+    _finish_order("next call started")          # a previous call whose end was missed still gets its order saved
     try:
         items = _get_conv_mgr(shop).stock_items
     except Exception as e:
         log.warning(f"[ORDER] could not start an order for {shop!r}: {e}")
         items = []
-    session = OrderSession(shop, items, listener=_transport.send_event) if items else None
+    book = None
+    if items:
+        try:
+            book = _credit.CreditBook.for_shop(shop, _shops.shop_dir(shop))
+        except Exception as e:                       # a broken customer list must not stop orders: credit stays pending
+            log.warning(f"[CREDIT] {shop!r}: the credit book is unusable, credit stays with the shopkeeper: {e}")
+    session = OrderSession(shop, items, listener=_transport.send_event, credit=book) if items else None
     with _order_lock:
         _order = session
+        _loan = LoanSession(shop, listener=_transport.send_event)
 
 
 def _finish_order(reason: str) -> None:
     """The call is over: write the order to orders/<shop>/ (if anything was ordered) and drop it."""
-    global _order
+    global _order, _loan
     with _order_lock:
         session, _order = _order, None
+        loan, _loan = _loan, None
+    if loan is not None:
+        try:
+            saved = loan.close()
+            if saved is not None:
+                log.info(f"[LOAN] {reason}: saved loan enquiry {saved['call_id']} for {loan.shop!r} "
+                         f"(project cost {saved['project_cost']}, covered {saved['covered']}).")
+        except Exception as e:
+            log.error(f"[LOAN] could not save the loan enquiry for call {loan.call_id}: {e}", exc_info=True)
     if session is None:
         return
     try:
@@ -1027,7 +1047,11 @@ def _device_name():
 
 def _clear_history(reason=""):
     global _last_reply_wav, _last_reply_lang, _no_speech_apologized, _locked_language_code
-    _finish_order(reason or "history cleared")          # write the finished call's order before its state goes
+    # Only the end of a call closes its order. The other resets ("new call", "new node ...") happen right AFTER
+    # _set_active_shop() has opened the next call's order, and must not throw it away: that bug left every call
+    # after the first without an order (found by the first full evaluation run, 2026-11-03).
+    if (reason or "").startswith("call ended"):
+        _finish_order(reason)
     # 2026-07-31: _no_speech_apologized and _locked_language_code used
     # to be set here BEFORE acquiring _hist_lock, while processor_thread
     # writes them without any lock at all — despite a comment elsewhere
@@ -1525,6 +1549,20 @@ MIN_ECHO_CHECK_WORDS = 4   # below this, don't even consider self-echo (see belo
 ECHO_OVERLAP_THRESHOLD = 0.85  # raised from 0.6 — see below
 
 
+def _self_echo_filter_on() -> bool:
+    """
+    The self-echo filter exists for a phone line, where the agent's own voice leaks back into the microphone.
+    A browser cancels that echo itself, and the filter then does harm: on an order call the caller repeats
+    items the agent has just confirmed ("tomato 1 kilo kar dijiye" after "0.5 kilo tomato added") and the
+    filter dropped the correction as an "echo" (89% word overlap). Found by the first valid evaluation run,
+    2026-11-03. So it is on only for a transport that needs an echo tail; SELF_ECHO_FILTER=1 or 0 overrides.
+    """
+    forced = os.getenv("SELF_ECHO_FILTER", "").strip()
+    if forced in ("0", "1"):
+        return forced == "1"
+    return _transport.default_echo_tail_sec > 0
+
+
 def _is_self_echo(transcript: str) -> bool:
     """
     Defense-in-depth against Bluetooth SCO echo tail: if the transcript
@@ -1542,6 +1580,8 @@ def _is_self_echo(transcript: str) -> bool:
     ACK_WORDS/STOP_WORDS/REPEAT_KEYWORDS before this ever runs, so
     requiring more words here doesn't miss those cases.
     """
+    if not _self_echo_filter_on():
+        return False
     with _hist_lock:
         last_reply = next(
             (h["content"] for h in reversed(_history) if h["role"] == "assistant"),
@@ -1683,7 +1723,7 @@ def _ask_streaming(transcript: str, language_code: str):
     with _hist_lock:
         recent = list(_history[-(LLM_HISTORY * 2):])
 
-    yield from _get_conv_mgr().handle_turn_streaming(transcript, recent, context, language_code, order=_order)
+    yield from _get_conv_mgr().handle_turn_streaming(transcript, recent, context, language_code, order=_order, loan=_loan)
 
 
 # ─────────────────────────────────────────────────────

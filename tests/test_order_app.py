@@ -62,7 +62,7 @@ def _only_call_id(root):
 def test_a_call_that_ordered_nothing_writes_no_file(app, tmp_path):
     app._set_active_shop()
     app._clear_history("call ended")
-    assert not (tmp_path / "dukaan_dost").exists() and app._order is None
+    assert not list((tmp_path / "dukaan_dost").glob("order_*.json")) and app._order is None
 
 
 def test_an_order_left_open_is_saved_when_the_next_call_starts(app, tmp_path):
@@ -108,7 +108,7 @@ def test_the_reply_path_hands_the_current_order_to_the_conversation_manager(app,
     seen = {}
 
     class Fake:
-        def handle_turn_streaming(self, transcript, recent, context, language_code, order=None):
+        def handle_turn_streaming(self, transcript, recent, context, language_code, order=None, loan=None):
             seen["order"] = order
             yield "ok.", language_code
 
@@ -120,3 +120,48 @@ def test_the_reply_path_hands_the_current_order_to_the_conversation_manager(app,
     app._order = OrderSession("dukaan_dost", [], now=None)
     list(app._ask_streaming("hello", "en-IN"))
     assert seen["order"] is app._order
+
+
+def test_the_resets_that_follow_a_new_call_do_not_discard_its_order(app):
+    """Regression: the watchdog opens the order, then resets the history with reason 'new node ...'."""
+    app._set_active_shop()
+    opened = app._order
+    app._clear_history("new node replay-h02")
+    app._clear_history("new call")
+    assert app._order is opened and opened is not None
+
+
+def test_only_the_end_of_a_call_closes_its_order(app, tmp_path):
+    app._set_active_shop()
+    app._order.apply(sugar(1))
+    app._clear_history("new node x")
+    assert app._order is not None and not list((tmp_path).glob("dukaan_dost/order_*.json"))
+    app._clear_history("call ended (node changed)")
+    assert app._order is None and len(list((tmp_path / "dukaan_dost").glob("order_*.json"))) == 1
+
+
+def test_two_calls_in_a_row_each_save_their_own_order(app, tmp_path):
+    for qty in (1, 2):
+        app._set_active_shop()
+        app._clear_history("new node k")          # as the watchdog does right after a call starts
+        app._order.apply(sugar(qty))
+        app._clear_history("call ended")
+    import json
+    totals = sorted(json.loads(f.read_text(encoding="utf-8"))["total"] for f in (tmp_path / "dukaan_dost").glob("order_*.json"))
+    assert totals == [44, 88]
+
+
+def test_the_self_echo_filter_is_off_for_a_transport_that_cancels_its_own_echo(app, monkeypatch):
+    """Regression: a caller repeating an item the agent just confirmed was dropped as an 'echo'."""
+    monkeypatch.delenv("SELF_ECHO_FILTER", raising=False)
+    app._clear_history("test")
+    with app._hist_lock:
+        app._history.append({"role": "assistant", "content": "1 kilo basmati chawal 110 rupees, 0.5 kilo tomato 15 rupees"})
+    said = "tomato 1 kilo basmati chawal 110 rupees 0.5 kilo"
+    monkeypatch.setattr(app._transport, "default_echo_tail_sec", 0.0, raising=False)
+    assert app._is_self_echo(said) is False
+    monkeypatch.setattr(app._transport, "default_echo_tail_sec", 1.2, raising=False)
+    assert app._is_self_echo(said) is True                      # still protects a phone line
+    monkeypatch.setenv("SELF_ECHO_FILTER", "0")
+    assert app._is_self_echo(said) is False
+    app._clear_history("test done")

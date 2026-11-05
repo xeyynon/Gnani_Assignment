@@ -34,7 +34,7 @@ from pathlib import Path
 
 from .shops import PROJECT_ROOT, valid_name
 
-ORDERS_DIR = PROJECT_ROOT / "orders"
+ORDERS_DIR = Path(os.environ.get("ORDERS_DIR") or PROJECT_ROOT / "orders")     # ORDERS_DIR: where an evaluation run writes its orders
 IST = timezone(timedelta(hours=5, minutes=30), "IST")
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 ATTENTION = ("credit_pending", "incomplete")

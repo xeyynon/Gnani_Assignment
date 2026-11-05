@@ -196,3 +196,26 @@ def test_a_broken_stock_list_does_not_stop_the_call(app, monkeypatch, tmp_path):
     monkeypatch.setattr(app._shops, "shop_dir", lambda name, root=None: tmp_path)
     app._boost_product_names("whatever")
     assert given == [[]]
+
+
+# ---- the catalogue sent on every order turn ---------------------------------------------------------
+
+def test_the_catalogue_has_one_short_line_for_every_item(items):
+    lines = stock.catalogue_text(items).splitlines()
+    assert lines[0].startswith("CATALOGUE") and len(lines) == len(items) + 1
+    assert "SUGAR-1KG | Sugar | चीनी | చక్కెర | kg" in lines
+    assert "RICE-1KG | Rice | चावल | బియ్యం | kg" in lines                     # the bracket in "Rice (Sona Masoori)" is dropped
+    assert all(" | " in l for l in lines[1:])
+    assert not any("₹" in l or "rupee" in l for l in lines)                    # the catalogue holds no prices
+    assert sum(1 for l in lines if l.endswith("OUT OF STOCK")) == sum(1 for it in items if not it["in_stock"])
+
+
+def test_the_catalogue_stays_small_enough_to_send_every_turn(items):
+    assert len(stock.catalogue_text(items)) < 4000
+
+
+def test_the_search_can_leave_the_product_file_out():
+    with_products = knowledge_retriever.get_relevant_context(SHOP, "ghee ka rate aur delivery")
+    without = knowledge_retriever.get_relevant_context(SHOP, "ghee ka rate aur delivery", skip=("products_pricing.md",))
+    assert "## Ghee" in with_products and "## Ghee" not in without
+    assert "Delivery" in without                                                # shop facts still come through
