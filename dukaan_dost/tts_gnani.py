@@ -58,7 +58,8 @@ MODEL = os.getenv("GNANI_TTS_MODEL", "timbre-v3.0")
 SPEED = float(os.getenv("GNANI_TTS_SPEED", "1.0"))        # documented range 0.85 to 1.15
 
 SPARE = os.getenv("GNANI_TTS_SPARE", "1") != "0"
-SPARE_MAX_AGE_SEC = float(os.getenv("GNANI_TTS_SPARE_MAX_AGE_SEC", "12"))     # an older spare may have been closed by the server
+SPARE_MAX_AGE_SEC = float(os.getenv("GNANI_TTS_SPARE_MAX_AGE_SEC", "60"))     # Timbre kept an idle socket open for at least 90 s (2026-11-05); a dead one is caught by the first-message check
+SPARE_FIRST_MESSAGE_SEC = float(os.getenv("GNANI_TTS_SPARE_FIRST_MESSAGE_SEC", "1.5"))   # a spare that says nothing by then is dead
 
 _SUPPORTED = {"hi-IN", "en-IN", "ta-IN", "te-IN", "kn-IN", "ml-IN", "mr-IN", "pa-IN", "bn-IN", "gu-IN"}
 
@@ -144,6 +145,7 @@ def _request_payload(text: str, language_code: str) -> dict:
 _loop = None
 _loop_lock = threading.Lock()
 _spare = None            # (connection, url, key, opened at); touched only on the loop thread
+_closing: set = set()    # background close tasks, kept so they are not collected half-done
 
 
 def _shared_loop():
@@ -163,6 +165,19 @@ async def _open(url: str, key: str):
         timeout=CONNECT_TIMEOUT_SEC)
 
 
+def _close_later(ws) -> None:
+    """Close a connection in the background. A peer that never answers the close frame makes close()
+    wait out the library's 10 s timeout, and nothing the caller does should wait for that."""
+    async def close():
+        try:
+            await ws.close()
+        except Exception:
+            pass
+    task = asyncio.get_running_loop().create_task(close())
+    _closing.add(task)
+    task.add_done_callback(_closing.discard)
+
+
 async def _refill(url: str, key: str):
     global _spare
     if _spare is not None:
@@ -179,10 +194,12 @@ async def _refill(url: str, key: str):
 
 
 async def _take():
-    """A ready connection if the spare is fresh, else a new one; then start opening the next spare."""
+    """(connection, came from the spare): a ready connection if the spare is fresh, else a new one;
+    then start opening the next spare."""
     global _spare
     url, key = _url(), _api_key()
     ws = None
+    from_spare = False
     spare, _spare = _spare, None
     if spare is not None:
         old, s_url, s_key, opened = spare
@@ -190,16 +207,14 @@ async def _take():
         if (s_url == url and s_key == key and time.monotonic() - opened < SPARE_MAX_AGE_SEC
                 and old.state is State.OPEN):
             ws = old
+            from_spare = True
         else:
-            try:
-                await old.close()
-            except Exception:
-                pass
+            _close_later(old)
     if ws is None:
         ws = await _open(url, key)
     if SPARE:
         asyncio.get_running_loop().create_task(_refill(url, key))
-    return ws
+    return ws, from_spare
 
 
 def close_spare() -> None:
@@ -267,11 +282,46 @@ class StreamingSynthesis:
             return
         _api_key()                            # fail at once, with the clear message, when there is no key
         t0 = time.monotonic()
-        ws = await _take()
+        ws, from_spare = await _take()
+        try:
+            await self._exchange(ws, text, language_code, t0, SPARE_FIRST_MESSAGE_SEC if from_spare else None)
+        except _SpareSilent as e:
+            # A spare can die quietly while it waits. Nothing has been yielded yet, so one fresh
+            # connection can take over without the caller noticing more than the wait.
+            log.warning(f"[TTS-GNANI] the spare connection did not answer ({e}); retrying on a new one")
+            ws = await _open(_url(), _api_key())
+            await self._exchange(ws, text, language_code, t0, None)
+
+    async def _exchange(self, ws, text: str, language_code: str, t0: float, first_message_sec):
+        """One request on one socket, which is then closed (in the background: the end of the
+        stream must not wait for a peer that does not answer the close frame). With
+        first_message_sec set, _SpareSilent is raised if no message comes back in that time."""
         leftover = b""                        # a chunk may end mid-sample; carry the odd byte over
         try:
-            await ws.send(json.dumps(_request_payload(text, language_code), ensure_ascii=False))
-            async for raw in ws:
+            first = first_message_sec is not None
+            try:
+                await ws.send(json.dumps(_request_payload(text, language_code), ensure_ascii=False))
+            except Exception as e:
+                if first:
+                    raise _SpareSilent(str(e) or type(e).__name__) from None
+                raise
+            messages = ws.__aiter__()
+            while True:
+                try:
+                    if first:
+                        raw = await asyncio.wait_for(messages.__anext__(), timeout=first_message_sec)
+                    else:
+                        raw = await messages.__anext__()
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    raise _SpareSilent(f"nothing in {first_message_sec:g}s") from None
+                except Exception as e:
+                    if first:
+                        raise _SpareSilent(str(e) or type(e).__name__) from None
+                    raise
+                if first:
+                    first = False
                 msg = json.loads(raw)
                 kind = msg.get("type")
                 if kind == "audio":
@@ -294,10 +344,11 @@ class StreamingSynthesis:
                     raise RuntimeError(msg.get("message") or "error from the speech service")
             raise RuntimeError("connection closed before the synthesis completed")
         finally:
-            try:
-                await ws.close()
-            except Exception:
-                pass
+            _close_later(ws)
+
+
+class _SpareSilent(Exception):
+    """The spare connection gave no first message in time (or broke before one)."""
 
 
 def start_streaming_synthesis(text: str, language_code: str) -> StreamingSynthesis:

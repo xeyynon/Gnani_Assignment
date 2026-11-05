@@ -6,6 +6,7 @@ what the docs say; they cannot show the real service agrees (see scripts/gnani_s
     python -m pytest tests/test_stt_gnani.py
 """
 
+import asyncio
 import importlib
 import json
 import sys
@@ -321,3 +322,31 @@ def test_a_server_that_never_sends_processing_finishes_quickly():
         t0 = time.monotonic()
         assert run(s) == ("do kilo atta", "hi-IN")
         assert time.monotonic() - t0 < 1.5            # not the 3 s test timeout
+
+
+def test_a_speech_start_that_is_never_answered_does_not_hold_the_session_for_the_full_timeout(monkeypatch):
+    """A segment shorter than x-min-segment-ms is dropped by the server: speech_start, then nothing."""
+    monkeypatch.setattr(stt_gnani, "SPEECH_OPEN_GRACE_SEC", 0.3)
+    rec = Recorder()
+
+    async def on_commit(ws):
+        await ws.send(json.dumps({"type": "speech_start", "utterance_id": "u"}))
+
+    with make_server(rec, on_commit) as s:
+        t0 = time.monotonic()
+        assert run(s) == ("", "")
+        assert time.monotonic() - t0 < 1.5            # not the 3 s test timeout
+
+
+def test_a_transcript_that_comes_a_little_after_the_commit_grace_is_still_taken(monkeypatch):
+    monkeypatch.setattr(stt_gnani, "SPEECH_OPEN_GRACE_SEC", 1.0)
+    rec = Recorder()
+
+    async def on_commit(ws):
+        await ws.send(json.dumps({"type": "speech_start", "utterance_id": "u"}))
+        await asyncio.sleep(0.4)                         # later than COMMIT_GRACE_SEC (0.1 here)
+        await ws.send(json.dumps({"type": "transcript", "text": "chini", "is_final": True,
+                                  "detected_language_code": "hi-IN"}))
+
+    with make_server(rec, on_commit) as s:
+        assert run(s) == ("chini", "hi-IN")

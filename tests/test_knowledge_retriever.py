@@ -82,3 +82,35 @@ def test_a_message_of_only_everyday_words_does_not_fail(tmp_path):
     (kn / "faq.md").write_text("## The price\nthe price is fixed", encoding="utf-8")
     kr.get_relevant_context(tmp_path, "what is the")
     assert kr.get_relevant_context(tmp_path, "") == ""
+
+
+# ---- bug hunt of 2026-11-05: the speculative cache is per shop and per version of the files -----------------------
+
+def _shop_with_price(root, name, price):
+    folder = root / name / "knowledge"
+    folder.mkdir(parents=True)
+    (folder / "products_pricing.md").write_text(f"## Ghee\nGhee costs {price} rupees\n", encoding="utf-8")
+    return root / name
+
+
+def test_a_prefetched_context_is_not_served_to_another_shop(tmp_path):
+    a, b = _shop_with_price(tmp_path, "shop_a", 600), _shop_with_price(tmp_path, "shop_b", 999)
+    kr.prefetch_relevant_context(a, "ghee price")
+    assert "999" in kr.get_relevant_context_maybe_cached(b, "ghee price please")
+
+
+def test_a_prefetched_context_is_not_served_after_the_shops_prices_change(tmp_path):
+    import os
+    a = _shop_with_price(tmp_path, "shop_a", 600)
+    kr.prefetch_relevant_context(a, "ghee price")
+    f = a / "knowledge" / "products_pricing.md"
+    f.write_text("## Ghee\nGhee costs 650 rupees\n", encoding="utf-8")
+    os.utime(f, ns=(f.stat().st_atime_ns, f.stat().st_mtime_ns + 5_000_000_000))
+    assert "650" in kr.get_relevant_context_maybe_cached(a, "ghee price please")
+
+
+def test_a_prefetched_context_is_still_reused_for_the_same_shop(tmp_path, monkeypatch):
+    a = _shop_with_price(tmp_path, "shop_a", 600)
+    kr.prefetch_relevant_context(a, "ghee price")
+    monkeypatch.setattr(kr, "get_relevant_context", lambda *x, **y: (_ for _ in ()).throw(AssertionError("recomputed")))
+    assert "600" in kr.get_relevant_context_maybe_cached(a, "ghee price please")

@@ -21,7 +21,7 @@ import yaml
 
 from .knowledge_retriever import get_core_context, get_relevant_context, get_relevant_context_maybe_cached
 from . import loan_turn, order_turn
-from .product_search import ProductSearch
+from .product_search import ProductSearch, normalise
 from . import stock as _stock
 from .llm_provider import ask as gemini_ask, ask_json as gemini_ask_json, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
 from .validator import validate_reply
@@ -113,7 +113,7 @@ class ConversationManager:
             self.stock_items = _stock.load(shop_dir)
         except FileNotFoundError:
             self.stock_items = []
-        except (ValueError, OSError, KeyError) as e:
+        except Exception as e:      # a malformed stock.json (any shape of it) must not stop the shop's calls (B-67)
             log.warning(f"[ORDER] {shop_dir.name}: the stock list is unusable, order taking is off: {e}")
             self.stock_items = []
         # the JSON note needs more room than plain speech; gpt-oss models spend part of the budget reasoning first
@@ -123,9 +123,49 @@ class ConversationManager:
         self.catalogue_mode = os.getenv("ORDER_CATALOGUE", "auto").strip().lower()
         self.catalogue_auto_max_chars = int(os.getenv("ORDER_CATALOGUE_AUTO_MAX_CHARS", "6000"))
         self.catalogue_candidates = int(os.getenv("ORDER_CATALOGUE_CANDIDATES", "12"))
-        self.product_search = ProductSearch(self.stock_items) if self.stock_items else None
+        try:
+            self.product_search = ProductSearch(self.stock_items) if self.stock_items else None
+        except Exception as e:
+            log.warning(f"[ORDER] {shop_dir.name}: product search could not be built: {e}")
+            self.product_search = None
+        self._product_names = None          # every spelling of every product, built the first time names_product() needs it
         self.order_tokens = int(os.getenv("ORDER_LLM_TOKENS") or (700 if llm_model.startswith("openai/gpt-oss") else 260))
         self.order_temperature = float(os.getenv("ORDER_LLM_TEMP", "0.2"))   # reading an order is extraction, not chat
+
+    def named_skus(self, text: str) -> set:
+        """
+        The SKUs whose name or alias, in any language, the caller's words contain, or match almost exactly. Used to
+        tell an order turn from a plain repeat request (B-69), and to tell which ops of the model's note the caller
+        actually asked for (OrderSession.drop_replayed_ops).
+        """
+        if not self.stock_items:
+            return set()
+        if self._product_names is None:
+            by_sku = {}
+            for it in self.stock_items:
+                try:
+                    n = it["name"]
+                    spellings = set()
+                    for raw in (n["en"], re.sub(r"\s*\(.*?\)", "", n["en"]), n["hi"], n["te"], *it.get("aliases", [])):
+                        v = normalise(str(raw))
+                        if len(v) >= 3 or (v and not v.isascii()):
+                            spellings.add(v)
+                    by_sku[it["sku"]] = spellings
+                except Exception:
+                    continue
+            self._product_names = by_sku
+        padded = f" {normalise(text)} "
+        found = {sku for sku, spellings in self._product_names.items() if any(f" {v} " in padded for v in spellings)}
+        try:
+            if self.product_search:
+                found |= {sku for sku, score in self.product_search.search(text, 3) if score >= 0.9}
+        except Exception:
+            pass
+        return found
+
+    def names_product(self, text: str) -> bool:
+        """True if the caller's words name one of the shop's products (see named_skus)."""
+        return bool(self.named_skus(text))
 
     def _fallback_for(self, detected_language: str) -> str:
         key = (detected_language or "en-in").lower()
@@ -275,6 +315,9 @@ class ConversationManager:
 
         plan.say = validate_reply(plan.say, self._fallback_for(detected_language), not recent_history,
                                   language_code=detected_language or "") if plan.say else ""
+        plan.ops, replayed = order.drop_replayed_ops(plan.ops, self.named_skus(transcript), order_turn.has_quantity(transcript))
+        if replayed:
+            log.warning(f"[ORDER] the model repeated changes the caller did not just ask for, ignored: {replayed}")
         result = order.apply(plan.ops, plan.payment, plan.customer_name, plan.delivery, plan.finish,
                              language=reply_language, balance_query=plan.balance_query)
         text = order_turn.compose(plan, result, order, detected_language,

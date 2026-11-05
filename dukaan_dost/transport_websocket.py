@@ -322,6 +322,8 @@ class WebSocketTransport(Transport):
                     data = json.loads(message)
                 except ValueError:
                     continue
+                if not isinstance(data, dict):             # `123` or `[]` is valid JSON but not a message
+                    continue
                 if data.get("type") == "played":
                     with session.lock:
                         ev = session.pending.get(data.get("id"))

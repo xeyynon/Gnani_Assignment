@@ -142,6 +142,11 @@ def _decimal(raw):
     return q if q.is_finite() and q > 0 else None
 
 
+def _op_key(op) -> tuple:
+    q = _decimal(op.get("qty")) if op.get("qty") is not None else None
+    return (str(op.get("op", "")).strip().lower(), str(op.get("sku", "")).strip(), None if q is None else q.normalize())
+
+
 def _fmt_qty(q: Decimal) -> str:
     return format(q.normalize(), "f") if q != q.to_integral_value() else str(int(q))
 
@@ -167,6 +172,7 @@ class OrderSession:
         self._now = now or datetime.now(store.IST)
         self.call_id = call_id or self._now.strftime("%Y%m%d-%H%M%S") + f"-{self._now.microsecond // 1000:03d}"     # ms: two calls in one second must not overwrite each other
         self.lines: dict = {}               # sku -> Decimal quantity, in the order they were first added
+        self._seen_ops: set = set()         # (op, sku, qty) of every change made so far, to recognise a model that repeats them
         self.payment: str | None = None
         self.customer: str | None = None
         self.delivery: str | None = None
@@ -237,7 +243,14 @@ class OrderSession:
             if self._is_replay_on_payment_turn(ops, payment):
                 log.warning("[ORDER] the model re-added the whole order on a payment turn (B-30); those lines are ignored")
                 ops = []
-            changes = [c for op in (ops or []) if (c := self._apply_one(op)) is not None]
+            changes = []
+            for op in (ops or []):
+                c = self._apply_one(op)
+                if c is None:
+                    continue
+                changes.append(c)
+                if c.kind in ("added", "updated", "removed"):
+                    self._seen_ops.add(_op_key(op))
             payment_before = self.payment
             if payment is not None:
                 key = _PAYMENT_WORDS.get(str(payment).strip().lower())
@@ -275,6 +288,19 @@ class OrderSession:
         balance, balance_unknown (the caller asked what they owe). An event is produced only when the situation
         changes, so the caller is not told the same thing every turn.
         """
+        try:
+            return self._credit_events(balance_query)
+        except store.LedgerUnreadable as e:
+            # The book cannot be trusted this turn: say nothing about balances and leave credit to the shopkeeper.
+            log.warning(f"[CREDIT] the ledger is unreadable, credit stays with the shopkeeper: {e}")
+            self.balance_before = self.balance_after = None
+            self.credit_id, self._credit_sig = None, None
+            if self.payment == "udhaar" and self.customer:
+                self.credit_state = "unknown"
+                return [{"kind": "unknown"}]
+            return [{"kind": "balance_unknown"}] if self._balance_wanted and self.customer else []
+
+    def _credit_events(self, balance_query) -> list:
         events = []
         if balance_query:
             self._balance_wanted = True
@@ -331,9 +357,40 @@ class OrderSession:
                 out.append(say[key].format(name=name, before=e["before"], total=e["total"], after=e["after"], limit=e["limit"]))
             elif kind == "balance":
                 name = self.credit.name(e["cid"], lang)
-                balance, limit = self.credit.balance(e["cid"]), self.credit.limit(e["cid"])
+                try:
+                    balance, limit = self.credit.balance(e["cid"]), self.credit.limit(e["cid"])
+                except store.LedgerUnreadable:
+                    out.append(say["credit_unknown"])
+                    continue
                 out.append(say["credit_balance" if balance else "credit_balance_clear"].format(name=name, balance=balance, limit=limit))
         return " ".join(out)
+
+    def drop_replayed_ops(self, ops: list, named: set, has_quantity: bool) -> tuple:
+        """
+        Splits the model's ops into (kept, dropped). The model sometimes copies the changes of an earlier turn into
+        the note for a later one (B-30), which doubles an order: on a live run "Bas itna hi" (that is all) added the
+        same two packets again, and "UPI" added them a third time. The instructions say never to, and the larger
+        model mostly obeys, but the smaller one often does not, so this is checked in code. The caller's own words
+        are the only authority for a change:
+          - an op for a product the caller just named (`named`: SKUs) is always kept;
+          - any other op is dropped if it is exactly a change already made on an earlier turn (a replay);
+          - if the sentence names no product and gives no quantity, a new add or set is dropped too (nothing was said
+            that could change an item); a remove is kept, because "take that out" names nothing.
+        Ops for SKUs the shop does not have are kept: applying them gives the usual "I could not find" answer.
+        """
+        kept, dropped = [], []
+        nothing_said = not named and not has_quantity
+        with self._lock:
+            for op in ops or []:
+                kind = str(op.get("op", "")).strip().lower() if isinstance(op, dict) else ""
+                sku = str(op.get("sku", "")).strip() if isinstance(op, dict) else ""
+                if sku in named or sku not in self._items or kind not in ("add", "set", "remove"):
+                    kept.append(op)
+                elif _op_key(op) in self._seen_ops or (nothing_said and kind in ("add", "set")):
+                    dropped.append(op)
+                else:
+                    kept.append(op)
+        return kept, dropped
 
     def _is_replay_on_payment_turn(self, ops, payment) -> bool:
         """
@@ -342,8 +399,8 @@ class OrderSession:
         as much). A real "add all of it again" is not something a shopper says while paying, so such a note is dropped.
         Any other ops on a payment turn are applied as usual.
         """
-        if self.payment is not None or payment is None or not self.lines or not ops:
-            return False
+        if self.payment is not None or payment is None or len(self.lines) < 2 or not ops:
+            return False                                 # one line only: "one more maggi, cash" looks exactly like a replay
         adds = {}
         for op in ops:
             if not isinstance(op, dict) or str(op.get("op", "")).strip().lower() != "add":
@@ -370,10 +427,18 @@ class OrderSession:
         if kind == "remove":
             if current is None:
                 return Change("not_in_order", sku)
-            q = _decimal(op.get("qty")) if op.get("qty") is not None else None
-            if q is not None and q < current:
-                self.lines[sku] = current - q
-                return Change("updated", sku, current - q, self._line_total(sku, current - q))
+            if op.get("qty") is None:
+                del self.lines[sku]                     # no quantity said: the whole line goes
+                return Change("removed", sku)
+            q = _decimal(op.get("qty"))
+            if q is None:
+                return Change("bad_qty", sku)           # a quantity that is zero, negative or not a number never deletes a line
+            if q < current:
+                left = current - q
+                if not _valid_qty(item["unit"], left):
+                    return Change("bad_qty", sku)       # what is left must be a quantity an add would accept (no 2.5 packets)
+                self.lines[sku] = left
+                return Change("updated", sku, left, self._line_total(sku, left))
             del self.lines[sku]
             return Change("removed", sku)
 
@@ -405,10 +470,10 @@ class OrderSession:
                     out.append(say["unknown"])
             if added:
                 out.append(say["added"].format(lines=", ".join(self._describe(c.sku, c.qty, lang) for c in added)))
+            updated = [c for c in updated if c.sku in self.lines]       # a line updated and then removed in one note is only "removed"
             if updated:
                 out.append(say["updated"].format(
-                    lines=", ".join(self._describe(c.sku, self.lines[c.sku], lang) for c in updated
-                                    if c.sku in self.lines)))
+                    lines=", ".join(self._describe(c.sku, self.lines[c.sku], lang) for c in updated)))
             if self.lines and any(c.kind in ("added", "updated", "removed") for c in changes):
                 out.append(say["total"].format(total=self.total()))
             return " ".join(s for s in out if s)
@@ -507,20 +572,33 @@ class OrderSession:
             f"Payment: {r['payment'] or 'not chosen'}   Delivery: {r['delivery']}   Status: {r['status']}",
         ]) + "\n"
 
-    def _settle_credit(self) -> None:
-        """At hang-up: re-check the limit against the book as it is now (another call may have used credit since),
-        and add the order to the customer's balance. If the check no longer passes the order stays pending."""
+    def _credit_precheck(self) -> bool:
+        """At hang-up, with the lock held: re-check the limit against the book as it is now (another call may have used
+        credit since). True when the order should be charged to the customer once its file is written. If the check no
+        longer passes, or the book cannot be read, the order stays pending for the shopkeeper."""
         if self.credit is None or self.payment != "udhaar" or self.credit_state != "approved" or not self.lines:
-            return
+            return False
         try:
             check = self.credit.check(self.credit_id, self.total())
-            if not check.ok:
-                self.credit_state = "unknown"
-                return
+        except Exception as e:
+            log.warning(f"[CREDIT] could not re-check the limit, the order stays pending: {e}")
+            self.credit_state, self.balance_before, self.balance_after = "unknown", None, None
+            return False
+        if not check.ok:
+            self.credit_state, self.balance_before, self.balance_after = "unknown", None, None
+            return False
+        self.balance_before, self.balance_after = check.before, check.after
+        return True
+
+    def _credit_charge(self) -> bool:
+        """Add the order to the customer's balance. Done after the order file is safely written, so a failed write can
+        never leave a customer charged for an order that no one can find. False if the ledger could not be written."""
+        try:
             self.credit.record(self.credit_id, self.call_id, self.total(), self._now)
-            self.balance_before, self.balance_after = check.before, check.after
-        except Exception:
-            self.credit_state = "unknown"                    # the ledger could not be written: leave it to the shopkeeper
+            return True
+        except Exception as e:
+            log.warning(f"[CREDIT] the ledger could not be written, the order stays pending: {e}")
+            return False
 
     def close(self, root=None):
         """End of the call: write the order (if any) and refuse further changes. Returns the record or None."""
@@ -528,10 +606,17 @@ class OrderSession:
             if self.closed:
                 return None
             self.closed = True
-            self._settle_credit()
+            charge = self._credit_precheck()
             record = self.to_record()
             text = self.to_text()
         if record is not None:
+            store.write_order(self.shop, record, root)
+            store.write_order_text(self.shop, self.call_id, text, root)
+        if charge and not self._credit_charge():
+            with self._lock:                                  # not charged: rewrite the order as waiting for the shopkeeper
+                self.credit_state, self.balance_before, self.balance_after = "unknown", None, None
+                record = self.to_record()
+                text = self.to_text()
             store.write_order(self.shop, record, root)
             store.write_order_text(self.shop, self.call_id, text, root)
         return record

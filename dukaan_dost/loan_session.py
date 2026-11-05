@@ -25,6 +25,7 @@ from . import loan_calculator, store
 from .order_session import lang_key
 
 MAX_AMOUNT = 100 * 10_000_000            # 100 crore: anything above is a mis-hearing, not a project
+MIN_AMOUNT = 1_000                       # under a thousand rupees is a mis-hearing too ("0.4" or "1" would quote a loan of 9 rupees)
 LAKH = 100_000
 CRORE = 10_000_000
 
@@ -111,7 +112,7 @@ SAY = {
 
 @dataclass
 class LoanResult:
-    status: str          # quoted | ask_amount | ask_kind | not_covered | bad_amount
+    status: str          # quoted | ask_amount | ask_kind | not_covered | bad_amount | closed
     amount: int | None = None
     kind: str | None = None
 
@@ -124,7 +125,7 @@ def _amount_to_int(raw):
         d = Decimal(str(raw).replace(",", "").strip())
     except Exception:
         return None
-    if not d.is_finite() or d <= 0 or d > MAX_AMOUNT:
+    if not d.is_finite() or d < MIN_AMOUNT or d > MAX_AMOUNT:
         return None
     return int(d.to_integral_value())
 
@@ -157,6 +158,8 @@ class LoanSession:
 
     def apply(self, amount=None, kind=None, business=None, place=None, language=None) -> LoanResult:
         with self._lock:
+            if self.closed:
+                return LoanResult("closed")      # a turn still in flight after hang-up must not quote, show or save anything
             if language:
                 self.language = language
             self.business = _clean_text(business) or self.business
@@ -176,7 +179,10 @@ class LoanSession:
                 return LoanResult("ask_kind", amount=value)
             self._pending_amount = None
             margin = Decimal(value) if kind == "margin_money" else Decimal(value) * loan_calculator.MARGIN_SHARE
-            quote = loan_calculator.quote(margin)
+            try:
+                quote = loan_calculator.quote(margin)
+            except ValueError:
+                return LoanResult("bad_amount")
             self.quote, self.kind, self.heard_amount = quote, kind, value
             listener, event = self.listener, self.event()
         if listener is not None:
@@ -192,6 +198,8 @@ class LoanSession:
     def text(self, result: LoanResult, language=None) -> str:
         lang = _key(language or self.language)
         say = SAY[lang]
+        if result.status == "closed":
+            return ""
         if result.status == "ask_amount":
             return say["ask_amount"]
         if result.status == "bad_amount":

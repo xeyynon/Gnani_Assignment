@@ -103,6 +103,20 @@ def extract_json(text: str):
     return None
 
 
+# Number words in the three languages, for has_quantity(). "do" is also the Hinglish "give" (dena, de do), so it counts
+# as a number here: the cost of being wrong is only that a guard stays off.
+_QUANTITY_WORDS = ("one two three four five six seven eight nine ten half quarter dozen "
+                   "ek do teen char chaar paanch panch chhe saat aath nau das aadha adha dedh dhai sawa "
+                   "oka rendu moodu nalugu aidu ara "
+                   "एक दो तीन चार पांच पाँच छह सात आठ नौ दस आधा डेढ़ ఒక రెండు మూడు నాలుగు ఐదు అర").split()
+_QUANTITY_RE = re.compile(r"\d|(?<!\w)(?:" + "|".join(map(re.escape, _QUANTITY_WORDS)) + r")(?!\w)", re.IGNORECASE)
+
+
+def has_quantity(text: str) -> bool:
+    """Does the caller's sentence contain a digit or a number word? "UPI", "that is all" and "my name is Ramesh" do not."""
+    return bool(text) and _QUANTITY_RE.search(text) is not None
+
+
 def parse_plan(text: str) -> Plan | None:
     obj = extract_json(text)
     if obj is None:
@@ -144,7 +158,7 @@ def compose(plan: Plan, result, session, language, closing: str | None = None) -
     blocked = bool(kinds & {"need_name", "over_limit"})          # the caller has to answer or choose again first
     # the order is complete on this turn: payment chosen (cash or UPI), credit approved or left to the shopkeeper,
     # or credit chosen at a shop that keeps no credit book
-    completes = (not blocked) and bool(
+    completes = (not blocked) and (not session.is_empty) and bool(
         (kinds & {"approved", "unknown"})
         or (result.payment_set and (session.payment in ("cash", "upi") or (session.payment == "udhaar" and session.credit is None))))
     parts = []

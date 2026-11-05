@@ -313,3 +313,23 @@ def test_list_folders_includes_a_shop_with_no_config_but_list_shops_does_not(tmp
     assert shops.list_shops(tmp_path) == ["ok"]
     assert shops.list_folders(tmp_path) == ["noconfig", "ok"]
     assert shops.list_folders(tmp_path / "missing") == []
+
+
+# ---- bug hunt of 2026-11-05 ---------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", ["abc\n", "abc\r\n", " abc", "ab c", "../abc"])
+def test_a_shop_name_with_a_trailing_newline_or_space_is_not_valid(name):
+    assert shops.valid_name(name) is False
+
+
+def test_a_call_id_with_a_trailing_newline_is_refused(tmp_path):
+    with pytest.raises(ValueError):
+        store.write_loan("dukaan_dost", {"call_id": "x1\n"}, tmp_path)
+
+
+def test_a_record_with_an_infinite_total_does_not_break_the_snapshot(tmp_path):
+    folder = tmp_path / "dukaan_dost"
+    folder.mkdir()
+    (folder / "order_a1.json").write_text('{"call_id": "a1", "type": "order", "total": 1e999, "items": []}', encoding="utf-8")
+    snap = store.snapshot("dukaan_dost", root=tmp_path)
+    assert isinstance(snap, dict)

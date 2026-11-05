@@ -431,3 +431,77 @@ def test_a_broken_customer_list_does_not_stop_orders(app, monkeypatch, tmp_path)
         assert app._order is not None and app._order.credit is None
     finally:
         app._finish_order("teardown")
+
+
+# ---- bug hunt of 2026-11-05: the ledger must never be silently reset, charges follow the order file -------------------
+
+def test_a_ledger_that_cannot_be_read_is_never_replaced_by_opening_balances(tmp_path):
+    first = credit.CreditBook("dukaan_dost", credit.load_customers(SHOP), root=tmp_path)
+    first.record("ramesh", "c1", 1500, NOW)
+    path = tmp_path / "dukaan_dost" / "ledger.json"
+    path.write_text(path.read_text(encoding="utf-8")[:60], encoding="utf-8")           # cut in half: not valid JSON
+    damaged = path.read_text(encoding="utf-8")
+    with pytest.raises(store.LedgerUnreadable):
+        credit.CreditBook("dukaan_dost", credit.load_customers(SHOP), root=tmp_path)
+    assert path.read_text(encoding="utf-8") == damaged                                  # nothing was overwritten
+
+
+def test_a_ledger_that_goes_bad_during_a_call_leaves_credit_to_the_shopkeeper(items, book, tmp_path):
+    s = OrderSession("dukaan_dost", items, call_id="c2", now=NOW, credit=book)
+    s.apply([add("SUGAR-1KG", 2)], payment="udhaar", customer="Ramesh")
+    assert s.credit_state == "approved"
+    (tmp_path / "dukaan_dost" / "ledger.json").write_text("{not json", encoding="utf-8")
+    again = s.apply([add("SUGAR-1KG", 1)])
+    assert [e["kind"] for e in again.credit_events] == ["unknown"] and s.credit_state == "unknown"
+    s.close(tmp_path)
+    order = json.loads(next((tmp_path / "dukaan_dost").glob("order_*.json")).read_text(encoding="utf-8"))
+    assert order["status"] == "credit_pending"
+    assert (tmp_path / "dukaan_dost" / "ledger.json").read_text(encoding="utf-8") == "{not json"
+
+
+def test_a_missing_ledger_is_a_new_one_seeded_from_the_customer_list(tmp_path):
+    book = credit.CreditBook("dukaan_dost", credit.load_customers(SHOP), root=tmp_path)
+    assert book.balance("ramesh") == 400
+
+
+def test_a_failed_order_write_never_charges_the_customer(items, book, tmp_path, monkeypatch):
+    s = OrderSession("dukaan_dost", items, call_id="c3", now=NOW, credit=book)
+    s.apply([add("SUGAR-1KG", 2)], payment="udhaar", customer="Ramesh")
+    before = book.balance("ramesh")
+    monkeypatch.setattr(store, "write_order", lambda *a, **k: (_ for _ in ()).throw(OSError("disk full")))
+    with pytest.raises(OSError):
+        s.close(tmp_path)
+    assert book.balance("ramesh") == before
+
+
+def test_a_failed_ledger_write_rewrites_the_order_as_pending(items, book, tmp_path, monkeypatch):
+    s = OrderSession("dukaan_dost", items, call_id="c4", now=NOW, credit=book)
+    s.apply([add("SUGAR-1KG", 2)], payment="udhaar", customer="Ramesh")
+    monkeypatch.setattr(book, "record", lambda *a, **k: (_ for _ in ()).throw(OSError("locked")))
+    s.close(tmp_path)
+    order = json.loads(next((tmp_path / "dukaan_dost").glob("order_*.json")).read_text(encoding="utf-8"))
+    assert order["status"] == "credit_pending" and order.get("balance_after") is None
+
+
+@pytest.mark.parametrize("heard", ["Venkatesh", "Mohana Rao"])
+def test_a_longer_name_that_only_begins_with_a_known_one_is_not_that_customer(book, heard):
+    assert book.find(heard) is None
+
+
+def test_a_one_letter_difference_still_matches(book):
+    assert book.find("Rameshh") == "ramesh"
+
+
+def test_a_file_lock_on_the_ledger_is_waited_out(tmp_path, monkeypatch):
+    real = store.os.replace
+    calls = {"n": 0}
+
+    def flaky(src, dst):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise PermissionError(13, "Access is denied")
+        return real(src, dst)
+
+    monkeypatch.setattr(store.os, "replace", flaky)
+    store.write_ledger("dukaan_dost", {"customers": {"x": {"balance": 1}}}, tmp_path)
+    assert calls["n"] == 3 and store.read_ledger("dukaan_dost", tmp_path)["customers"]["x"]["balance"] == 1

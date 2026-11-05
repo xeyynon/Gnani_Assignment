@@ -347,6 +347,14 @@ class TelephonyTransport(WebSocketTransport):
             with s.lock:
                 s.pending.pop(clip_id, None)
 
+    def send_event(self, event: dict) -> None:
+        """The page events (transcripts, order lines, names) are for the call page. A phone provider's
+        socket understands only its own messages, so a phone session gets none of them."""
+        s = self._session
+        if getattr(s, "adapter", None) is not None:
+            return
+        super().send_event(event)
+
     def stop_playback(self) -> bool:
         s = self._session
         adapter = getattr(s, "adapter", None) if s is not None else None

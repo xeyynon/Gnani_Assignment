@@ -62,7 +62,7 @@ def _atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text, encoding="utf-8", newline="\n")
-    os.replace(tmp, path)
+    store.replace_file(tmp, path)
 
 
 def _check_shop(name, shops_root) -> Path:
@@ -134,7 +134,7 @@ def create_shop(name, display_name, template="blank", pin=None, shops_root=None,
             _write_blank(hidden, title)
         else:
             _copy_template(source, hidden, title)
-        os.rename(hidden, shops.shop_dir(name, shops_root))
+        store.replace_file(hidden, shops.shop_dir(name, shops_root))
     except Exception:
         shutil.rmtree(hidden, ignore_errors=True)
         raise
@@ -239,8 +239,9 @@ def save_stock(shop, update=None, remove=None, add=None, shops_root=None) -> dic
     if problems:
         raise ValueError("The stock list would not be valid:\n" + "\n".join(problems[:6]))
     data["items"] = items
+    products_md = stock.render_products_md(items)        # build both files before writing either: a failure here must leave stock.json alone
     _atomic_write(path, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
-    _atomic_write(folder / "knowledge" / "products_pricing.md", stock.render_products_md(items))
+    _atomic_write(folder / "knowledge" / "products_pricing.md", products_md)
     return {"items": len(items)}
 
 
@@ -314,7 +315,7 @@ def recent_activity(limit: int = 30, path: Path | None = None) -> list:
             tail = f.read().decode("utf-8", errors="replace")
     except OSError:
         return []
-    lines = tail.splitlines()
+    lines = tail.split("\n")                              # not splitlines(): U+2028 and U+0085 may sit raw inside a logged note
     if size > LOG_TAIL_BYTES and lines:
         lines = lines[1:]                                    # the first line of a cut tail is probably half a line
     out = []

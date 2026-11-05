@@ -91,8 +91,10 @@ class CreditBook:
     # ---- the ledger file ---------------------------------------------------------------------------------------------
 
     def _ensure_ledger(self) -> None:
+        """Seed the ledger from the customer list for customers it does not have yet. A ledger that exists but cannot be
+        read raises store.LedgerUnreadable: re-seeding it would replace every real balance with its opening balance."""
         with _LOCK:
-            ledger = store.read_ledger(self.shop, self.root)
+            ledger = store.read_ledger_strict(self.shop, self.root)
             changed = False
             for cid, c in self.customers.items():
                 if cid not in ledger["customers"]:
@@ -104,11 +106,13 @@ class CreditBook:
                 store.write_ledger(self.shop, ledger, self.root)
 
     def _entry(self, cid: str):
-        return store.read_ledger(self.shop, self.root)["customers"].get(cid)
+        return store.read_ledger_strict(self.shop, self.root)["customers"].get(cid)
 
     def balance(self, cid: str) -> int:
         entry = self._entry(cid)
-        return int(entry["balance"]) if entry else 0
+        if entry is None:
+            raise store.LedgerUnreadable(f"{cid}: no entry in the ledger")      # a known customer always has one; never answer "owes nothing"
+        return int(entry["balance"])
 
     def limit(self, cid: str) -> int:
         entry = self._entry(cid)
@@ -128,6 +132,8 @@ class CreditBook:
         for cid, variant in self._variants:
             if len(query) <= 3 or len(variant) <= 3:
                 score = 1.0 if query == variant else 0.0                   # very short names must match exactly
+            elif query != variant and (query.startswith(variant) or variant.startswith(query)) and abs(len(query) - len(variant)) > 1:
+                score = 0.0                                                # Venkatesh is not Venkat: a longer name that only begins with a known one
             else:
                 score = SequenceMatcher(None, query, variant).ratio()
             if score > best.get(cid, 0.0):
@@ -150,7 +156,7 @@ class CreditBook:
         """Add `amount` to the customer's balance and log it. Returns the new balance."""
         now = now or datetime.now(store.IST)
         with _LOCK:
-            ledger = store.read_ledger(self.shop, self.root)
+            ledger = store.read_ledger_strict(self.shop, self.root)
             entry = ledger["customers"].get(cid)
             if entry is None:
                 raise KeyError(cid)
