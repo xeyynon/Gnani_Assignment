@@ -69,7 +69,9 @@ const ANALYSE = `(() => {
   document.querySelectorAll(SEL).forEach(el => {
     if (el.closest('[hidden]') || el.disabled || el.getAttribute('aria-disabled') === 'true') return;
     let r = el.getBoundingClientRect();
-    if (r.width < 4 || r.height < 4) { const l = el.labels && el.labels[0]; if (l) r = l.getBoundingClientRect(); }      // a visually hidden input: its label is the target
+    const lab = el.labels && el.labels[0];
+    if (lab) { const lr = lab.getBoundingClientRect(); if (r.width < 4 || r.height < 4 || lr.width * lr.height > r.width * r.height) r = lr; }   // a checkbox or a hidden input: clicking its label is the same control, so the label is the target
+    if (el.matches('[tabindex="-1"][readonly]') && (r.width < 4 || r.height < 4)) return;                                                 // a helper field for password managers, not for people
     if (!(r.width > 0 && r.height > 0)) return;
     if (!name(el)) add('error', 'no-name', el, 'an interactive element with no accessible name');
     const inText = el.tagName === 'A' && getComputedStyle(el).display === 'inline';                                       // a link inside a sentence is exempt from the size rule

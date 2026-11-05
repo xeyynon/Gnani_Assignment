@@ -1,25 +1,29 @@
-// ui_check/snapshots.mjs: take a full-page screenshot of every page, in every state, theme and device size, into snapshots/.
+// ui_check/snapshots.mjs: take a full-page screenshot of every page, in every state, theme and device size, into snapshots/latest/.
 //   SNAP_PIN=<shop pin> SNAP_ADMIN_PASSWORD=<admin password> node --experimental-websocket scripts/ui_check/snapshots.mjs <base-url> [out-dir] [only]
 // Meant to be pointed at the made-up-data preview (python -m dukaan_dost.preview --port 8861 --no-browser), which prints both secrets.
 // `only` is a page name (call-page, dashboard, admin) to retake just that one. CHROME=/path/to/chrome overrides the browser.
 //
 // Layout and naming (so a file name says what it is):
-//   snapshots/<page>/<NN>-<state>/<theme>-<device>-<width>.png        e.g. snapshots/admin/02-problems/dark-phone-390.png
-//   snapshots/INDEX.md                                                 what is in the folder, when, and from which commit
-// Retaking a snapshot overwrites the file with the same name, so `git diff --stat snapshots/` shows which screens changed.
+//   snapshots/latest/<page>/<NN>-<state>/<theme>-<device>-<width>.png      e.g. snapshots/latest/admin/02-problems/dark-phone-390.png
+//   snapshots/latest/INDEX.md                                               what is in the folder, when, and from which commit
+//   snapshots/latest/manifest.json                                          every image taken and whether it scrolled sideways
+// Retaking a snapshot overwrites the file with the same name, so `git diff --stat snapshots/latest/` shows which screens changed.
+// The older releases are in snapshots/history/ (scripts/ui_check/snapshot_release.py takes them from git); for those this tool is run with
+// SNAP_PAGES='[{"name":"call-page","path":"/","auth":"","states":[["landing",""]]}]' (auth is a full Authorization header value),
+// SNAP_DEVICES='[["phone",390,844],["desktop",1280,900]]' and SNAP_NO_INDEX=1.
 import { existsSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { spawn, execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
-const [base, outDir = 'snapshots', only = ''] = process.argv.slice(2);
+const [base, outDir = 'snapshots/latest', only = ''] = process.argv.slice(2);
 if (!base) { console.error('usage: snapshots.mjs <base-url> [out-dir] [only]'); process.exit(2); }
 const basic = (user, pw) => 'Basic ' + Buffer.from(`${user}:${pw}`).toString('base64');
 const DASH = process.env.SNAP_PIN ? basic('shop', process.env.SNAP_PIN) : '';
 const ADMIN = basic('admin', process.env.SNAP_ADMIN_PASSWORD || '');
 
 const THEMES = ['light', 'dark'];
-const DEVICES = [['phone', 390, 844], ['tablet', 768, 1024], ['desktop', 1280, 900]];
+const DEVICES = process.env.SNAP_DEVICES ? JSON.parse(process.env.SNAP_DEVICES) : [['phone', 390, 844], ['tablet', 768, 1024], ['desktop', 1280, 900]];
 const SHOP = 'demo_kirana';
 
 const ORDER = { items: [{ name: 'Toor dal', qty: 2, unit: 'kg', line_total: 280 }, { name: 'Sunflower oil', qty: 1, unit: 'litre', line_total: 142 },
@@ -30,11 +34,26 @@ const LOAN = { type: 'loan', heard_amount: 150000, kind: 'working capital', busi
 const view = hash => `location.hash=${JSON.stringify(hash)}`;
 
 // A page is a URL, the credentials it needs, and the states to put it in. A state is a snippet run in the page, then a short wait.
-const PAGES = [
+const PAGES = process.env.SNAP_PAGES ? JSON.parse(process.env.SNAP_PAGES) : [
   { name: 'call-page', path: '/', auth: '', states: [
     ['idle', ''],
     ['order-in-progress', `renderOrder(${JSON.stringify(ORDER)})`],
     ['order-and-loan-quote', `renderLoan(${JSON.stringify(LOAN)})`],
+  ] },
+  // The sign-in pages are what a browser with no session sees. showResult is the page's own function, so each answer is drawn by the real code.
+  { name: 'sign-in-shop', path: `/s/${SHOP}/dashboard`, auth: '', states: [
+    ['idle', ''],
+    ['pin-typed', `$('secret').value='4821'`],
+    ['pin-shown', 'peek()'],
+    ['empty-submit', `peek(); $('secret').value=''; showResult(400, {empty: true})`],
+    ['wrong-pin', `$('secret').value='4822'; showResult(401, {wrong: true, remaining: 3})`],
+    ['locked', `showResult(429, {locked: true, retry_after: 42})`],
+  ] },
+  { name: 'sign-in-shop-without-a-pin', path: '/s/no_pin_stores/dashboard', auth: '', states: [['idle', '']] },
+  { name: 'sign-in-admin', path: '/admin', auth: '', states: [
+    ['idle', ''],
+    ['wrong-password', `$('secret').value='nope'; showResult(401, {wrong: true, remaining: 2})`],
+    ['locked', `showResult(429, {locked: true, retry_after: 42})`],
   ] },
   { name: 'dashboard', path: `/s/${SHOP}/dashboard`, auth: DASH, states: [
     ['overview', view('#overview')],
@@ -116,13 +135,15 @@ for (const page of PAGES) {
   for (const [i, [state]] of page.states.entries()) {
     lines.push(`### ${num(i + 1)} ${state.replace(/-/g, ' ')}`, '', '| Device | Light | Dark |', '|---|---|---|');
     for (const [device, width] of DEVICES) {
-      const f = th => { const t = mine.find(x => x.n === i + 1 && x.theme === th && x.device === device); return t ? `[${t.file.split('/').slice(1).join('/')}](${t.file.split('/').slice(1).join('/')})${t.overflow ? ' (scrolls sideways)' : ''}` : ''; };
+      const rel = t => relative(outDir, t.file).replace(/\\/g, '/');
+      const f = th => { const t = mine.find(x => x.n === i + 1 && x.theme === th && x.device === device); return t ? `[${rel(t)}](${rel(t)})${t.overflow ? ' (scrolls sideways)' : ''}` : ''; };
       lines.push(`| ${device} ${width} | ${f('light')} | ${f('dark')} |`);
     }
     lines.push('');
   }
 }
-if (!only) writeFileSync(join(outDir, 'INDEX.md'), lines.join('\n'));
+if (!only && !process.env.SNAP_NO_INDEX) writeFileSync(join(outDir, 'INDEX.md'), lines.join('\n'));
+if (!only) writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(taken.map(t => ({ ...t, file: relative(outDir, t.file).replace(/\\/g, '/') })), null, 1));
 const sideways = taken.filter(t => t.overflow);
 console.log(`\n${taken.length} snapshots in ${outDir}/` + (sideways.length ? `, ${sideways.length} scroll sideways` : ', none scroll sideways'));
 process.exit(sideways.length ? 1 : 0);
