@@ -47,7 +47,8 @@ Settings you may want (all optional):
 | `SHOP_DISPLAY_NAME` | `display_name` in the shop's config.yaml, else the folder name | Overrides the name the greeting speaks for the default shop |
 | `ADMIN_PASSWORD` | unset | Password for user `admin` on every shop's dashboard; unset means no admin sign-in |
 | `AUDIO_HOST`, `AUDIO_PORT` | `127.0.0.1`, `8765` | Where the call server listens |
-| `AUDIO_TRANSPORT` | `websocket` | Where call audio comes from and goes to |
+| `AUDIO_TRANSPORT` | `websocket` | Where call audio comes from and goes to: `websocket` (browser), `telephony` (a Twilio or Exotel stream; needs `TELEPHONY_TOKEN`, 16 or more characters, and a public `wss://` address ending in `/telephony/twilio` or `/telephony/exotel`), `replay` (evaluation) |
+| `TELEPHONY_TOKEN` | unset | Shared secret a phone provider must send as the custom parameter `token`; with none set every phone call is refused |
 | `CALL_DATA_ENABLED` | `0` | Call recording; leave off (synthetic data only) |
 | `LLM_MODEL` | `gemini-3.5-flash-lite` with a Gemini key, else `gemini-2.5-flash` | The language model |
 

@@ -39,6 +39,27 @@ Everything between the browser and the pipeline goes through `dukaan_dost/transp
 ## Many shops and the dashboards (DEC-034)
 The transport also routes by shop: `/s/<shop>/ws` is a call for that shop, and the app loads that shop's prompt, knowledge and greeting for the call (`_active_shop`, `_get_conv_mgr`). `dashboard.py` plugs into the same server as an HTTP handler and serves each shop's owner a PIN-protected page (`/s/<shop>/dashboard`) from the JSON files in `orders/<shop>/` (`store.py`). Sign-in and shop names are in `auth.py` and `shops.py`. The agent will write those files at hang-up; today only `demo_data.py` does.
 
+## One call at a time, and what several callers would take (future work, B-39 context, DEC-046)
+**Today the agent process serves one call at a time.** A second caller is closed with "busy" (the call page shows a message; the phone transport closes the socket with code 1013). For a neighbourhood shop that is honest and enough. Gnani is not the limit: 8 Prisma sessions ran at once without a refusal (2026-11-03, higher untested).
+
+**Why not simply allow more.** `app.py` was written for one call. The state that belongs to a call, and so would need to become an object per call, is:
+
+| Group | Module-level state in `app.py` |
+|---|---|
+| Which call | `_call_gen`, `_call_key`, `_capture_key`, `_playback_key`, `_active_shop` |
+| Conversation | `_history`, `_spoken` (what was actually heard), `_locked_language_code`, `_no_speech_apologized`, `_last_reply_wav`, `_last_reply_lang` |
+| Order, loan, credit | `_order`, `_loan` (and the credit book they hold) |
+| Turn-taking | `_playing`, `_greeting_guard`, `_caller_speaking`, `_mid_play_interrupt`, `_abandoned_reply_id`, `_reply_id_counter` |
+| Voice activity | `_vad`, `_vad_barge_in`, caller-pitch tracking, `_vad_turn_counter` |
+| Recording and metrics | `_dump_seq`, `_call_data_seq`, the metrics queue |
+| Threads | five loops (capture, processor, speaker and others) that all read the state above |
+
+Shared safely between calls already: the model client, each shop's `ConversationManager` (`_conv_mgrs`), the stock list, product search.
+
+**The design when it is needed.** One `Call` object holds every row of that table plus its own queues and threads (or asyncio tasks); `app.py` keeps only the process-wide parts (config, logging, the transport, the shared managers, shutdown). The transports already key everything by call (`find_call`, `open_capture(key)`, `play(key, ...)`), so `live_calls()` and the dashboards need only list more than one. Every queued item already carries the call generation, which becomes the call id. Cost: a rewrite of the main file (about 3,400 lines), new tests for isolation (two calls must never share a history, an order or a language lock), and more model quota than the Groq account has.
+
+**Cheaper options before that:** run several agent processes on different ports behind a small router (each keeps its own state, no pipeline change), or keep one call at a time.
+
 ## Components
 | Component | File | Status |
 |---|---|---|
