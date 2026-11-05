@@ -15,11 +15,11 @@
 {{include:shared/atoms.css}}
 {{include:shared/panel.css}}
 {{include:shared/theme-button.css}}
-{{include:shared/glass.css}}
 {{include:call/layout.css}}
 {{include:call/header.css}}
 {{include:call/call-card.css}}
 {{include:call/order-panel.css}}
+{{include:call/loan-panel.css}}
 {{include:call/transcript.css}}
 {{include:call/tips.css}}
 {{include:shared/brutal.css}}
@@ -31,15 +31,16 @@
 <div class="wrap">
 {{include:call/header.html}}
 
-  <div class="grid">
+  <main class="grid">
 {{include:call/call-card.html}}
 
     <div class="stack">
 {{include:call/order-panel.html}}
+{{include:call/loan-panel.html}}
 {{include:call/transcript.html}}
 {{include:call/tips.html}}
     </div>
-  </div>
+  </main>
 </div>
 
 <script>
@@ -103,9 +104,12 @@ function say(text, bad) { notice = { text, bad: !!bad }; render(); }
 
 {{include:call/order-panel.js}}
 
+{{include:call/loan-panel.js}}
+
 function resetScreen() {
   resetTranscript();
   resetOrder();
+  resetLoan();
   $('langtext').textContent = 'Language: detected as you speak';
 }
 
@@ -164,6 +168,7 @@ function onMessage(ev) {
     }
     else if (m.type === 'agent') { showThinking(false); agentSaid(m.reply, m.text); if (state === 'thinking') { clearTimeout(thinkTimer); } }
     else if (m.type === 'order') renderOrder(m);
+    else if (m.type === 'loan') renderLoan(m);
     return;
   }
   const id = new DataView(ev.data).getUint32(0);

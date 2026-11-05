@@ -29,12 +29,13 @@ All data in this project is synthetic.
 import json
 import os
 import re
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .shops import PROJECT_ROOT, valid_name
 
-ORDERS_DIR = PROJECT_ROOT / "orders"
+ORDERS_DIR = Path(os.environ.get("ORDERS_DIR") or PROJECT_ROOT / "orders")     # ORDERS_DIR: where an evaluation run writes its orders
 IST = timezone(timedelta(hours=5, minutes=30), "IST")
 ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 ATTENTION = ("credit_pending", "incomplete")
@@ -46,15 +47,46 @@ def shop_orders_dir(shop: str, root: Path | None = None) -> Path:
     return (root or ORDERS_DIR) / shop
 
 
+class LedgerUnreadable(Exception):
+    """ledger.json exists but cannot be read or understood. The credit book must not carry on as if it were empty."""
+
+
+_LOCK_RETRIES = 6
+_LOCK_WAIT_SEC = 0.02
+
+
+def replace_file(src, dst) -> None:
+    """os.replace, retried a few times: on Windows it fails with PermissionError while another thread of this process
+    (the dashboard) has the target open to read it. A real permission problem still fails, a moment later."""
+    for attempt in range(_LOCK_RETRIES):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == _LOCK_RETRIES - 1:
+                raise
+            time.sleep(_LOCK_WAIT_SEC * (attempt + 1))
+
+
+def _read_text(path: Path) -> str:
+    for attempt in range(_LOCK_RETRIES):
+        try:
+            return path.read_text(encoding="utf-8")
+        except PermissionError:
+            if attempt == _LOCK_RETRIES - 1:
+                raise
+            time.sleep(_LOCK_WAIT_SEC * (attempt + 1))
+
+
 def _atomic_write(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, path)
+    replace_file(tmp, path)
 
 
 def _record_path(shop, kind, call_id, root):
-    if not ID_RE.match(str(call_id)):
+    if not ID_RE.fullmatch(str(call_id)):
         raise ValueError(f"{call_id!r} is not a valid call id")
     return shop_orders_dir(shop, root) / f"{kind}_{call_id}.json"
 
@@ -67,13 +99,13 @@ def write_order(shop: str, order: dict, root: Path | None = None) -> Path:
 
 def write_order_text(shop: str, call_id: str, text: str, root: Path | None = None) -> Path:
     """A readable copy of the order (order_<call_id>.txt) next to the JSON; the dashboards only read the JSON."""
-    if not ID_RE.match(str(call_id)):
+    if not ID_RE.fullmatch(str(call_id)):
         raise ValueError(f"{call_id!r} is not a valid call id")
     path = shop_orders_dir(shop, root) / f"order_{call_id}.txt"
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text, encoding="utf-8")
-    os.replace(tmp, path)
+    replace_file(tmp, path)
     return path
 
 
@@ -84,11 +116,31 @@ def write_loan(shop: str, loan: dict, root: Path | None = None) -> Path:
 
 
 def read_ledger(shop: str, root: Path | None = None) -> dict:
+    """The ledger for display (the dashboards): anything unreadable shows as empty. The credit book uses read_ledger_strict."""
     try:
-        data = json.loads((shop_orders_dir(shop, root) / "ledger.json").read_text(encoding="utf-8"))
+        data = json.loads(_read_text(shop_orders_dir(shop, root) / "ledger.json"))
         return data if isinstance(data.get("customers"), dict) else {"customers": {}}
     except (OSError, ValueError, AttributeError):
         return {"customers": {}}
+
+
+def read_ledger_strict(shop: str, root: Path | None = None) -> dict:
+    """The ledger for the credit book. A missing file is a new, empty ledger; a file that is there but cannot be read
+    or understood raises LedgerUnreadable, because treating it as empty would wipe every customer's debt."""
+    path = shop_orders_dir(shop, root) / "ledger.json"
+    try:
+        text = _read_text(path)
+    except FileNotFoundError:
+        return {"customers": {}}
+    except OSError as e:
+        raise LedgerUnreadable(f"{path}: {e}") from e
+    try:
+        data = json.loads(text)
+    except ValueError as e:
+        raise LedgerUnreadable(f"{path}: not valid JSON ({e})") from e
+    if not isinstance(data, dict) or not isinstance(data.get("customers"), dict):
+        raise LedgerUnreadable(f"{path}: no customers table")
+    return data
 
 
 def write_ledger(shop: str, ledger: dict, root: Path | None = None) -> None:
@@ -127,7 +179,7 @@ def read_records(shop: str, kind: str, root: Path | None = None):
 def _int(value, default=0) -> int:
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):        # OverflowError: JSON allows 1e999 and Infinity
         return default
 
 

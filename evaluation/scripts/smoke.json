@@ -1,0 +1,5 @@
+{"calls": [{"id": "smoke1", "shop": "dukaan_dost", "tts_lang": "hi-en", "turns": [
+  {"text": "Do kilo cheeni aur ek litre sunflower oil chahiye"},
+  {"text": "Bas itna hi"},
+  {"text": "Cash, mera naam Ramesh hai"}],
+  "expected": {"items": {"SUGAR-1KG": 2, "OIL-1L": 1}, "payment": "cash"}}]}

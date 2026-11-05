@@ -107,6 +107,12 @@ def _retry_after(response: httpx.Response) -> float:
         return 1.0
 
 
+def _mentions_schema(response: httpx.Response) -> bool:
+    """Whether a 400 is about the structured-output request itself rather than something else."""
+    text = response.text.lower()
+    return any(word in text for word in ("json_schema", "response_format", "schema"))
+
+
 def warmup(model: str):
     """Opens the connection with a one-token request, so the first caller does not pay for it."""
     try:
@@ -147,7 +153,11 @@ def ask(model: str, messages: list, max_tokens: int, temperature: float, json_mo
             r = _get_client().post(f"{_base_url()}/chat/completions", headers=_headers(),
                                    json=_payload(model, messages, max_tokens, temperature, False, json_mode,
                                                  json_schema))
-            if r.status_code == 429 and attempt == 1 and _retry_after(r) <= MAX_RETRY_WAIT_SEC:
+            if r.status_code == 429 and attempt == 1:
+                if _retry_after(r) > MAX_RETRY_WAIT_SEC:
+                    log.error(f"[GROQ] rate limited, asked to wait {_retry_after(r):g}s (more than "
+                              f"{MAX_RETRY_WAIT_SEC:g}s): giving up without a second attempt")
+                    return ""
                 time.sleep(_retry_after(r))
                 continue
             r.raise_for_status()
@@ -157,9 +167,14 @@ def ask(model: str, messages: list, max_tokens: int, temperature: float, json_mo
             if isinstance(e, httpx.HTTPStatusError):
                 if json_schema is not None and e.response.status_code == 400 and \
                         _failed_generation(e.response) is None and model not in _schema_unsupported:
-                    log.warning(f"[GROQ] {model} does not accept a json_schema ({e.response.text[:160]}); "
-                                f"using plain JSON mode from now on")
-                    _schema_unsupported.add(model)
+                    if _mentions_schema(e.response):
+                        log.warning(f"[GROQ] {model} does not accept a json_schema ({e.response.text[:160]}); "
+                                    f"using plain JSON mode from now on")
+                        _schema_unsupported.add(model)
+                    else:
+                        # some other 400 (too long a prompt, ...): the model may well take schemas next time
+                        log.warning(f"[GROQ] 400 on a json_schema request ({e.response.text[:160]}); "
+                                    f"plain JSON mode for this call only")
                     return ask(model, messages, max_tokens, temperature, json_mode=True)
                 if (json_mode or json_schema is not None) and e.response.status_code == 400:
                     attempted = _failed_generation(e.response)
@@ -190,7 +205,11 @@ def stream(model: str, messages: list, max_tokens: int, temperature: float):
         try:
             with _get_client().stream("POST", f"{_base_url()}/chat/completions", headers=_headers(),
                                       json=_payload(model, messages, max_tokens, temperature, True)) as r:
-                if r.status_code == 429 and attempt == 1 and _retry_after(r) <= MAX_RETRY_WAIT_SEC:
+                if r.status_code == 429 and attempt == 1:
+                    if _retry_after(r) > MAX_RETRY_WAIT_SEC:
+                        log.error(f"[GROQ-STREAM] rate limited, asked to wait {_retry_after(r):g}s (more than "
+                                  f"{MAX_RETRY_WAIT_SEC:g}s): giving up without a second attempt")
+                        return
                     time.sleep(_retry_after(r))
                     continue
                 if r.status_code >= 400:
@@ -202,13 +221,19 @@ def stream(model: str, messages: list, max_tokens: int, temperature: float):
                     data = line[5:].strip()
                     if data == "[DONE]":
                         return
+                    event = None
                     try:
-                        piece = json.loads(data)["choices"][0]["delta"].get("content")
-                    except (ValueError, KeyError, IndexError):
+                        event = json.loads(data)
+                        piece = event["choices"][0]["delta"].get("content")
+                    except (ValueError, KeyError, IndexError, TypeError):
+                        if isinstance(event, dict) and event.get("error"):
+                            log.warning(f"[GROQ-STREAM] error event in the stream: {str(event['error'])[:200]}")
                         continue
                     if piece:
                         yielded_any = True
                         yield piece
+                if yielded_any:
+                    log.warning("[GROQ-STREAM] the stream ended without [DONE]: the reply may be cut short")
                 return
         except Exception as e:
             if yielded_any:

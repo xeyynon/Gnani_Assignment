@@ -20,7 +20,8 @@ Protocol (one call at a time; a second visitor is told "busy"):
     server -> page   text:   {"type": "ready"} | {"type": "busy"} | {"type": "stop"}
                              {"type": "user", "text": ..., "lang": ...}   what the caller said
                              {"type": "agent", "reply": N, "text": ...}   a sentence the agent is about to say
-                             {"type": "order", "items": [...], "total": N} the order so far (not sent yet)
+                             {"type": "order", "items": [...], "total": N} the order so far
+                             {"type": "loan", ...}   the latest loan quote: the calculator's figures, indicative
                      binary: 4-byte big-endian clip id, then a WAV file to play
 
 The pipeline's threads are plain threads, so the asyncio server runs on its
@@ -320,6 +321,8 @@ class WebSocketTransport(Transport):
                 try:
                     data = json.loads(message)
                 except ValueError:
+                    continue
+                if not isinstance(data, dict):             # `123` or `[]` is valid JSON but not a message
                     continue
                 if data.get("type") == "played":
                     with session.lock:

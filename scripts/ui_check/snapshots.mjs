@@ -1,0 +1,128 @@
+// ui_check/snapshots.mjs: take a full-page screenshot of every page, in every state, theme and device size, into snapshots/.
+//   SNAP_PIN=<shop pin> SNAP_ADMIN_PASSWORD=<admin password> node --experimental-websocket scripts/ui_check/snapshots.mjs <base-url> [out-dir] [only]
+// Meant to be pointed at the made-up-data preview (python -m dukaan_dost.preview --port 8861 --no-browser), which prints both secrets.
+// `only` is a page name (call-page, dashboard, admin) to retake just that one. CHROME=/path/to/chrome overrides the browser.
+//
+// Layout and naming (so a file name says what it is):
+//   snapshots/<page>/<NN>-<state>/<theme>-<device>-<width>.png        e.g. snapshots/admin/02-problems/dark-phone-390.png
+//   snapshots/INDEX.md                                                 what is in the folder, when, and from which commit
+// Retaking a snapshot overwrites the file with the same name, so `git diff --stat snapshots/` shows which screens changed.
+import { existsSync, mkdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { spawn, execSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const [base, outDir = 'snapshots', only = ''] = process.argv.slice(2);
+if (!base) { console.error('usage: snapshots.mjs <base-url> [out-dir] [only]'); process.exit(2); }
+const basic = (user, pw) => 'Basic ' + Buffer.from(`${user}:${pw}`).toString('base64');
+const DASH = process.env.SNAP_PIN ? basic('shop', process.env.SNAP_PIN) : '';
+const ADMIN = basic('admin', process.env.SNAP_ADMIN_PASSWORD || '');
+
+const THEMES = ['light', 'dark'];
+const DEVICES = [['phone', 390, 844], ['tablet', 768, 1024], ['desktop', 1280, 900]];
+const SHOP = 'demo_kirana';
+
+const ORDER = { items: [{ name: 'Toor dal', qty: 2, unit: 'kg', line_total: 280 }, { name: 'Sunflower oil', qty: 1, unit: 'litre', line_total: 142 },
+  { name: 'Parle-G biscuits', qty: 4, unit: 'packet', line_total: 40 }], total: 462 };
+const LOAN = { type: 'loan', heard_amount: 150000, kind: 'working capital', business: 'kirana shop', place: 'Hyderabad', margin_money: 150000,
+  project_cost: 200000, covered: true, scheme: 'Mudra Shishu', annual_rate_pct: 11, loan_amount: 150000, own_contribution: 50000,
+  monthly_instalment: 4900, repayment_months: 36, moratorium_months: 6, total_repayment: 176400, total_interest: 26400, indicative: true };
+const view = hash => `location.hash=${JSON.stringify(hash)}`;
+
+// A page is a URL, the credentials it needs, and the states to put it in. A state is a snippet run in the page, then a short wait.
+const PAGES = [
+  { name: 'call-page', path: '/', auth: '', states: [
+    ['idle', ''],
+    ['order-in-progress', `renderOrder(${JSON.stringify(ORDER)})`],
+    ['order-and-loan-quote', `renderLoan(${JSON.stringify(LOAN)})`],
+  ] },
+  { name: 'dashboard', path: `/s/${SHOP}/dashboard`, auth: DASH, states: [
+    ['overview', view('#overview')],
+    ['orders', view('#orders')],
+    ['credit-book', view('#credit')],
+    ['loan-enquiries', view('#loans')],
+  ] },
+  { name: 'admin', path: '/admin', auth: ADMIN, states: [
+    ['overview', view('#overview')],
+    ['problems', view('#problems')],
+    ['activity', view('#activity')],
+    ['add-a-shop', view('#add')],
+    ['edit-a-working-shop', view(`#edit/${SHOP}`)],
+    ['edit-a-broken-shop', view('#edit/broken_shop')],
+  ] },
+];
+
+function chromePath() {
+  const found = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/usr/bin/chromium',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(c => c && existsSync(c));
+  if (!found) throw new Error('Chrome not found. Set CHROME to its path.');
+  return found;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const num = n => String(n).padStart(2, '0');
+
+async function session(page, theme, [device, width, height], taken) {
+  const port = 9100 + Math.floor(Math.random() * 700), profile = mkdtempSync(join(tmpdir(), 'cdp'));
+  const chrome = spawn(chromePath(), ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+  try {
+    let target;
+    for (let i = 0; i < 50 && !target; i++) { await sleep(200); try { target = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(t => t.type === 'page'); } catch {} }
+    const ws = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise(r => ws.onopen = r);
+    let id = 0; const waits = {};
+    ws.onmessage = e => { const m = JSON.parse(e.data); if (m.id && waits[m.id]) { waits[m.id](m.result); delete waits[m.id]; } };
+    const send = (method, params = {}) => new Promise(r => { const i = ++id; waits[i] = r; ws.send(JSON.stringify({ id: i, method, params })); });
+    const phone = width < 700;
+    await send('Page.enable'); await send('Network.enable');
+    if (page.auth) await send('Network.setExtraHTTPHeaders', { headers: { Authorization: page.auth } });
+    await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: phone });
+    if (phone) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] });
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: `try{localStorage.setItem('dd:theme',${JSON.stringify(theme)})}catch(e){}` });
+    await send('Page.navigate', { url: base + page.path });
+    await sleep(3200);
+    for (const [i, [state, js]] of page.states.entries()) {
+      if (js) { const r = await send('Runtime.evaluate', { expression: js, awaitPromise: true }); if (r.exceptionDetails) console.log('  STATE ERROR', page.name, state, JSON.stringify(r.exceptionDetails.exception && r.exceptionDetails.exception.description)); await sleep(1100); }
+      const m = JSON.parse((await send('Runtime.evaluate', { expression: 'JSON.stringify({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,sh:document.documentElement.scrollHeight,t:document.title})', returnByValue: true })).result.value);
+      await send('Emulation.setDeviceMetricsOverride', { width, height: Math.min(Math.max(m.sh, height), 5000), deviceScaleFactor: 1, mobile: phone });
+      await sleep(250);
+      const shot = await send('Page.captureScreenshot', { format: 'png' });
+      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: phone });
+      const dir = join(outDir, page.name, `${num(i + 1)}-${state}`); mkdirSync(dir, { recursive: true });
+      const file = join(dir, `${theme}-${device}-${width}.png`);
+      writeFileSync(file, Buffer.from(shot.data, 'base64'));
+      const bad = m.sw > m.cw;
+      taken.push({ page: page.name, n: i + 1, state, theme, device, width, file: file.replace(/\\/g, '/'), overflow: bad });
+      console.log(bad ? 'OVERFLOW' : 'ok      ', file);
+    }
+    ws.close();
+  } finally { chrome.kill(); try { rmSync(profile, { recursive: true, force: true }); } catch {} }
+}
+
+const taken = [];
+for (const page of PAGES.filter(p => !only || p.name === only))
+  for (const theme of THEMES) for (const device of DEVICES) await session(page, theme, device, taken);
+
+// The index: one section per page, one table per state, so the folder explains itself.
+let commit = 'unknown'; try { commit = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim(); } catch {}
+const lines = ['# Snapshots', '',
+  'Full-page screenshots of every page in every state, in light and dark, at phone, tablet and desktop widths. All data is made up (the preview\'s demo shop).', '',
+  `Taken ${new Date().toISOString().slice(0, 10)} from commit \`${commit}\` by \`scripts/ui_check/snapshots.mjs\`. Retake with the command in that file\'s header; same-named files are overwritten.`, '',
+  'Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tablet 768 px, desktop 1280 px.', ''];
+for (const page of PAGES) {
+  const mine = taken.filter(t => t.page === page.name); if (!mine.length) continue;
+  lines.push(`## ${page.name}`, '');
+  for (const [i, [state]] of page.states.entries()) {
+    lines.push(`### ${num(i + 1)} ${state.replace(/-/g, ' ')}`, '', '| Device | Light | Dark |', '|---|---|---|');
+    for (const [device, width] of DEVICES) {
+      const f = th => { const t = mine.find(x => x.n === i + 1 && x.theme === th && x.device === device); return t ? `[${t.file.split('/').slice(1).join('/')}](${t.file.split('/').slice(1).join('/')})${t.overflow ? ' (scrolls sideways)' : ''}` : ''; };
+      lines.push(`| ${device} ${width} | ${f('light')} | ${f('dark')} |`);
+    }
+    lines.push('');
+  }
+}
+if (!only) writeFileSync(join(outDir, 'INDEX.md'), lines.join('\n'));
+const sideways = taken.filter(t => t.overflow);
+console.log(`\n${taken.length} snapshots in ${outDir}/` + (sideways.length ? `, ${sideways.length} scroll sideways` : ', none scroll sideways'));
+process.exit(sideways.length ? 1 : 0);

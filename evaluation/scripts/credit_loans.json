@@ -1,0 +1,223 @@
+{
+ "calls": [
+  {
+   "id": "L01",
+   "kind": "loan",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "loan",
+    "hi-IN"
+   ],
+   "turns": [
+    {
+     "text": "मुझे दुकान के लिए लोन चाहिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "मेरे पास एक लाख रुपये हैं",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "project_cost": 1000000,
+    "loan_amount": 900000,
+    "monthly_instalment": 15438
+   }
+  },
+  {
+   "id": "L02",
+   "kind": "loan",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "loan",
+    "te-IN"
+   ],
+   "turns": [
+    {
+     "text": "నాకు రుణం కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "నా దగ్గర యాభై వేలు ఉన్నాయి",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "project_cost": 500000,
+    "loan_amount": 450000,
+    "monthly_instalment": 7719
+   }
+  },
+  {
+   "id": "L03",
+   "kind": "loan",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "loan",
+    "en-IN"
+   ],
+   "turns": [
+    {
+     "text": "I want a loan, my whole project will cost twelve lakh rupees",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "project_cost": 1200000,
+    "loan_amount": 1080000,
+    "monthly_instalment": 18526
+   }
+  },
+  {
+   "id": "L04",
+   "kind": "loan",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "loan",
+    "hi-en"
+   ],
+   "turns": [
+    {
+     "text": "Business loan chahiye, main das hazaar laga sakta hoon",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "project_cost": 100000,
+    "loan_amount": 90000,
+    "monthly_instalment": 3034
+   }
+  },
+  {
+   "id": "U01",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "credit",
+    "approved"
+   ],
+   "turns": [
+    {
+     "text": "Ek kilo cheeni dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Udhaar pe dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Mera naam Ramesh hai",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 1
+    },
+    "payment": "udhaar",
+    "customer": "Ramesh",
+    "status": "confirmed",
+    "balance_after": 444
+   }
+  },
+  {
+   "id": "U02",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "credit",
+    "over_limit"
+   ],
+   "turns": [
+    {
+     "text": "I want one ghee",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "On credit, my name is Suresh",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Then I will pay by cash",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "GHEE-500": 1
+    },
+    "payment": "cash",
+    "customer": null,
+    "status": "confirmed",
+    "balance_after": null
+   }
+  },
+  {
+   "id": "U03",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "credit",
+    "unknown_name"
+   ],
+   "turns": [
+    {
+     "text": "Do kilo atta dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Udhaar pe, mera naam Pappu hai",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ATTA-5KG": 2
+    },
+    "payment": "udhaar",
+    "customer": null,
+    "status": "credit_pending",
+    "balance_after": null
+   }
+  },
+  {
+   "id": "U04",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "credit",
+    "balance"
+   ],
+   "turns": [
+    {
+     "text": "How much do I owe on credit? My name is Anita",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {},
+    "payment": null,
+    "no_order": true,
+    "says": [
+     "1900"
+    ]
+   }
+  }
+ ]
+}

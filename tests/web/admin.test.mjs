@@ -273,10 +273,11 @@ test("the admin starts dark and a choice made on any page is kept, including 'fo
   assert.doesNotMatch(script, /localStorage\.removeItem\('dd:theme'\)/);
 });
 
-test("the dark palette is only in token rules, and the lime accent is the green in dark", () => {
+test("the admin uses the shared neutral palette: no palette of its own, no glow, no blur", () => {
   const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
-  assert.match(style, /:root\[data-theme="dark"\]\{[^}]*--green:#C6F135/);
-  assert.match(style, /prefers-color-scheme:dark\)\{:root:not\(\[data-theme="light"\]\)\{[^}]*--green:#C6F135/);
+  assert.doesNotMatch(style, /#C6F135/i);                                          // the old lime accent
+  assert.doesNotMatch(style, /--blob|--glass|backdrop-filter|radial-gradient/);
+  assert.match(style, /:root\[data-theme="dark"\]\{[^}]*--bg:#141415/);
 });
 
 test("the search box is labelled, takes typing and offers its shortcut", () => {

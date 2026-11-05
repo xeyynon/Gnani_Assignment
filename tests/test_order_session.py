@@ -305,7 +305,7 @@ def test_two_threads_adding_at_once_do_not_lose_an_update(items):
 
 def test_the_call_id_is_a_safe_file_name(items):
     s = OrderSession("dukaan_dost", items, now=NOW)
-    assert s.call_id == "20261102-153000" and store.ID_RE.match(s.call_id)
+    assert s.call_id == "20261102-153000-000" and store.ID_RE.match(s.call_id)
 
 
 def test_prices_are_spoken_from_the_stock_list(session):
@@ -322,3 +322,74 @@ def test_the_result_says_when_payment_was_chosen_on_this_turn(session):
     assert session.apply([], payment="cash").payment_set is False          # unchanged
     assert session.apply([], payment="upi").payment_set is True            # changed his mind
     assert session.apply([], payment="bitcoin").payment_set is False
+
+
+# ---- B-30: the whole order added again on the payment turn ---------------------------------------
+
+def test_re_adding_the_whole_order_on_the_payment_turn_is_ignored(session):
+    session.apply([add("SUGAR-1KG", 4), add("OIL-1L", 16)])
+    before = session.total()
+    result = session.apply([add("SUGAR-1KG", 4), add("OIL-1L", 16)], payment="cash", customer="Ramesh")
+    assert session.total() == before and result.changes == [] and session.payment == "cash"
+
+
+def test_a_real_change_on_the_payment_turn_is_still_applied(session):
+    session.apply([add("SUGAR-1KG", 4), add("OIL-1L", 16)])
+    session.apply([add("SUGAR-1KG", 1)], payment="cash")                     # "one more sugar, cash"
+    assert float(session.lines["SUGAR-1KG"]) == 5
+
+
+def test_a_partial_repeat_or_a_different_quantity_is_applied(session):
+    session.apply([add("SUGAR-1KG", 4), add("OIL-1L", 2)])
+    session.apply([add("SUGAR-1KG", 4)], payment="upi")                       # only one of the two lines: a real add
+    assert float(session.lines["SUGAR-1KG"]) == 8
+
+
+def test_the_same_repeat_on_a_turn_without_payment_is_applied(session):
+    session.apply([add("SUGAR-1KG", 2)])
+    session.apply([add("SUGAR-1KG", 2)])                                      # "two more sugar" is a normal add
+    assert float(session.lines["SUGAR-1KG"]) == 4
+
+
+def test_a_later_payment_change_is_not_a_replay_check(session):
+    session.apply([add("SUGAR-1KG", 2)], payment="cash")
+    session.apply([add("SUGAR-1KG", 2)], payment="upi")                       # payment was already chosen: not this guard's case
+    assert float(session.lines["SUGAR-1KG"]) == 4
+
+
+# ---- bug hunt of 2026-11-05 ------------------------------------------------------------------------------------
+
+def test_removing_part_of_a_line_must_leave_a_quantity_an_add_would_accept(session):
+    session.apply([add("SUGAR-1KG", 1), add("MAGGI-70", 3)])
+    r = session.apply([{"op": "remove", "sku": "SUGAR-1KG", "qty": 0.1}, {"op": "remove", "sku": "MAGGI-70", "qty": 0.5}])
+    assert [c.kind for c in r.changes] == ["bad_qty", "bad_qty"]
+    assert float(session.lines["SUGAR-1KG"]) == 1 and float(session.lines["MAGGI-70"]) == 3
+    session.apply([{"op": "remove", "sku": "SUGAR-1KG", "qty": 0.5}])
+    assert float(session.lines["SUGAR-1KG"]) == 0.5
+
+
+@pytest.mark.parametrize("qty", [0, -1, "two", "", [], {}, float("nan")])
+def test_a_remove_with_a_quantity_that_is_not_valid_never_deletes_the_line(session, qty):
+    session.apply([add("SUGAR-1KG", 5)])
+    r = session.apply([{"op": "remove", "sku": "SUGAR-1KG", "qty": qty}])
+    assert [c.kind for c in r.changes] == ["bad_qty"] and float(session.lines["SUGAR-1KG"]) == 5
+
+
+def test_a_remove_with_no_quantity_takes_the_whole_line_and_one_equal_to_it_too(session):
+    session.apply([add("SUGAR-1KG", 5), add("OIL-1L", 2)])
+    session.apply([{"op": "remove", "sku": "SUGAR-1KG"}])
+    session.apply([{"op": "remove", "sku": "OIL-1L", "qty": 2}])
+    assert session.lines == {}
+
+
+def test_the_replay_guard_does_not_swallow_one_more_of_a_one_line_order(session):
+    session.apply([add("MAGGI-70", 1)])
+    session.apply([add("MAGGI-70", 1)], payment="cash")                       # "one more maggi, cash"
+    assert float(session.lines["MAGGI-70"]) == 2
+
+
+def test_a_line_updated_and_then_removed_in_one_note_is_only_reported_as_removed(session):
+    session.apply([add("SUGAR-1KG", 5)])
+    r = session.apply([{"op": "remove", "sku": "SUGAR-1KG", "qty": 1}, {"op": "remove", "sku": "SUGAR-1KG"}])
+    text = session.changes_text(r.changes, "en-IN")
+    assert "Updated: ." not in text and "Removed" in text

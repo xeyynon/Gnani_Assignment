@@ -47,6 +47,10 @@ def add(sku, qty):
     return {"op": "add", "sku": sku, "qty": qty}
 
 
+def remove(sku, qty=None):
+    return {"op": "remove", "sku": sku, **({"qty": qty} if qty is not None else {})}
+
+
 # ---- reading the model's answer ------------------------------------------------------------------
 
 def test_a_plain_json_answer_is_read():
@@ -98,7 +102,7 @@ def test_the_instructions_name_the_json_fields_and_use_the_shops_own_skus():
 
 def test_the_schema_lists_every_field_the_plan_reads():
     props = order_turn.SCHEMA["properties"]
-    assert set(props) == {"ops", "payment", "customer_name", "delivery", "finish", "price_of", "not_sold", "say"}
+    assert set(props) == {"ops", "payment", "customer_name", "delivery", "finish", "balance_query", "price_of", "not_sold", "say"}
     assert set(order_turn.SCHEMA["required"]) == set(props) and order_turn.SCHEMA["additionalProperties"] is False
     assert set(props["ops"]["items"]["properties"]) == {"op", "sku", "qty"}
 
@@ -298,7 +302,8 @@ def test_the_model_is_shown_the_order_so_far_but_never_an_amount_of_it(manager, 
     state = second["system"].split("CURRENT ORDER:")[1].split("\n\n")[0]
     assert "88" not in state and "rupee" not in state
     assert first["max_tokens"] == manager.order_tokens >= 200       # the JSON note needs room
-    assert "SKU SUGAR-1KG" in first["system"]                        # the product knowledge carries the SKUs
+    assert "CATALOGUE" in first["system"] and "SUGAR-1KG | Sugar | चीनी | చక్కెర | kg" in first["system"]     # every item, every turn
+    assert "PANEER-200 | Paneer | पनीर | పనీర్ | packet | OUT OF STOCK" in first["system"]
 
 
 def test_every_order_turn_asks_for_the_strict_schema_and_a_low_temperature(manager, session, monkeypatch):
@@ -432,3 +437,74 @@ def test_not_sold_is_said_along_with_the_read_back_at_the_end(session):
 def test_not_sold_must_be_a_list_of_strings():
     assert order_turn.parse_plan('{"not_sold": "mango"}').not_sold == []
     assert order_turn.parse_plan('{"not_sold": ["mango", 3, null]}').not_sold == ["mango"]
+
+
+def test_the_order_prompt_carries_the_whole_catalogue_and_no_product_sections(manager, session, monkeypatch):
+    model = ScriptedModel(note([], "hello"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "aadha kilo pyaz aur ek kilo aloo chahiye")
+    system = model.prompts[0]["system"]
+    for sku in ("ONION-1KG", "POTATO-1KG", "ATTA-5KG", "TEA-250", "SOAP-100"):       # every item is there, whatever the words
+        assert f"{sku} |" in system
+    assert "SKU ONION-1KG" not in system                                 # the product sections of the search are left out
+    assert "Relevant knowledge" not in system or "per kg" not in system.split("Relevant knowledge")[1]
+
+
+# ---- the model repeats earlier changes (B-30, seen on the first valid run of gpt-oss-20b) -------------------------
+
+def test_a_model_that_repeats_earlier_changes_on_later_turns_does_not_double_the_order(manager, session, monkeypatch, tmp_path):
+    """The real failure of call h02: every later note carried the earlier adds again (Maggi 1->2, Parle-G 2->3, butter 1->2)."""
+    model = ScriptedModel(
+        note([add("MAGGI-70", 1), add("PARLEG-100", 2)], "ok"),
+        note([add("BUTTER-100", 1), add("MAGGI-70", 1), add("PARLEG-100", 2)], "ok"),          # replays the first turn
+        note([add("BUTTER-100", 1)], "ok", finish=True),                                       # replays the second turn
+        note([add("BUTTER-100", 1)], "ok", payment="upi"),
+    )
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    for words in ("Ek packet Maggi aur do packet Parle-G dena", "Aur ek Amul butter bhi", "bas itna hi", "UPI se dunga"):
+        talk(manager, session, words, "hi-en")
+    record = session.close(tmp_path)
+    assert [(i["sku"], i["qty"]) for i in record["items"]] == [("MAGGI-70", 1), ("PARLEG-100", 2), ("BUTTER-100", 1)]
+    assert record["total"] == 14 + 20 + 58 and record["payment"] == "upi"
+
+
+def test_a_replayed_remove_is_ignored_but_a_real_one_is_not(manager, session, monkeypatch):
+    model = ScriptedModel(
+        note([add("RICE-1KG", 3), add("DAL-TOOR-1KG", 1)], "ok"),
+        note([remove("RICE-1KG", 1)], "ok"),
+        note([remove("RICE-1KG", 1)], "ok", payment="cash"),                                    # "Bas, cash": the last change again
+    )
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "Teen kilo chawal aur ek kilo toor dal dena", "hi-en")
+    talk(manager, session, "Chawal ek kilo kam kar do", "hi-en")
+    talk(manager, session, "Bas, cash", "hi-en")
+    assert float(session.lines["RICE-1KG"]) == 2 and float(session.lines["DAL-TOOR-1KG"]) == 1
+
+
+def test_the_caller_naming_a_product_again_may_repeat_a_quantity(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("MAGGI-70", 2)], "ok"), note([add("MAGGI-70", 2)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "do packet Maggi", "hi-en")
+    talk(manager, session, "aur do packet Maggi", "hi-en")
+    assert float(session.lines["MAGGI-70"]) == 4
+
+
+def test_a_new_add_on_a_sentence_with_no_product_and_no_quantity_is_ignored(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("SUGAR-1KG", 2)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "haan theek hai", "hi-en")
+    assert session.lines == {}
+
+
+def test_an_op_for_a_product_the_caller_named_is_always_kept(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("SUGAR-1KG", 1)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "ek packet sugar", "hi-en")
+    assert float(session.lines["SUGAR-1KG"]) == 1
+
+
+def test_has_quantity_sees_digits_and_number_words_in_three_languages():
+    for text in ("2 kilo", "do kilo", "ek packet", "one litre", "రెండు కిలోలు", "दो किलो", "half kilo"):
+        assert order_turn.has_quantity(text), text
+    for text in ("UPI", "that is all", "bas itna hi", "cash, my name is Ramesh", "యూపీఐ", ""):
+        assert not order_turn.has_quantity(text), text
