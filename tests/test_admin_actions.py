@@ -62,7 +62,10 @@ def test_a_generated_pin_is_returned_once_and_works(env):
     out = act.create_shop("shop_two", "Shop Two", shops_root=root, auth_path=auth_file)
     assert out["pin_generated"] and len(out["pin"]) == act.GENERATED_PIN_DIGITS and out["pin"].isdigit()
     assert auth.check_pin("shop_two", out["pin"], auth_file)
-    assert out["pin"] not in auth_file.read_text(encoding="utf-8")            # stored hashed, never in clear
+    stored = json.loads(auth_file.read_text(encoding="utf-8"))
+    values = [str(v) for entry in stored.values() for v in (entry.values() if isinstance(entry, dict) else [entry])]
+    assert out["pin"] not in values                                            # stored hashed, never in clear
+    # (not a substring test: a short run of digits turns up by chance inside a hex hash and made this test flaky)
 
 
 def test_a_new_shop_can_be_a_copy_of_an_existing_one_with_its_own_name(env):

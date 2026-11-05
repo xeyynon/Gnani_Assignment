@@ -115,7 +115,7 @@ def test_no_language_sends_the_hint_list_and_a_locked_language_sends_one_code():
     rec = Recorder()
     with make_server(rec) as s:
         run(s)
-    assert rec.headers["language_code"] == "hi-IN,en-IN,te-IN"
+    assert rec.headers["language_code"] == "indic-auto"
     with make_server(rec) as s:
         run(s, language="te-in")
     assert rec.headers["language_code"] == "te-IN"

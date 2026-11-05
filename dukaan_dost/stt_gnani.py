@@ -115,7 +115,7 @@ def set_keyterms(terms) -> int:
 def _normalize_language(language_code: str | None) -> str:
     """'hi-in' / 'hi_IN' / 'hi' -> 'hi-IN'; None -> the default hint list."""
     if not language_code or language_code.lower() in ("unknown", "auto", "indic-auto"):
-        return os.getenv("GNANI_STT_LANGUAGES", "hi-IN,en-IN,te-IN")
+        return os.getenv("GNANI_STT_LANGUAGES", "indic-auto")
     code = language_code.replace("_", "-")
     lang, _, region = code.partition("-")
     return f"{lang.lower()}-{(region or 'IN').upper()}"
@@ -197,7 +197,7 @@ class StreamingSession:
                         f"language (likely a hallucination from noise).")
             return "", ""
         if transcript and not language:
-            language = self._language.split(",")[0]
+            language = "hi-IN" if self._language == "indic-auto" else self._language.split(",")[0]
         if transcript:
             log.info(f"[STT-GNANI] '{transcript}' (lang={language}, streaming)")
         else:
@@ -351,7 +351,7 @@ class StreamingSession:
 
 def start_streaming_session(language_code: str | None = None, is_stale=None) -> StreamingSession:
     """
-    language_code=None: Prisma gets the default hint list (hi-IN,en-IN,te-IN)
+    language_code=None: Prisma gets indic-auto (the real service rejects a list of languages, 2026-11-02)
     and may pick any of them. A specific code (e.g. "hi-IN") locks the session
     to that language for the rest of the call.
     is_stale: polled while waiting for a free session slot; True abandons the

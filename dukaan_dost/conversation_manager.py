@@ -19,8 +19,9 @@ import re
 
 import yaml
 
-from .knowledge_retriever import get_core_context, get_relevant_context_maybe_cached
-from . import order_turn
+from .knowledge_retriever import get_core_context, get_relevant_context, get_relevant_context_maybe_cached
+from . import loan_turn, order_turn
+from .product_search import ProductSearch
 from . import stock as _stock
 from .llm_provider import ask as gemini_ask, ask_json as gemini_ask_json, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
 from .validator import validate_reply
@@ -97,6 +98,9 @@ class ConversationManager:
             self.config = yaml.safe_load(f)
 
         self.base_prompt = self.config["system_prompt"]
+        # Order turns use a shorter persona (the order instructions carry the order rules): about 2,000
+        # fewer characters a turn, which matters for the model's daily token limit and for latency.
+        self.order_base_prompt = self.config.get("order_system_prompt") or self.base_prompt
         self.fallback_messages = {
             lang.lower(): msg for lang, msg in self.config["fallback_messages"].items()
         }
@@ -113,6 +117,13 @@ class ConversationManager:
             log.warning(f"[ORDER] {shop_dir.name}: the stock list is unusable, order taking is off: {e}")
             self.stock_items = []
         # the JSON note needs more room than plain speech; gpt-oss models spend part of the budget reasoning first
+        # How the order prompt shows the products: "full" sends every item on every turn;
+        # "search" sends only the best matches of the caller's sentence (product_search.py) plus the ones already
+        # in the order; "auto" (default) sends everything while the catalogue is small and searches when it grows.
+        self.catalogue_mode = os.getenv("ORDER_CATALOGUE", "auto").strip().lower()
+        self.catalogue_auto_max_chars = int(os.getenv("ORDER_CATALOGUE_AUTO_MAX_CHARS", "6000"))
+        self.catalogue_candidates = int(os.getenv("ORDER_CATALOGUE_CANDIDATES", "12"))
+        self.product_search = ProductSearch(self.stock_items) if self.stock_items else None
         self.order_tokens = int(os.getenv("ORDER_LLM_TOKENS") or (700 if llm_model.startswith("openai/gpt-oss") else 260))
         self.order_temperature = float(os.getenv("ORDER_LLM_TEMP", "0.2"))   # reading an order is extraction, not chat
 
@@ -120,8 +131,9 @@ class ConversationManager:
         key = (detected_language or "en-in").lower()
         return self.fallback_messages.get(key, self.fallback_messages["en-in"])
 
-    def _build_system_prompt(self, context: str, knowledge: str, detected_language: str, is_first_turn: bool) -> str:
-        parts = [self.base_prompt]
+    def _build_system_prompt(self, context: str, knowledge: str, detected_language: str, is_first_turn: bool,
+                             base: str | None = None) -> str:
+        parts = [base or self.base_prompt]
 
         if is_first_turn:
             parts.append("This is the first message of the call — the automatic greeting has already been spoken.")
@@ -152,7 +164,8 @@ class ConversationManager:
 
         return "\n\n".join(parts)
 
-    def _build_messages(self, transcript: str, recent_history: list[dict], context: str, detected_language: str):
+    def _build_messages(self, transcript: str, recent_history: list[dict], context: str, detected_language: str,
+                        base: str | None = None, knowledge: str | None = None):
         is_first_turn = not recent_history
         # get_relevant_context_maybe_cached() must see the caller's
         # actual words, not the language-reminder wrapper added below,
@@ -163,8 +176,9 @@ class ConversationManager:
         # it, falling back to a normal (still fast, local) lookup
         # otherwise — see knowledge_retriever.py for why this is a
         # modest, not dramatic, win.
-        knowledge = get_relevant_context_maybe_cached(self.shop_dir, transcript)
-        system_prompt = self._build_system_prompt(context, knowledge, detected_language, is_first_turn)
+        if knowledge is None:
+            knowledge = get_relevant_context_maybe_cached(self.shop_dir, transcript)
+        system_prompt = self._build_system_prompt(context, knowledge, detected_language, is_first_turn, base)
 
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(recent_history)
@@ -212,6 +226,18 @@ class ConversationManager:
         table = {str(k).lower(): v for k, v in table.items()}
         return table.get((language or "en-in").lower()) or table.get("en-in")
 
+    def catalogue_for(self, transcript: str, order) -> str:
+        """The product list for one order turn: all items, or the best matches plus what is already ordered."""
+        full = _stock.catalogue_text(self.stock_items)
+        mode = self.catalogue_mode
+        if mode == "auto":
+            mode = "full" if len(full) <= self.catalogue_auto_max_chars else "search"
+        if mode != "search" or self.product_search is None:
+            return full
+        wanted = {sku for sku, _ in self.product_search.search(transcript, self.catalogue_candidates)}
+        wanted |= set(order.lines)                       # a correction names an item already in the order
+        return _stock.catalogue_text(self.stock_items, only=wanted)
+
     def _order_turn(self, transcript: str, recent_history: list[dict], context: str, detected_language: str, order):
         """
         One turn of order taking: ask the model for a JSON note (items, quantities, payment, finish, a
@@ -220,8 +246,13 @@ class ConversationManager:
         """
         examples = [(it["sku"], it["name"]["en"], it["unit"]) for it in self.stock_items[:2]]
         full_context = "\n\n".join(part for part in (
-            context, order_turn.prompt_section(examples), order.state_for_model()) if part)
-        messages, _ = self._build_messages(transcript, recent_history, full_context, detected_language)
+            context, order_turn.prompt_section(examples), self.catalogue_for(transcript, order),
+            order.state_for_model()) if part)
+        # The catalogue replaces the product sections of the knowledge search; the search still supplies shop
+        # facts (delivery, payment, opening hours).
+        facts = get_relevant_context(self.shop_dir, transcript, skip=("products_pricing.md",))
+        messages, _ = self._build_messages(transcript, recent_history, full_context, detected_language,
+                                           base=self.order_base_prompt, knowledge=facts)
         reply_language = detected_language or "en-IN"
 
         raw = gemini_ask_json(model=self.llm_model, messages=messages, max_tokens=self.order_tokens,
@@ -245,9 +276,10 @@ class ConversationManager:
         plan.say = validate_reply(plan.say, self._fallback_for(detected_language), not recent_history,
                                   language_code=detected_language or "") if plan.say else ""
         result = order.apply(plan.ops, plan.payment, plan.customer_name, plan.delivery, plan.finish,
-                             language=reply_language)
+                             language=reply_language, balance_query=plan.balance_query)
         text = order_turn.compose(plan, result, order, detected_language,
-                                  closing=self._closing_for(order.payment, detected_language))
+                                  closing=self._closing_for("cash" if order.credit_state == "approved" else order.payment,
+                                                            detected_language))
         if not text:
             yield self._fallback_for(detected_language), reply_language
             return
@@ -262,8 +294,45 @@ class ConversationManager:
         if buffer.strip():
             yield buffer.strip(), reply_language
 
+    def _loan_turn(self, transcript: str, recent_history: list[dict], context: str, detected_language: str, loan):
+        """
+        One turn of loan guidance: the model reads the amount out of the caller's words (JSON), loan_session.py
+        checks it and does the arithmetic, and the reply is the code's sentences (see loan_turn.compose).
+        """
+        loan.active = True
+        reply_language = detected_language or "en-IN"
+        full_context = "\n\n".join(part for part in (context, loan_turn.prompt_section()) if part)
+        messages, _ = self._build_messages(transcript, recent_history, full_context, detected_language,
+                                           base=self.order_base_prompt, knowledge="")
+        raw = gemini_ask_json(model=self.llm_model, messages=messages, max_tokens=self.order_tokens,
+                              temperature=self.order_temperature, schema=loan_turn.SCHEMA)
+        plan = loan_turn.parse_plan(raw)
+        if plan is None and raw.strip():
+            log.warning(f"[LOAN] plain text instead of the JSON note, asking again: {raw[:160]!r}")
+            retry = messages + [{"role": "assistant", "content": raw},
+                                {"role": "user", "content": "That was not the JSON object. Answer again with only "
+                                 "the JSON object described above, for the caller's last message."}]
+            raw = gemini_ask_json(model=self.llm_model, messages=retry, max_tokens=self.order_tokens,
+                                  temperature=self.order_temperature, schema=loan_turn.SCHEMA)
+            plan = loan_turn.parse_plan(raw)
+        if plan is None:
+            log.warning(f"[LOAN] the model's answer was not usable JSON: {raw[:200]!r}")
+            yield self._fallback_for(detected_language), reply_language
+            return
+        result = loan.apply(plan.amount, plan.kind, plan.business, plan.place, language=reply_language)
+        text = loan_turn.compose(plan, result, loan, detected_language)
+        buffer = text
+        while True:
+            found = next_sentence(buffer)
+            if found is None:
+                break
+            sentence, buffer = found
+            yield sentence, reply_language
+        if buffer.strip():
+            yield buffer.strip(), reply_language
+
     def handle_turn_streaming(self, transcript: str, recent_history: list[dict], context: str, detected_language: str,
-                              order=None):
+                              order=None, loan=None):
         """
         Yields (sentence_chunk, reply_language) tuples as Gemini streams.
 
@@ -274,6 +343,9 @@ class ConversationManager:
         The caller is responsible for validation and history — the full
         reply text must be assembled from the yielded chunks.
         """
+        if loan is not None and (loan.active or loan_turn.detect(transcript)):
+            yield from self._loan_turn(transcript, recent_history, context, detected_language, loan)
+            return
         if order is not None and self.stock_items:
             yield from self._order_turn(transcript, recent_history, context, detected_language, order)
             return

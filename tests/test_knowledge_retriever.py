@@ -1,4 +1,4 @@
-"""
+r"""
 Tests for keyword retrieval over a shop's knowledge files, in particular that Hindi and Telugu
 words are kept whole (Python's \w alone cuts them at their vowel signs).
 

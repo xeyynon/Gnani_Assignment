@@ -1,0 +1,20 @@
+{
+  "_note": "Synthetic regular customers for the demo shop's udhaar (credit) book: made-up names, limits and balances, no real people. Each name is given in English, Hindi and Telugu because Prisma writes a caller's name in the script they spoke. The names were written by the assistant and need a native-speaker check. Balances are in rupees.",
+  "customers": [
+    {"id": "ramesh",   "name": {"en": "Ramesh",   "hi": "रमेश",     "te": "రమేష్"},     "credit_limit": 2000, "opening_balance": 400},
+    {"id": "anita",    "name": {"en": "Anita",    "hi": "अनीता",    "te": "అనిత"},     "credit_limit": 3000, "opening_balance": 1900},
+    {"id": "lakshmi",  "name": {"en": "Lakshmi",  "hi": "लक्ष्मी",   "te": "లక్ష్మి"},    "credit_limit": 2500, "opening_balance": 900},
+    {"id": "suresh",   "name": {"en": "Suresh",   "hi": "सुरेश",    "te": "సురేష్"},    "credit_limit": 500,  "opening_balance": 450},
+    {"id": "venkat",   "name": {"en": "Venkat",   "hi": "वेंकट",    "te": "వెంకట్"},    "credit_limit": 2000, "opening_balance": 0},
+    {"id": "sunita",   "name": {"en": "Sunita",   "hi": "सुनीता",   "te": "సునీత"},    "credit_limit": 1500, "opening_balance": 600},
+    {"id": "prakash",  "name": {"en": "Prakash",  "hi": "प्रकाश",   "te": "ప్రకాష్"},   "credit_limit": 1000, "opening_balance": 250},
+    {"id": "meena",    "name": {"en": "Meena",    "hi": "मीना",     "te": "మీనా"},     "credit_limit": 1200, "opening_balance": 1100},
+    {"id": "kiran",    "name": {"en": "Kiran",    "hi": "किरण",     "te": "కిరణ్"},     "credit_limit": 3000, "opening_balance": 1500},
+    {"id": "padma",    "name": {"en": "Padma",    "hi": "पद्मा",     "te": "పద్మ"},     "credit_limit": 1500, "opening_balance": 0},
+    {"id": "rajesh",   "name": {"en": "Rajesh",   "hi": "राजेश",    "te": "రాజేష్"},    "credit_limit": 2500, "opening_balance": 800},
+    {"id": "geeta",    "name": {"en": "Geeta",    "hi": "गीता",     "te": "గీత"},      "credit_limit": 800,  "opening_balance": 300},
+    {"id": "srinivas", "name": {"en": "Srinivas", "hi": "श्रीनिवास", "te": "శ్రీనివాస్"}, "credit_limit": 4000, "opening_balance": 2200},
+    {"id": "kavitha",  "name": {"en": "Kavitha",  "hi": "कविता",    "te": "కవిత"},     "credit_limit": 1000, "opening_balance": 150},
+    {"id": "mohan",    "name": {"en": "Mohan",    "hi": "मोहन",     "te": "మోహన్"},     "credit_limit": 2000, "opening_balance": 1750}
+  ]
+}

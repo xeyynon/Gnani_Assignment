@@ -80,6 +80,29 @@ def render_products_md(items) -> str:
     return "\n\n".join(sections) + "\n"
 
 
+def catalogue_text(items, only=None) -> str:
+    """
+    Every item on one short line, for the order prompt: "SKU | English | Hindi | Telugu | unit [| OUT OF STOCK]".
+    No prices (the code says those). Sent on every order turn so the model can match whatever the caller
+    says, in any of the three languages or in Latin letters, to a SKU. Keyword retrieval used to pick a few
+    product sections and missed items (the Hindi spelling with or without a dot under the letter, a Telugu
+    plural, or a crowd of oils filling the 1,200-character budget), so the model said "we do not have onions".
+    """
+    lines = []
+    for it in items:
+        if only is not None and it["sku"] not in only:
+            continue
+        n = it["name"]
+        english = re.sub(r"\s*\(.*?\)", "", n["en"]).strip()
+        parts = [it["sku"], english, n["hi"], n["te"], it["unit"]]
+        if not it["in_stock"]:
+            parts.append("OUT OF STOCK")
+        lines.append(" | ".join(parts))
+    head = ("CATALOGUE (SKU | English | Hindi | Telugu | unit):" if only is None else
+            "CATALOGUE, the items that best match what the caller said (SKU | English | Hindi | Telugu | unit). The caller may mean other items of the shop, but only these are listed:")
+    return head + "\n" + "\n".join(lines)
+
+
 def keyterms(items, limit: int = 200) -> list:
     """
     Words to boost in Prisma: each product's main English name (HTTP headers are ASCII, so

@@ -98,7 +98,7 @@ def test_the_instructions_name_the_json_fields_and_use_the_shops_own_skus():
 
 def test_the_schema_lists_every_field_the_plan_reads():
     props = order_turn.SCHEMA["properties"]
-    assert set(props) == {"ops", "payment", "customer_name", "delivery", "finish", "price_of", "not_sold", "say"}
+    assert set(props) == {"ops", "payment", "customer_name", "delivery", "finish", "balance_query", "price_of", "not_sold", "say"}
     assert set(order_turn.SCHEMA["required"]) == set(props) and order_turn.SCHEMA["additionalProperties"] is False
     assert set(props["ops"]["items"]["properties"]) == {"op", "sku", "qty"}
 
@@ -298,7 +298,8 @@ def test_the_model_is_shown_the_order_so_far_but_never_an_amount_of_it(manager, 
     state = second["system"].split("CURRENT ORDER:")[1].split("\n\n")[0]
     assert "88" not in state and "rupee" not in state
     assert first["max_tokens"] == manager.order_tokens >= 200       # the JSON note needs room
-    assert "SKU SUGAR-1KG" in first["system"]                        # the product knowledge carries the SKUs
+    assert "CATALOGUE" in first["system"] and "SUGAR-1KG | Sugar | चीनी | చక్కెర | kg" in first["system"]     # every item, every turn
+    assert "PANEER-200 | Paneer | पनीर | పనీర్ | packet | OUT OF STOCK" in first["system"]
 
 
 def test_every_order_turn_asks_for_the_strict_schema_and_a_low_temperature(manager, session, monkeypatch):
@@ -432,3 +433,14 @@ def test_not_sold_is_said_along_with_the_read_back_at_the_end(session):
 def test_not_sold_must_be_a_list_of_strings():
     assert order_turn.parse_plan('{"not_sold": "mango"}').not_sold == []
     assert order_turn.parse_plan('{"not_sold": ["mango", 3, null]}').not_sold == ["mango"]
+
+
+def test_the_order_prompt_carries_the_whole_catalogue_and_no_product_sections(manager, session, monkeypatch):
+    model = ScriptedModel(note([], "hello"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "aadha kilo pyaz aur ek kilo aloo chahiye")
+    system = model.prompts[0]["system"]
+    for sku in ("ONION-1KG", "POTATO-1KG", "ATTA-5KG", "TEA-250", "SOAP-100"):       # every item is there, whatever the words
+        assert f"{sku} |" in system
+    assert "SKU ONION-1KG" not in system                                 # the product sections of the search are left out
+    assert "Relevant knowledge" not in system or "per kg" not in system.split("Relevant knowledge")[1]
