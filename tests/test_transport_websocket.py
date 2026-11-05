@@ -273,3 +273,12 @@ def test_an_event_to_a_call_that_has_gone_is_a_quiet_no_op(server):
         assert wait_for(lambda: server.find_call()[0] is not None)
     assert wait_for(lambda: server.find_call()[0] is None)
     server.send_event({"type": "user", "text": "too late"})
+
+
+def test_a_json_frame_that_is_not_an_object_does_not_end_the_call(server, caller):
+    for frame in ("123", "[]", '"played"', "null", "true"):
+        caller.send(frame)
+    time.sleep(0.2)
+    assert server.find_call()[0] is not None                 # still a call
+    server.send_event({"type": "agent", "reply": 1, "text": "still here"})
+    assert json.loads(caller.recv(timeout=3))["text"] == "still here"

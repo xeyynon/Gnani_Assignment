@@ -356,3 +356,57 @@ def test_a_reasoning_model_always_gets_room_to_reason(monkeypatch):
 
 def test_the_default_model_is_one_this_account_can_use():
     assert llm_groq.DEFAULT_MODEL == "openai/gpt-oss-20b"
+
+
+# ---- bugs found in review (B-52, B-53, B-54) --------------------------------------------------
+
+def test_an_unrelated_400_on_a_schema_request_falls_back_for_that_call_only(monkeypatch):
+    too_long = json.dumps({"error": {"code": "context_length_exceeded",
+                                     "message": "Please reduce the length of the messages or completion."}}).encode()
+    monkeypatch.setattr(llm_groq, "_schema_unsupported", set())
+    with FakeGroq([(400, {}, too_long), (200, {}, completion('{"a": 1}')), (200, {}, completion('{"a": 2}'))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask_json("good-model", MESSAGES, 50, 0.1, schema=SCHEMA) == '{"a": 1}'
+        assert "good-model" not in llm_groq._schema_unsupported
+        assert llm_groq.ask_json("good-model", MESSAGES, 50, 0.1, schema=SCHEMA) == '{"a": 2}'
+    assert s.requests[1]["body"]["response_format"] == {"type": "json_object"}
+    assert s.requests[2]["body"]["response_format"]["type"] == "json_schema"      # tried again next time
+
+
+def test_ask_gives_up_at_once_on_a_rate_limit_with_a_long_wait(monkeypatch):
+    with FakeGroq([(429, {"retry-after": "30"}, b"x"), (200, {}, completion("late"))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask("m", MESSAGES, 10, 0.1) == ""
+    assert len(s.requests) == 1
+
+
+def test_stream_gives_up_at_once_on_a_rate_limit_with_a_long_wait(monkeypatch):
+    with FakeGroq([(429, {"retry-after": "30"}, b"x"), (200, {}, sse("late"))]) as s:
+        point_at(s, monkeypatch)
+        assert list(llm_groq.stream("m", MESSAGES, 10, 0.1)) == []
+    assert len(s.requests) == 1
+
+
+def test_an_error_event_in_the_stream_is_logged(monkeypatch, caplog):
+    body = sse("Hello ", done=False) + b'data: {"error":{"message":"overloaded"}}\n\n'
+    with FakeGroq([(200, {}, body)]) as s:
+        point_at(s, monkeypatch)
+        with caplog.at_level("WARNING", logger="llm_groq"):
+            assert list(llm_groq.stream("m", MESSAGES, 10, 0.1)) == ["Hello "]
+    assert "overloaded" in caplog.text
+
+
+def test_a_stream_that_ends_without_done_after_text_is_logged(monkeypatch, caplog):
+    with FakeGroq([(200, {}, sse("Hello ", done=False))]) as s:
+        point_at(s, monkeypatch)
+        with caplog.at_level("WARNING", logger="llm_groq"):
+            assert list(llm_groq.stream("m", MESSAGES, 10, 0.1)) == ["Hello "]
+    assert "[DONE]" in caplog.text
+
+
+def test_a_complete_stream_logs_no_warning(monkeypatch, caplog):
+    with FakeGroq([(200, {}, sse("Hello "))]) as s:
+        point_at(s, monkeypatch)
+        with caplog.at_level("WARNING", logger="llm_groq"):
+            list(llm_groq.stream("m", MESSAGES, 10, 0.1))
+    assert caplog.text == ""

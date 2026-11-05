@@ -22,20 +22,46 @@ from .order_turn import extract_json
 
 log = logging.getLogger("loan_turn")
 
-# Words that mean "I want a loan / business funding". Hindi and Telugu words are written as callers and
-# Prisma write them. Telugu అప్పు (debt, also "on credit") is NOT here: in a shop it means udhaar.
-_LOAN_WORDS = [
-    r"\bloans?\b", r"\bemi\b", r"\binterest\b", r"\bmudra\b", r"\budyami\b", r"\bsubsidy\b", r"\bmoratorium\b",
-    r"\bkarz\w*", r"\bkarj\w*", r"\bbyaj\b", r"\bvyapar\b", r"\bbusiness\b", r"\bstart (?:a|my) (?:shop|business)\b",
-    r"\bfund(?:ing)?\b", r"\binvest\w*", r"लोन", r"कर्ज", r"कर्ज़", r"ऋण", r"ब्याज", r"किस्त", r"कारोबार", r"व्यापार",
-    r"बिज़नेस", r"बिजनेस", r"दुकान खोल", r"निवेश", r"योजना", r"లోన్", r"రుణం", r"రుణ", r"వడ్డీ", r"వ్యాపారం", r"బిజినెస్",
-    r"పెట్టుబడి", r"పథకం", r"ఈఎంఐ", r"కిస్తీ", r"కిస్తు", r"వాయిదా",
+# Words that mean "I want a loan". Hindi and Telugu words are written as callers and Prisma write them.
+# Telugu అప్పు (debt, also "on credit") is NOT here: in a shop it means udhaar.
+_STRONG_WORDS = [
+    r"\bloans?\b", r"\bemi\b", r"\bmudra\b", r"\budyami\b", r"\bmoratorium\b", r"\bkarz\w*", r"\bkarj\w*",
+    r"\bstart (?:a|my) (?:shop|business)\b", r"\b(?:dukaan|dukan|shop|business)\s+(?:khol|shuru|start)\w*", r"लोन", r"कर्ज", r"कर्ज़", r"ऋण", r"किस्त", r"दुकान खोल", r"లోన్", r"రుణం", r"రుణ",
+    r"ఈఎంఐ", r"కిస్తీ", r"కిస్తు",
 ]
-_LOAN_RE = re.compile("|".join(_LOAN_WORDS), re.IGNORECASE)
+# Words that are ordinary shop talk on their own ("do you charge interest on udhaar", "is the shop open for business",
+# "I will invest in 10 kg of rice", "postpone it to tomorrow"). They start loan mode only beside a money-scale word
+# (lakh, crore, thousand), because loan mode is sticky: one wrong start would stop the caller ordering for the rest of the call.
+_WEAK_WORDS = [
+    r"\binterest\b", r"\bsubsidy\b", r"\bbyaj\b", r"\bvyapar\b", r"\bbusiness\b", r"\bfund(?:ing)?\b", r"\binvest\w*",
+    r"ब्याज", r"कारोबार", r"व्यापार", r"बिज़नेस", r"बिजनेस", r"निवेश", r"योजना", r"వడ్డీ", r"వ్యాపారం", r"బిజినెస్", r"పెట్టుబడి",
+    r"పథకం", r"వాయిదా",
+]
+_SCALE_WORDS = [r"\blakhs?\b", r"\blacs?\b", r"\bcrores?\b", r"\bhaz[a-z]*ar\b", r"\bthousand\b", r"लाख", r"करोड़", r"करोड", r"हज़ार",
+                r"हजार", r"లక్ష", r"కోటి", r"వేల"]
+_STRONG_RE = re.compile("|".join(_STRONG_WORDS), re.IGNORECASE)
+_WEAK_RE = re.compile("|".join(_WEAK_WORDS), re.IGNORECASE)
+_SCALE_RE = re.compile("|".join(_SCALE_WORDS), re.IGNORECASE)
+
+
+_NEGATION_RE = re.compile(r"^\W{0,3}(?:नहीं|नही|nahi|nahin|not|no|dont|don't|వద్దు|లేదు)(?!\w)", re.IGNORECASE)
+
+
+_REFUSED_BEFORE_RE = re.compile(r"(?:^|\W)(?:no|not|without|dont|don't)\W*$", re.IGNORECASE)
+
+
+def _asked_for(match_re, text: str) -> bool:
+    """A match counts unless a refusal sits right beside it ("मुझे लोन नहीं, दो किलो चीनी चाहिए", "no loan, two kilo sugar")."""
+    return any(not _NEGATION_RE.match(text[m.end():m.end() + 12]) and not _REFUSED_BEFORE_RE.search(text[max(0, m.start() - 10):m.start()])
+               for m in match_re.finditer(text))
 
 
 def detect(text: str) -> bool:
-    return bool(text) and _LOAN_RE.search(text) is not None
+    if not text:
+        return False
+    if _asked_for(_STRONG_RE, text):
+        return True
+    return _asked_for(_WEAK_RE, text) and _SCALE_RE.search(text) is not None
 
 
 def prompt_section() -> str:

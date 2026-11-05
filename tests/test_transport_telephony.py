@@ -29,7 +29,7 @@ from dukaan_dost.transport_telephony import (  # noqa: E402
     ExotelAdapter, TelephonyTransport, TwilioAdapter, mulaw_decode, mulaw_encode, resample, _token_ok,
 )
 
-TOKEN = "a-long-random-secret-for-tests"
+TOKEN = "test-only-secret-for-the-stand-in"
 PHONE = "+910000000000"            # made up; the test checks it never reaches a log
 
 
@@ -437,3 +437,23 @@ def test_every_method_the_app_calls_exists_on_the_telephony_transport():
     for name in ("start", "configure", "add_http_handler", "add_ws_handler", "call_shop", "live_calls", "send_event",
                  "find_call", "open_capture", "play", "stop_playback", "close"):
         assert callable(getattr(TelephonyTransport, name, None)), name
+
+
+# ---- page events are not for the phone provider -----------------------------------------------
+
+def test_page_events_are_not_sent_to_the_phone_provider(server):
+    with connect(twilio_url(server)) as ws:
+        twilio_start(ws)
+        call_up(server)
+        server.send_event({"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"})
+        server.send_event({"type": "order", "customer": "Ramesh"})
+        with pytest.raises(TimeoutError):
+            ws.recv(timeout=0.7)
+
+
+def test_a_browser_call_on_the_same_server_still_gets_the_events(server):
+    with connect(f"ws://127.0.0.1:{server.port}/ws") as ws:
+        assert json.loads(ws.recv(timeout=3))["type"] == "ready"
+        call_up(server)
+        server.send_event({"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"})
+        assert json.loads(ws.recv(timeout=3))["text"] == "ek kilo chawal"

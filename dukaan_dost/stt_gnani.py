@@ -61,6 +61,10 @@ TRAILING_SILENCE_SEC = float(os.getenv("GNANI_STT_TRAILING_SILENCE_SEC", "0.6"))
 # that nothing more is coming (e.g. the whole utterance was already closed
 # by the server's own silence detection).
 COMMIT_GRACE_SEC = float(os.getenv("GNANI_STT_COMMIT_GRACE_SEC", "0.3"))
+# After commit, how long a speech_start with no transcript is still waited for. The server drops a
+# segment shorter than x-min-segment-ms without any message, so an open speech may never be
+# answered; this is longer than COMMIT_GRACE_SEC because a real transcript can follow the commit.
+SPEECH_OPEN_GRACE_SEC = float(os.getenv("GNANI_STT_SPEECH_OPEN_GRACE_SEC", "1.5"))
 STREAMING_FINISH_TIMEOUT_SEC = float(os.getenv("GNANI_STT_FINISH_TIMEOUT_SEC", "8"))
 CONNECT_TIMEOUT_SEC = float(os.getenv("GNANI_STT_CONNECT_TIMEOUT_SEC", "10"))
 
@@ -340,12 +344,18 @@ class StreamingSession:
     @staticmethod
     def _maybe_done(state: dict, done: asyncio.Event) -> None:
         """Done once commit was sent, every utterance the server started has
-        produced its transcript, none is still open, and the grace period passed."""
-        if state["commit_at"] is None or state["pending"] or state["speech_open"]:
+        produced its transcript, none is still open, and the grace period passed.
+        A speech_start that nothing ever answers (a segment the server dropped as too short) stops
+        counting as open after SPEECH_OPEN_GRACE_SEC; a pending 'processing' is always waited for."""
+        if state["commit_at"] is None or state["pending"]:
             return
-        if state["answered"]:                       # the commit produced its transcript: nothing to wait for
+        waited = time.monotonic() - state["commit_at"]
+        if state["speech_open"]:
+            if waited >= SPEECH_OPEN_GRACE_SEC:
+                done.set()
+        elif state["answered"]:                     # the commit produced its transcript: nothing to wait for
             done.set()
-        elif time.monotonic() - state["commit_at"] >= COMMIT_GRACE_SEC:
+        elif waited >= COMMIT_GRACE_SEC:
             done.set()                              # nothing came back: there was no speech
 
 

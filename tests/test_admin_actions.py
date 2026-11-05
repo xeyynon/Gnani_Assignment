@@ -343,3 +343,52 @@ def test_a_note_is_cut_to_a_sane_length(env):
     make_shop(root, "gamma")
     act.dismiss("gamma:no-pin", "n" * 5000, root, orders, auth_file, state)
     assert len(act.dismissed(state)["gamma:no-pin"]["note"]) == 200
+
+
+# ---- bug hunt of 2026-11-05 ---------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("items", [
+    [None], ["x"], [{"sku": None}], [{"sku": "AB-1\n", "name": {"en": "a", "hi": "b", "te": "c"}, "unit": "kg", "price": 1,
+                                       "in_stock": True, "aliases": ["a"], "pack": "1 kg"}],
+    [{**ITEM, "name": "Rice"}], [{**ITEM, "aliases": [1, None]}], [{**ITEM, "price": float("nan")}],
+    [{**ITEM, "price": float("inf")}], [{**ITEM, "pack": None}], "not a list", None,
+])
+def test_validate_reports_a_malformed_stock_list_instead_of_raising(items):
+    assert stock.validate(items)
+
+
+def test_a_new_item_without_a_pack_is_refused_and_stock_json_stays_as_it_was(env):
+    root, _, _, _ = env
+    folder = stocked_shop(root)
+    before = (folder / "stock.json").read_text(encoding="utf-8")
+    bad = {k: v for k, v in ITEM.items() if k != "pack"} | {"sku": "NEW-1"}
+    with pytest.raises(ValueError):
+        act.save_stock("alpha", add=[bad], shops_root=root)
+    assert (folder / "stock.json").read_text(encoding="utf-8") == before
+    act.save_stock("alpha", update=[{"sku": "RICE-1KG", "price": 61}], shops_root=root)       # later saves are not blocked
+
+
+def test_a_truncated_auth_file_is_not_overwritten_by_the_next_pin(tmp_path):
+    path = tmp_path / "auth.json"
+    auth.set_pin("alpha", "1111", path)
+    auth.set_pin("beta", "2222", path)
+    path.write_text(path.read_text(encoding="utf-8")[:40], encoding="utf-8")
+    damaged = path.read_text(encoding="utf-8")
+    with pytest.raises(auth.AuthFileUnreadable):
+        auth.set_pin("gamma", "3333", path)
+    assert path.read_text(encoding="utf-8") == damaged
+    assert auth.check_pin("alpha", "1111", path) is False                                      # and nobody gets in on a bad file
+
+
+@pytest.mark.parametrize("content", ["[]", '{"shops": null}', '{"shops": {"a": 5}}', "123"])
+def test_an_auth_file_of_the_wrong_shape_fails_closed_without_raising(tmp_path, content):
+    path = tmp_path / "auth.json"
+    path.write_text(content, encoding="utf-8")
+    assert auth.has_pin("a", path) in (True, False) and auth.check_pin("a", "1234", path) is False
+
+
+def test_log_entries_with_unusual_line_separators_are_all_read_back(tmp_path):
+    path = tmp_path / "log.jsonl"
+    for note in ["plain", "has separator", "hasnext-line", "has paragraph"]:
+        act.log_event("note", "alpha", note, path=path)
+    assert len(act.recent_activity(10, path)) == 4

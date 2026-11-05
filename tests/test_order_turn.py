@@ -47,6 +47,10 @@ def add(sku, qty):
     return {"op": "add", "sku": sku, "qty": qty}
 
 
+def remove(sku, qty=None):
+    return {"op": "remove", "sku": sku, **({"qty": qty} if qty is not None else {})}
+
+
 # ---- reading the model's answer ------------------------------------------------------------------
 
 def test_a_plain_json_answer_is_read():
@@ -444,3 +448,63 @@ def test_the_order_prompt_carries_the_whole_catalogue_and_no_product_sections(ma
         assert f"{sku} |" in system
     assert "SKU ONION-1KG" not in system                                 # the product sections of the search are left out
     assert "Relevant knowledge" not in system or "per kg" not in system.split("Relevant knowledge")[1]
+
+
+# ---- the model repeats earlier changes (B-30, seen on the first valid run of gpt-oss-20b) -------------------------
+
+def test_a_model_that_repeats_earlier_changes_on_later_turns_does_not_double_the_order(manager, session, monkeypatch, tmp_path):
+    """The real failure of call h02: every later note carried the earlier adds again (Maggi 1->2, Parle-G 2->3, butter 1->2)."""
+    model = ScriptedModel(
+        note([add("MAGGI-70", 1), add("PARLEG-100", 2)], "ok"),
+        note([add("BUTTER-100", 1), add("MAGGI-70", 1), add("PARLEG-100", 2)], "ok"),          # replays the first turn
+        note([add("BUTTER-100", 1)], "ok", finish=True),                                       # replays the second turn
+        note([add("BUTTER-100", 1)], "ok", payment="upi"),
+    )
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    for words in ("Ek packet Maggi aur do packet Parle-G dena", "Aur ek Amul butter bhi", "bas itna hi", "UPI se dunga"):
+        talk(manager, session, words, "hi-en")
+    record = session.close(tmp_path)
+    assert [(i["sku"], i["qty"]) for i in record["items"]] == [("MAGGI-70", 1), ("PARLEG-100", 2), ("BUTTER-100", 1)]
+    assert record["total"] == 14 + 20 + 58 and record["payment"] == "upi"
+
+
+def test_a_replayed_remove_is_ignored_but_a_real_one_is_not(manager, session, monkeypatch):
+    model = ScriptedModel(
+        note([add("RICE-1KG", 3), add("DAL-TOOR-1KG", 1)], "ok"),
+        note([remove("RICE-1KG", 1)], "ok"),
+        note([remove("RICE-1KG", 1)], "ok", payment="cash"),                                    # "Bas, cash": the last change again
+    )
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "Teen kilo chawal aur ek kilo toor dal dena", "hi-en")
+    talk(manager, session, "Chawal ek kilo kam kar do", "hi-en")
+    talk(manager, session, "Bas, cash", "hi-en")
+    assert float(session.lines["RICE-1KG"]) == 2 and float(session.lines["DAL-TOOR-1KG"]) == 1
+
+
+def test_the_caller_naming_a_product_again_may_repeat_a_quantity(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("MAGGI-70", 2)], "ok"), note([add("MAGGI-70", 2)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "do packet Maggi", "hi-en")
+    talk(manager, session, "aur do packet Maggi", "hi-en")
+    assert float(session.lines["MAGGI-70"]) == 4
+
+
+def test_a_new_add_on_a_sentence_with_no_product_and_no_quantity_is_ignored(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("SUGAR-1KG", 2)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "haan theek hai", "hi-en")
+    assert session.lines == {}
+
+
+def test_an_op_for_a_product_the_caller_named_is_always_kept(manager, session, monkeypatch):
+    model = ScriptedModel(note([add("SUGAR-1KG", 1)], "ok"))
+    monkeypatch.setattr(cm, "gemini_ask_json", model)
+    talk(manager, session, "ek packet sugar", "hi-en")
+    assert float(session.lines["SUGAR-1KG"]) == 1
+
+
+def test_has_quantity_sees_digits_and_number_words_in_three_languages():
+    for text in ("2 kilo", "do kilo", "ek packet", "one litre", "రెండు కిలోలు", "दो किलो", "half kilo"):
+        assert order_turn.has_quantity(text), text
+    for text in ("UPI", "that is all", "bas itna hi", "cash, my name is Ramesh", "యూపీఐ", ""):
+        assert not order_turn.has_quantity(text), text

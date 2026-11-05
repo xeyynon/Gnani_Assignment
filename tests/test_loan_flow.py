@@ -183,8 +183,10 @@ def test_closing_twice_writes_once(loan, tmp_path):
 
 @pytest.mark.parametrize("text", [
     "I want a loan for a tea stall", "mujhe business loan chahiye", "मुझे लोन चाहिए", "दुकान खोलनी है, कर्ज़ चाहिए",
-    "ब्याज कितना लगेगा", "నాకు రుణం కావాలి", "లోన్ గురించి చెప్పండి", "what is the EMI",
-    "udyami scheme ke baare mein", "కిస్తీ ఎంత", "I want to start a business", "karz chahiye", "byaj kitna hai",
+    "నాకు రుణం కావాలి", "లోన్ గురించి చెప్పండి", "what is the EMI",
+    "udyami scheme ke baare mein", "కిస్తీ ఎంత", "I want to start a business", "karz chahiye",
+    "mujhe dukaan kholni hai, mere paas ek lakh hai", "business start karna hai, 2 lakh invest kar sakta hoon",
+    "कारोबार के लिए पचास हज़ार चाहिए",
 ])
 def test_loan_words_in_any_of_the_languages_start_loan_mode(text):
     assert loan_turn.detect(text)
@@ -411,3 +413,43 @@ def test_nothing_is_sent_while_the_agent_is_still_asking_and_a_broken_listener_c
         raise RuntimeError("page gone")
     t = LoanSession("dukaan_dost", call_id="e3", now=NOW, listener=boom)
     assert t.apply(amount=100000, kind="margin_money").status == "quoted"
+
+
+@pytest.mark.parametrize("text", [
+    "Do you charge interest on udhaar?", "Is the shop open for business on Sunday?", "what is the business hours",
+    "उधार पर ब्याज लगेगा क्या", "मेरी योजना है कि कल सुबह आऊँ", "मेरा व्यापार है, 20 किलो चावल चाहिए", "I will invest in 10 kg rice",
+    "मुझे लोन नहीं, दो किलो चीनी चाहिए", "no loan, two kilo sugar", "what's the subsidy price of sugar", "రేపటికి వాయిదా వేయండి",
+    "ब्याज कितना लगेगा", "byaj kitna hai",
+])
+def test_ordinary_shop_talk_does_not_start_the_sticky_loan_mode(text):
+    """Bug hunt 2026-11-05: words like business, interest and ब्याज alone moved the whole call into loan mode."""
+    assert not loan_turn.detect(text)
+
+
+@pytest.mark.parametrize("text", ["business ke liye 5 lakh ka byaj kitna hoga", "interest on a 2 lakh loan", "వ్యాపారం కోసం రెండు లక్షలు కావాలి"])
+def test_a_weak_loan_word_beside_an_amount_scale_does_start_loan_mode(text):
+    assert loan_turn.detect(text)
+
+
+# ---- bug hunt of 2026-11-05: tiny amounts, a turn after hang-up -------------------------------------------------
+
+@pytest.mark.parametrize("amount", [0.4, 0.49, 1e-9, 1, 9, 999])
+def test_an_amount_under_a_thousand_rupees_is_a_mishearing_not_a_crash(loan, amount):
+    r = loan.apply(amount, "margin_money")
+    assert r.status == "bad_amount" and loan.quote is None
+    assert "0 rupees" not in loan.text(loan.apply(amount), "en-IN")
+
+
+def test_a_thousand_rupees_is_the_least_that_is_quoted(loan):
+    assert loan.apply(1000, "margin_money").status == "quoted" and loan.quote.project_cost == 10000
+
+
+def test_a_loan_turn_after_hang_up_quotes_shows_and_saves_nothing(tmp_path):
+    seen = []
+    s = LoanSession("dukaan_dost", call_id="z1", now=NOW, listener=seen.append)
+    s.apply(100000, "margin_money")
+    s.close(tmp_path)
+    seen.clear()
+    late = s.apply(500000, "project_cost", business="tea stall", place="Kurnool")
+    assert late.status == "closed" and seen == [] and s.text(late, "en-IN") == ""
+    assert s.quote.margin_money == 100000                      # the quote is still the one that was saved

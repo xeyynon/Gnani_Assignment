@@ -883,6 +883,7 @@ _call_key  = None   # node that opened current stream
 
 _history    = []
 _conv_mgrs  = {}     # shop name -> ConversationManager, built the first time a call needs it
+_conv_errors = {}    # shop name -> why its ConversationManager could not be built; cleared when a call for it starts
 _conv_lock  = threading.Lock()
 _active_shop = SHOP_NAME   # the shop of the call in progress (one call at a time); the default between calls
 _vad        = webrtcvad.Vad(VAD_MODE)
@@ -943,20 +944,40 @@ def _get_conv_mgr(shop: str | None = None) -> ConversationManager:
     with _conv_lock:
         mgr = _conv_mgrs.get(shop)
         if mgr is None:
-            mgr = ConversationManager(
-                shop_dir=_shops.shop_dir(shop),
-                llm_model=LLM_MODEL,
-                max_tokens=LLM_TOKENS,
-                temperature=LLM_TEMP,
-            )
+            if shop in _conv_errors:                # already failed on this call: raise again, silently
+                raise _conv_errors[shop]
+            try:
+                mgr = ConversationManager(
+                    shop_dir=_shops.shop_dir(shop),
+                    llm_model=LLM_MODEL,
+                    max_tokens=LLM_TOKENS,
+                    temperature=LLM_TEMP,
+                )
+            except Exception as e:
+                _conv_errors[shop] = e
+                log.error(f"[SHOP] {shop!r} cannot be loaded; its call gets the built-in fallback sentence: {e}")
+                raise
             _conv_mgrs[shop] = mgr
         return mgr
+
+
+# What a caller hears when the shop's own fallback sentences cannot be loaded (its config.yaml is broken).
+BUILTIN_FALLBACK = {
+    "en-in": "Sorry, I did not catch that. Could you please say it again?",
+    "hi-in": "माफ़ कीजिए, मैं समझ नहीं पाया। क्या आप दोबारा बोल सकते हैं?",
+    "te-in": "క్షమించండి, నాకు అర్థం కాలేదు. దయచేసి మళ్ళీ చెప్పగలరా?",
+}
+
+
+def _builtin_fallback(language_code) -> str:
+    return BUILTIN_FALLBACK.get((language_code or "").lower(), BUILTIN_FALLBACK["en-in"])
 
 
 def _forget_shop(shop: str | None) -> None:
     """The admin changed this shop's files: the next call that needs it loads them afresh (a call in progress keeps what it has)."""
     with _conv_lock:
         _conv_mgrs.pop(shop, None)
+        _conv_errors.pop(shop, None)
     log.info(f"[ADMIN] {shop!r} was changed; its next call reloads it")
 
 
@@ -969,8 +990,18 @@ def _set_active_shop() -> None:
         shop = SHOP_NAME
     _active_shop = shop
     log.info(f"[SHOP] Call is for {shop!r}")
-    _boost_product_names(shop)
-    _start_order(shop)
+    with _conv_lock:
+        _conv_errors.pop(shop, None)            # each call tries the shop afresh and logs a failure once
+    # Nothing about a shop's files may stop the call from starting: the watchdog would repeat "Call detected" on
+    # every poll and the greeting would never play (B-67).
+    try:
+        _boost_product_names(shop)
+    except Exception as e:
+        log.warning(f"[SHOP] product names of {shop!r} could not be prepared: {e}")
+    try:
+        _start_order(shop)
+    except Exception as e:
+        log.warning(f"[ORDER] could not start an order for {shop!r}: {e}")
 
 
 def _start_order(shop: str) -> None:
@@ -1030,7 +1061,7 @@ def _boost_product_names(shop: str) -> None:
         terms = _stock.keyterms(_stock.load(_shops.shop_dir(shop)))
     except FileNotFoundError:
         terms = []
-    except (ValueError, OSError, KeyError) as e:
+    except Exception as e:      # any malformed shape of stock.json, not only the ones stock.load reports (B-67)
         log.warning(f"[SHOP] stock list of {shop!r} is unusable, no product names boosted: {e}")
         terms = []
     kept = _set_stt_keyterms(terms)
@@ -1046,7 +1077,7 @@ def _device_name():
 
 
 def _clear_history(reason=""):
-    global _last_reply_wav, _last_reply_lang, _no_speech_apologized, _locked_language_code
+    global _last_reply_wav, _last_reply_lang, _no_speech_apologized, _locked_language_code, _call_gen
     # Only the end of a call closes its order. The other resets ("new call", "new node ...") happen right AFTER
     # _set_active_shop() has opened the next call's order, and must not throw it away: that bug left every call
     # after the first without an order (found by the first full evaluation run, 2026-11-03).
@@ -1064,6 +1095,10 @@ def _clear_history(reason=""):
     # writes below makes the two writers' updates to these actually
     # synchronized instead of merely usually-fine.
     with _hist_lock:
+        # The generation moves on BEFORE the history is emptied, under the lock the processor holds when it
+        # writes a finished turn into the history: a turn still running at hang-up sees the new generation
+        # and drops its result instead of writing call A's exchange into call B (B-64).
+        _call_gen += 1
         _no_speech_apologized = False
         _locked_language_code = None
         _history.clear()
@@ -1616,6 +1651,43 @@ def _is_repeat_request(transcript: str) -> bool:
     return bool(_REPEAT_KEYWORD_PATTERN.search(lower))
 
 
+# B-69: while an order is being taken, a sentence that holds a repeat word AND an item is an order turn ("add one
+# kilo sugar again"), not a request to hear the last reply. Quantity = a digit, or a number word right before a unit.
+_NUMBER_WORDS = ("one two three four five six seven eight nine ten half quarter dozen "
+                 "ek do teen char chaar paanch panch chhe saat aath nau das aadha adha dedh dhai sawa "
+                 "oka rendu moodu nalugu aidu ara "
+                 "एक दो तीन चार पांच पाँच छह सात आठ नौ दस आधा डेढ़ ఒక రెండు మూడు నాలుగు ఐదు అర").split()
+_UNIT_WORDS_RE = ("kg kgs kilo kilos kilogram kilograms gram grams litre litres liter liters packet packets paket pack "
+                  "packs piece pieces bottle bottles bag bags bar bars loaf dozen "
+                  "किलो ग्राम लीटर पैकेट पैक बोतल बैग बार కిలో లీటర్ ప్యాకెట్ బాటిల్ గ్రాములు").split()
+_QUANTITY_PATTERN = re.compile(
+    r"\d|(?<!\w)(?:" + "|".join(map(re.escape, _NUMBER_WORDS)) + r")\s+(?:" + "|".join(map(re.escape, _UNIT_WORDS_RE)) + r")(?!\w)")
+
+
+def _carries_order_words(transcript: str) -> bool:
+    """True if the caller's words name one of the shop's products or give a quantity."""
+    lower = transcript.lower()
+    if _QUANTITY_PATTERN.search(lower):
+        return True
+    try:
+        return _get_conv_mgr().names_product(lower)
+    except Exception:
+        return False
+
+
+# "repeat / read my order", and the same in Hindi and Telugu: an order word together with a repeat or read word.
+_ORDER_WORD_PATTERN = re.compile(r"\b(?:orders?|cart|list|samaan|saman|saaman)\b|ऑर्डर|आर्डर|सामान|ఆర్డర్")
+_READ_WORD_PATTERN = re.compile(
+    r"\b(?:read|recite|recap|padho|padhiye|sunao|dikhao)\b|पढ़ो|पढ़िए|सुनाओ|दोबारा|दुबारा|फिर से|మళ్ళీ|మళ్లీ|చదవండి")
+
+
+def _is_order_readback_request(transcript: str) -> bool:
+    """True if the caller asks to hear their order again ("repeat my order", "mera order dobara bolo")."""
+    lower = transcript.lower()
+    return bool(_ORDER_WORD_PATTERN.search(lower)) and bool(
+        _REPEAT_KEYWORD_PATTERN.search(lower) or _READ_WORD_PATTERN.search(lower))
+
+
 def _is_stop_request(transcript: str) -> bool:
     """True if the caller wants the bot to pause/stop, not answer a new question."""
     words = re.findall(r"\w+", transcript.lower())
@@ -1689,8 +1761,11 @@ def _filter_transcript(transcript: str, language_code: str, duration: float) -> 
 # (knowledge lookup -> Gemini -> validator)
 # ─────────────────────────────────────────────────────
 
-def _ask(transcript: str, language_code: str) -> tuple[str, str]:
-    """Returns (reply_text, language_code) for the TTS step to use."""
+def _ask(transcript: str, language_code: str, gen: int | None = None, remember: bool = True) -> tuple[str, str]:
+    """
+    Returns (reply_text, language_code) for the TTS step to use. The exchange is added to the history
+    unless remember is False (a synthetic instruction of ours) or the call it belongs to (gen) is over.
+    """
     tz  = pytz.timezone(USER_TIMEZONE)
     now = datetime.now(tz).strftime("%A, %d %B %Y, %I:%M %p IST")
     context = (
@@ -1703,10 +1778,11 @@ def _ask(transcript: str, language_code: str) -> tuple[str, str]:
 
     reply, reply_language = _get_conv_mgr().handle_turn(transcript, recent, context, language_code)
 
-    if reply:
+    if reply and remember:
         with _hist_lock:
-            _history.append({"role": "user",      "content": transcript})
-            _history.append({"role": "assistant",  "content": reply})
+            if gen is None or gen == _call_gen:
+                _history.append({"role": "user",      "content": transcript})
+                _history.append({"role": "assistant",  "content": reply})
 
     return reply, reply_language
 
@@ -1923,9 +1999,10 @@ def _concat_wav_chunks(chunks: list[bytes]) -> bytes | None:
     return out.getvalue()
 
 
-def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True):
+def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True) -> bool:
     """
-    Plays one WAV clip through the transport.
+    Plays one WAV clip through the transport. Returns True only if it was handed over and played to the end
+    (not when there is no output, or the clip timed out and was killed).
 
     set_playing/echo_tail exist because a streamed reply arrives as one
     clip PER SENTENCE: the caller must hear those as a single continuous
@@ -1937,21 +2014,61 @@ def _play(wav_bytes: bytes, set_playing: bool = True, echo_tail: bool = True):
         node = _playback_key
     if not node:
         log.warning("[PLAY] No output node.")
-        return
+        return False
     if set_playing:
         _playing.set()
     try:
         _transport.play(node, wav_bytes, PLAY_TIMEOUT_SEC)
         if echo_tail:
             time.sleep(ECHO_TAIL_SEC)
+        return True
     except _transport_mod.PlaybackTimeout:
         # Without a timeout, a stalled link would block this call
         # forever, a silent, permanent loss of all further replies for
         # the rest of the call.
         log.error(f"[PLAY] playback timed out after {PLAY_TIMEOUT_SEC}s — killed.")
+        return False
     finally:
         if set_playing:
             _playing.clear()
+
+
+def _set_last_reply_locked(wav: bytes | None, language: str | None) -> None:
+    """Store the audio for "repeat please". The caller holds _hist_lock and has checked the call generation."""
+    global _last_reply_wav, _last_reply_lang
+    _last_reply_wav = wav
+    _last_reply_lang = language
+
+
+def _remember_reply(gen: int, wav: bytes | None, language: str | None) -> bool:
+    """Keep the audio of the reply just given for "repeat please", unless its call is already over (B-64)."""
+    with _hist_lock:
+        if gen != _call_gen:
+            return False
+        _set_last_reply_locked(wav, language)
+    return True
+
+
+def _speak_apology(text: str, language: str, gen: int) -> bool:
+    """Best effort: say `text` once. Returns whether any audio was produced; a failure is only logged."""
+    try:
+        chunks, _ = _tts_and_enqueue(text, language, gen, _next_reply_id())
+    except Exception as e:
+        log.error(f"[TTS] The apology could not be spoken either: {e}")
+        return False
+    if not chunks:
+        log.error("[TTS] The apology could not be spoken either; the caller heard nothing for this turn.")
+    return bool(chunks)
+
+
+def _speak_from_code(text: str, language: str, gen: int, pcm: bytes, transcript: str, language_code: str) -> None:
+    """Say a sentence written by the code (an order read-back) and keep it for "repeat". Not added to the history."""
+    chunks, _ = _tts_and_enqueue(text, language, gen, _next_reply_id())
+    if chunks:
+        wav = _concat_wav_chunks(chunks)
+        if wav:
+            _remember_reply(gen, wav, language)
+    _record_turn(gen, pcm, transcript, language_code, text if chunks else None)
 
 
 def _stop_playback(reason: str) -> None:
@@ -2001,6 +2118,10 @@ def _play_greeting():
         if not chunks:
             log.warning("[GREETING] No audio — releasing recorder guard.")
             _greeting_guard.clear()
+        else:
+            wav = _concat_wav_chunks(chunks)        # "repeat please" right after the greeting says it again
+            if wav:
+                _remember_reply(gen, wav, "en-in")
     threading.Thread(target=_go, daemon=True).start()
 
 
@@ -2588,7 +2709,7 @@ def recorder_thread():
 # ─────────────────────────────────────────────────────
 
 def processor_thread():
-    global _last_reply_wav, _last_reply_lang, _no_speech_apologized, _locked_language_code
+    global _no_speech_apologized, _locked_language_code
     log.info("Processor started.")
 
     while not _shutdown.is_set():
@@ -2697,13 +2818,15 @@ def processor_thread():
                     # call ends — bounded by construction, no retries,
                     # and no new message to translate.
                     with _hist_lock:
-                        _no_speech_apologized = True
+                        if gen == _call_gen:
+                            _no_speech_apologized = True
                     log.info("[STT] Nothing recognised — informing the caller once")
                     _tts_and_enqueue(STT_ERROR_MESSAGE, "en-IN", gen, _next_reply_id())
                 continue
 
             with _hist_lock:
-                _no_speech_apologized = False
+                if gen == _call_gen:
+                    _no_speech_apologized = False
             if gen == _call_gen:
                 _transport.send_event({"type": "user", "text": transcript, "lang": language_code})
 
@@ -2726,7 +2849,8 @@ def processor_thread():
                 canonical = _canonical_sticky_lang(native_guess)
                 if canonical and canonical != _locked_language_code:
                     with _hist_lock:
-                        _locked_language_code = canonical
+                        if gen == _call_gen:
+                            _locked_language_code = canonical
                     log.info(
                         f"[LANG-LOCK] Re-locking to {canonical} — "
                         f"genuine native-script content detected, "
@@ -2751,7 +2875,8 @@ def processor_thread():
                     canonical = _canonical_sticky_lang(language_code)
                     if canonical:
                         with _hist_lock:
-                            _locked_language_code = canonical
+                            if gen == _call_gen:
+                                _locked_language_code = canonical
                         log.info(
                             f"[LANG-LOCK] Sticking to {canonical} for the "
                             f"rest of this call (first detected language, "
@@ -2771,13 +2896,25 @@ def processor_thread():
                 if chunks:
                     wav = _concat_wav_chunks(chunks)
                     if wav:
-                        with _hist_lock:
-                            _last_reply_wav = wav
-                            _last_reply_lang = lang_key
+                        _remember_reply(gen, wav, lang_key)
                 _record_turn(gen, pcm, transcript, language_code, response_text)
                 continue
 
-            if _is_repeat_request(transcript):
+            # B-69: while an order is being taken, a sentence naming a product or giving a quantity is an order
+            # turn even if it holds a repeat word ("add one kilo sugar again").
+            order = _order
+            order_turn_words = order is not None and _carries_order_words(transcript)
+            order_has_lines = order is not None and not order.is_empty
+
+            if order_has_lines and not order_turn_words and _is_order_readback_request(transcript):
+                # "repeat my order": the code reads the order back (its lines and total), not the model and not
+                # the last sentence ("Anything else?").
+                read_lang = _extract_requested_language(transcript) or language_code
+                log.info(f"[REPEAT] '{transcript}' — reading the order back")
+                _speak_from_code(order.readback(read_lang), read_lang, gen, pcm, transcript, language_code)
+                continue
+
+            if _is_repeat_request(transcript) and not order_turn_words:
                 # 2026-07-31: requested_lang below still controls what
                 # language THIS ONE repeated reply is spoken in (a
                 # caller asking "repeat that in Hindi" should hear
@@ -2797,7 +2934,12 @@ def processor_thread():
                         None,
                     )
 
-                if requested_lang and requested_lang != (last_lang or "").lower() and last_reply_text:
+                if requested_lang and requested_lang != (last_lang or "").lower() and order_has_lines:
+                    # While an order has lines, what was last said holds the order's amounts. The model must
+                    # not re-speak money, so the code reads the order back in the language asked for.
+                    log.info(f"[REPEAT] '{transcript}' — reading the order back in {requested_lang}")
+                    _speak_from_code(order.readback(requested_lang), requested_lang, gen, pcm, transcript, language_code)
+                elif requested_lang and requested_lang != (last_lang or "").lower() and last_reply_text:
                     # Caller wants the same content in a DIFFERENT
                     # language than it was last spoken in — replaying
                     # the cached audio would just repeat the same
@@ -2810,7 +2952,8 @@ def processor_thread():
                         f"Please say your previous answer again, in {lang_name} this time: "
                         f"\"{last_reply_text}\""
                     )
-                    reply, reply_language = _ask(translate_request, requested_lang)
+                    # remember=False: our instruction is not something the caller said, so it stays out of the history
+                    reply, reply_language = _ask(translate_request, requested_lang, gen, remember=False)
                     if reply:
                         # 2026-08-17: was a blocking _synthesize() — wait for
                         # the ENTIRE translated reply to finish, THEN
@@ -2823,9 +2966,7 @@ def processor_thread():
                         if new_chunks:
                             new_wav = _concat_wav_chunks(new_chunks)
                             if new_wav:
-                                with _hist_lock:
-                                    _last_reply_wav = new_wav
-                                    _last_reply_lang = reply_language
+                                _remember_reply(gen, new_wav, reply_language)
                         _record_turn(gen, pcm, transcript, language_code, reply)
                 elif wav:
                     log.info(f"[REPEAT] '{transcript}' — replaying last reply")
@@ -2847,7 +2988,16 @@ def processor_thread():
             log.info(f"Caller ({language_code}): '{transcript}'")
 
             is_first_turn = not bool(_history)
-            fallback_message = _get_conv_mgr()._fallback_for(language_code)
+            try:
+                fallback_message = _get_conv_mgr()._fallback_for(language_code)
+            except Exception:
+                # The shop cannot be loaded (broken config.yaml; the cause was logged once when the call began):
+                # the caller still gets an answer, a plain built-in sentence, instead of silence (B-67).
+                log.info(f"[SHOP] {_active_shop!r} is unusable, answering '{transcript}' with the built-in fallback")
+                fallback_message = _builtin_fallback(language_code)
+                if _speak_apology(fallback_message, language_code or "en-IN", gen):
+                    _record_turn(gen, pcm, transcript, language_code, fallback_message)
+                continue
 
             full_reply_parts = []
             wav_chunks = []
@@ -2861,6 +3011,7 @@ def processor_thread():
             llm_ttfs_ms = None    # time to first sentence out of Gemini
             tts_first_ms = None   # time to synthesize that first sentence
             first_audio_ms = None # time from turn start to first reply_q.put
+            sentences_tried = 0   # sentences handed to the speech synthesiser, whether or not audio came back
 
             try:
                 for sentence, sent_lang in _ask_streaming(transcript, language_code):
@@ -2927,10 +3078,11 @@ def processor_thread():
                         # else had been said. Appending instead of replacing
                         # keeps the bot's own memory in sync with what the
                         # caller actually heard.
-                        full_reply_parts.append(fallback_message)
                         new_chunks, this_tts_ms = _tts_and_enqueue(fallback_message, reply_language, gen, reply_id)
+                        sentences_tried += 1
                         _spoken.planned(reply_id, fallback_message, len(new_chunks))
                         if new_chunks:
+                            full_reply_parts.append(fallback_message)       # said, so remembered (B-65)
                             if tts_first_ms is None:
                                 tts_first_ms = this_tts_ms
                             wav_chunks.extend(new_chunks)
@@ -2938,12 +3090,15 @@ def processor_thread():
                                 first_audio_ms = (time.time() - t_turn_start) * 1000
                         break
 
-                    full_reply_parts.append(validated)
                     log.info(f"[STREAM] Sentence: '{validated}' ({sent_lang})")
 
                     new_chunks, this_tts_ms = _tts_and_enqueue(validated, sent_lang, gen, reply_id)
+                    sentences_tried += 1
                     _spoken.planned(reply_id, validated, len(new_chunks))
                     if new_chunks:
+                        # Only a sentence that has audio counts as said. One whose synthesis failed must not be
+                        # in the history or in what "repeat" replays (B-65).
+                        full_reply_parts.append(validated)
                         if tts_first_ms is None:
                             tts_first_ms = this_tts_ms
                         wav_chunks.extend(new_chunks)
@@ -2984,25 +3139,38 @@ def processor_thread():
 
             full_reply = " ".join(full_reply_parts).strip()
             if not full_reply:
-                log.warning(f"[LLM] Empty reply for '{transcript}' — turn dropped")
+                if sentences_tried and reply_id != _abandoned_reply_id and gen == _call_gen:
+                    # The model answered but no sentence became audio: the caller heard nothing. Keep the turn out
+                    # of the history ("repeat" must not replay the turn before) and tell the caller, if we can (B-65).
+                    log.error(f"[TTS] No audio for any of {sentences_tried} sentence(s) for '{transcript}' — "
+                              f"turn kept out of the history, apologising")
+                    _speak_apology(fallback_message, language_code or "en-IN", gen)
+                else:
+                    log.warning(f"[LLM] Empty reply for '{transcript}' — turn dropped")
                 continue
 
             with _hist_lock:
-                user_entry = {"role": "user", "content": transcript}
-                assistant_entry = {"role": "assistant", "content": full_reply}
-                _history.append(user_entry)
-                _history.append(assistant_entry)
-                _spoken.register_entry(reply_id, user_entry, assistant_entry)
-                if reply_id == _abandoned_reply_id:
-                    # the caller cut in before this entry existed; playback could not trim it
-                    _spoken.trim_after_interrupt(reply_id, _history)
-                if wav_chunks:
-                    # Cache the FULL reply's audio (merged across
-                    # sentence chunks), not just the last chunk — so a
-                    # later "repeat that" replays everything the
-                    # caller heard, not only its final sentence.
-                    _last_reply_wav = _concat_wav_chunks(wav_chunks)
-                    _last_reply_lang = reply_language
+                stale_call = gen != _call_gen
+                if not stale_call:
+                    user_entry = {"role": "user", "content": transcript}
+                    assistant_entry = {"role": "assistant", "content": full_reply}
+                    _history.append(user_entry)
+                    _history.append(assistant_entry)
+                    _spoken.register_entry(reply_id, user_entry, assistant_entry)
+                    if reply_id == _abandoned_reply_id:
+                        # the caller cut in before this entry existed; playback could not trim it
+                        _spoken.trim_after_interrupt(reply_id, _history)
+                    if wav_chunks:
+                        # Cache the FULL reply's audio (merged across
+                        # sentence chunks), not just the last chunk — so a
+                        # later "repeat that" replays everything the
+                        # caller heard, not only its final sentence.
+                        _set_last_reply_locked(_concat_wav_chunks(wav_chunks), reply_language)
+            if stale_call:
+                # The call ended while the model was thinking (B-64): nothing of this turn may reach the next call.
+                log.info(f"[ISOLATION] Turn finished after its call ended (gen {gen}, current {_call_gen}); "
+                         f"not added to the history.")
+                continue
 
             _record_turn(gen, pcm, transcript, language_code, full_reply)
 
@@ -3088,7 +3256,7 @@ def playback_thread():
         try:
             t0 = time.time()
             while True:
-                _play(wav, set_playing=False, echo_tail=False)
+                clip_played = _play(wav, set_playing=False, echo_tail=False)
                 chunks += 1
 
                 if _mid_play_interrupt.is_set():
@@ -3112,7 +3280,8 @@ def playback_thread():
                     )
                     break
 
-                _spoken.clip_finished(reply_id)    # played to the end: an interrupted clip never gets here
+                if clip_played:                    # played to the end: an interrupted or timed-out clip was not heard
+                    _spoken.clip_finished(reply_id)
 
                 if gen != _call_gen:
                     # 2026-07-31: the call this reply belonged to ended
