@@ -1,0 +1,716 @@
+{
+  "source_run": "run_clean_4.json",
+  "script": "orders.json",
+  "noise_snr_db": null,
+  "elapsed_sec": 1540,
+  "model": "openai/gpt-oss-120b",
+  "speech": "synthetic (Timbre)",
+  "overall": {
+    "calls": 20,
+    "exact_orders": 9,
+    "exact_rate": 0.45,
+    "exact_ci95": [
+      0.258,
+      0.658
+    ],
+    "item_recall": 0.75,
+    "item_precision": 0.95,
+    "payment_right": 17,
+    "orders_saved": 20
+  },
+  "by_language": {
+    "en-IN": {
+      "calls": 4,
+      "exact_orders": 3,
+      "exact_rate": 0.75,
+      "exact_ci95": [
+        0.301,
+        0.954
+      ],
+      "item_recall": 0.875,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 4
+    },
+    "hi-IN": {
+      "calls": 3,
+      "exact_orders": 0,
+      "exact_rate": 0.0,
+      "exact_ci95": [
+        0.0,
+        0.562
+      ],
+      "item_recall": 0.667,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "hi-en": {
+      "calls": 8,
+      "exact_orders": 5,
+      "exact_rate": 0.625,
+      "exact_ci95": [
+        0.306,
+        0.863
+      ],
+      "item_recall": 0.75,
+      "item_precision": 0.875,
+      "payment_right": 7,
+      "orders_saved": 8
+    },
+    "te-IN": {
+      "calls": 5,
+      "exact_orders": 1,
+      "exact_rate": 0.2,
+      "exact_ci95": [
+        0.036,
+        0.624
+      ],
+      "item_recall": 0.7,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 5
+    }
+  },
+  "by_tag": {
+    "brands": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 1
+    },
+    "change": {
+      "calls": 4,
+      "exact_orders": 1,
+      "exact_rate": 0.25,
+      "exact_ci95": [
+        0.046,
+        0.699
+      ],
+      "item_recall": 0.875,
+      "item_precision": 1.0,
+      "payment_right": 3,
+      "orders_saved": 4
+    },
+    "credit": {
+      "calls": 3,
+      "exact_orders": 2,
+      "exact_rate": 0.667,
+      "exact_ci95": [
+        0.208,
+        0.939
+      ],
+      "item_recall": 0.833,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "english": {
+      "calls": 4,
+      "exact_orders": 3,
+      "exact_rate": 0.75,
+      "exact_ci95": [
+        0.301,
+        0.954
+      ],
+      "item_recall": 0.875,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 4
+    },
+    "fractions": {
+      "calls": 5,
+      "exact_orders": 0,
+      "exact_rate": 0.0,
+      "exact_ci95": [
+        0.0,
+        0.434
+      ],
+      "item_recall": 0.5,
+      "item_precision": 0.8,
+      "payment_right": 4,
+      "orders_saved": 5
+    },
+    "hindi": {
+      "calls": 3,
+      "exact_orders": 0,
+      "exact_rate": 0.0,
+      "exact_ci95": [
+        0.0,
+        0.562
+      ],
+      "item_recall": 0.667,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "hinglish": {
+      "calls": 8,
+      "exact_orders": 5,
+      "exact_rate": 0.625,
+      "exact_ci95": [
+        0.306,
+        0.863
+      ],
+      "item_recall": 0.75,
+      "item_precision": 0.875,
+      "payment_right": 7,
+      "orders_saved": 8
+    },
+    "not_sold": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 2
+    },
+    "out_of_stock": {
+      "calls": 3,
+      "exact_orders": 3,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.438,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "removal": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 2
+    },
+    "telugu": {
+      "calls": 5,
+      "exact_orders": 1,
+      "exact_rate": 0.2,
+      "exact_ci95": [
+        0.036,
+        0.624
+      ],
+      "item_recall": 0.7,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 5
+    }
+  },
+  "total_matches_stock_list": "20/20",
+  "turns": 65,
+  "turns_without_response": 3,
+  "time_to_first_audio_ms": {
+    "n": 62,
+    "median": 2352,
+    "p90": 2860,
+    "min": 656,
+    "max": 4953
+  },
+  "wer_raw": 0.41,
+  "wer_number_normalised": 0.287,
+  "rate_limited_requests": 0,
+  "valid_run": true,
+  "reference_words": 293,
+  "calls_detail": [
+    {
+      "id": "h01",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "SUGAR-1KG"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": "Ramesh",
+      "customer_got": "Ramesh",
+      "order_total": 165,
+      "status": "confirmed"
+    },
+    {
+      "id": "h02",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "brands"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 92,
+      "status": "confirmed"
+    },
+    {
+      "id": "h03",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "ONION-1KG"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 35,
+      "status": "confirmed"
+    },
+    {
+      "id": "h04",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "change"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 265,
+      "status": "confirmed"
+    },
+    {
+      "id": "h05",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "removal",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "total_matches_stock_list": true,
+      "customer_expected": "Anita",
+      "customer_got": "अनीता",
+      "order_total": 330,
+      "status": "credit_pending"
+    },
+    {
+      "id": "h06",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "out_of_stock"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 45,
+      "status": "incomplete"
+    },
+    {
+      "id": "h07",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "not_sold"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 28,
+      "status": "confirmed"
+    },
+    {
+      "id": "h08",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.0,
+      "precision": 0.0,
+      "extra_items": [
+        "OIL-1L"
+      ],
+      "missing_items": [
+        "SUGAR-1KG"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 1320,
+      "status": "confirmed"
+    },
+    {
+      "id": "d01",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "ATTA-5KG"
+      ],
+      "wrong_quantities": {
+        "OIL-1L": [
+          1.0,
+          8.0
+        ]
+      },
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 1320,
+      "status": "confirmed"
+    },
+    {
+      "id": "d02",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "TEA-250"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 44,
+      "status": "confirmed"
+    },
+    {
+      "id": "d03",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi",
+        "change",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {
+        "TOMATO-1KG": [
+          1.0,
+          0.5
+        ]
+      },
+      "payment_right": false,
+      "payment_got": "",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 125,
+      "status": "incomplete"
+    },
+    {
+      "id": "t01",
+      "lang": "te-IN",
+      "tags": [
+        "telugu"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "OIL-1L"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 120,
+      "status": "confirmed"
+    },
+    {
+      "id": "t02",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "POTATO-1KG"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 20,
+      "status": "confirmed"
+    },
+    {
+      "id": "t03",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "change"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {
+        "SUGAR-1KG": [
+          2.0,
+          3.0
+        ]
+      },
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 252,
+      "status": "confirmed"
+    },
+    {
+      "id": "t04",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "SOAP-100"
+      ],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "total_matches_stock_list": true,
+      "customer_expected": "లక్ష్మి",
+      "customer_got": "లక్ష్మి",
+      "order_total": 145,
+      "status": "incomplete"
+    },
+    {
+      "id": "t05",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "out_of_stock"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 35,
+      "status": "confirmed"
+    },
+    {
+      "id": "e01",
+      "lang": "en-IN",
+      "tags": [
+        "english"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 285,
+      "status": "confirmed"
+    },
+    {
+      "id": "e02",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "not_sold"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 34,
+      "status": "confirmed"
+    },
+    {
+      "id": "e03",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "change",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 0.5,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [
+        "ONION-1KG"
+      ],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 45,
+      "status": "confirmed"
+    },
+    {
+      "id": "e04",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "removal",
+        "out_of_stock",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "total_matches_stock_list": true,
+      "customer_expected": "Ramesh",
+      "customer_got": "Ramesh",
+      "order_total": 330,
+      "status": "credit_pending"
+    }
+  ],
+  "not_computed": [
+    "T-WER",
+    "cut-off rate"
+  ]
+}
