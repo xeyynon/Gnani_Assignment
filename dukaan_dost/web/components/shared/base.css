@@ -7,4 +7,5 @@
   button{font:inherit;cursor:pointer}
   a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+.sw{outline:3px solid var(--amber);outline-offset:2px}
   h2[tabindex="-1"]:focus{outline:none}
-  @media (pointer:coarse){button,.nav,.link,.toplink,.themebtn,summary,.sw-row{min-height:44px}.nav,.link,.toplink,.themebtn,.round{min-width:44px}}
+  .sw-row{min-height:28px}
+  @media (pointer:coarse){button,.nav,.link,.toplink,.themebtn,summary,.sw-row{min-height:44px}.nav,.link,.toplink,.themebtn,.round,.menu-btn,.notice .x{min-width:44px;min-height:44px}}
