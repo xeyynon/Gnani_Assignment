@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<script>window.DD_DEFAULT_THEME='{{THEME}}';</script>
+{{include:shared/theme-init.html}}
+<title>Sign in: {{TITLE}}</title>
+<style>
+  /* The sign-in page, for a shop's dashboard and for the admin page (login.py serves it, DEC-050).
+     Same palette and parts as the other pages; this file only says which components it is made of. */
+{{include:shared/tokens.css}}
+{{include:shared/base.css}}
+{{include:shared/atoms.css}}
+{{include:shared/theme-button.css}}
+{{include:shared/forms.css}}
+{{include:shared/login.css}}
+{{include:shared/brutal.css}}
+</style>
+</head>
+<body>
+{{include:shared/icons.html}}
+{{include:shared/login-card.html}}
+
+<script>
+'use strict';
+
+/* ---- helpers (pure; tested in Node) ---- */
+{{include:shared/keys.js}}
+{{include:shared/theme-helpers.js}}
+{{include:shared/login-helpers.js}}
+/* ---- end helpers ---- */
+
+{{include:shared/dom.js}}
+{{include:shared/theme.js}}
+{{include:shared/login.js}}
+</script>
+</body>
+</html>
