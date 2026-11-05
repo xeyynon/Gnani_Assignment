@@ -23,7 +23,10 @@ Plan file (JSON):
                 "turns": [{"audio": "C:/.../s01_t1.wav", "text": "what was said",
                            "barge_in_after_sec": null}]}]}
 A turn with barge_in_after_sec speaks that many seconds after the agent's reply began, over the agent,
-instead of waiting for it to finish.
+instead of waiting for it to finish. It does not wait out min_turn_sec first: that gap would let the reply end.
+
+Each turn record carries first_audio_after_ms (from the LAST SAMPLE OF THE CLIP to the first sample of the reply) and
+trailing_silence_ms (the quiet at the end of the clip), so the time from the caller's last WORD is the sum of the two.
 """
 
 import json
@@ -51,6 +54,18 @@ def _wav_pcm(path: str) -> bytes:
         if (w.getframerate(), w.getnchannels(), w.getsampwidth()) != (16000, 1, 2):
             raise ValueError(f"{path}: need 16 kHz mono 16-bit audio")
         return w.readframes(w.getnframes())
+
+
+def trailing_silence_ms(pcm: bytes, frame_ms: int = 20, rms_below: float = 300.0) -> int:
+    """How long the clip is quiet at its end, in ms: whole 20 ms frames counted back from the last sample whose RMS is under
+    300. A synthetic voice clip ends with a pause; the caller's last word was spoken before it. The scorer (evaluation/score_calls.py) uses the same function for old results."""
+    a = np.frombuffer(pcm[:len(pcm) // 2 * 2], dtype=np.int16).astype(np.float64)
+    n = int(16000 * frame_ms / 1000)
+    quiet, end = 0, len(a)
+    while end >= n and np.sqrt(np.mean(a[end - n:end] ** 2)) < rms_below:
+        quiet += 1
+        end -= n
+    return quiet * frame_ms
 
 
 def _wav_seconds(wav_bytes: bytes) -> float:
@@ -109,6 +124,7 @@ class ReplayTransport(Transport):
         self._none_polls = 0
         self._t0 = time.monotonic()
         self._done = False
+        self._error = None                         # set if the scripted caller crashed
         self._thread = None
         self._closed = False
 
@@ -245,11 +261,13 @@ class ReplayTransport(Transport):
                     break
                 self._one_call(call)
                 self._write_results()
-        except Exception:
+        except Exception as e:
+            self._error = f"{type(e).__name__}: {e}"
             log.exception("[REPLAY] the scripted caller failed")
         finally:
             self._done = True
-            self._write_results()
+            if not self._write_results():                 # a failed write must not leave a file that says done
+                log.error("[REPLAY] the final results could not be written")
             log.info("[REPLAY] all scripted calls finished")
 
     def _one_call(self, call):
@@ -275,19 +293,23 @@ class ReplayTransport(Transport):
         for i, turn in enumerate(call.get("turns", [])):
             if self._closed:
                 break
-            if last_turn_start is not None:
+            barge = turn.get("barge_in_after_sec")
+            interrupting = barge is not None and bool(self._plays)
+            if last_turn_start is not None and not interrupting:      # an interrupting turn must start while the reply plays
                 gap = self.min_turn_sec - (self._now() - last_turn_start)
                 if gap > 0:
                     time.sleep(gap)                       # stay under the language model's rate limit
-            barge = turn.get("barge_in_after_sec")
-            if barge is not None and self._plays:
+            if interrupting:
                 self._wait_for(lambda: self._playing, 5)
-                time.sleep(float(barge))
+                started = self._plays[-1]["t"]            # the barge delay counts from when the reply began, not from now
+                wait = started + float(barge) - self._now()
+                if wait > 0:
+                    time.sleep(wait)
             else:
                 self._wait_for(self._agent_quiet, 30)
             pcm = _wav_pcm(turn["audio"])
             t_rec = {"i": i, "audio": turn["audio"], "text": turn.get("text"), "t_start": self._now(),
-                     "speech_seconds": round(len(pcm) / FRAME_BYTES_PER_SEC, 2)}
+                     "speech_seconds": round(len(pcm) / FRAME_BYTES_PER_SEC, 2), "trailing_silence_ms": trailing_silence_ms(pcm)}
             rec["turns"].append(t_rec)
             last_turn_start = self._now()
             with self._cond:
@@ -335,12 +357,23 @@ class ReplayTransport(Transport):
         rec["last_order_event"] = orders[-1] if orders else None
         rec["interrupted_clips"] = sum(1 for p in plays if p.get("stopped"))
 
-    def _write_results(self):
+    def _write_results(self) -> bool:
+        """Writes the results file through a temp file. On Windows the replace fails while another process has the file open,
+        so it is retried; a write that still fails is logged and returns False (the file then keeps its last good content,
+        which never says done), and the remaining calls go on."""
         if self.results_path is None:
-            return
-        data = {"done": self._done, "written_iso": datetime.now().astimezone().isoformat(timespec="seconds"),
-                "calls": self._calls_out}
-        self.results_path.parent.mkdir(parents=True, exist_ok=True)
+            return True
+        data = {"done": self._done, "aborted": self._error is not None, "error": self._error,
+                "written_iso": datetime.now().astimezone().isoformat(timespec="seconds"), "calls": self._calls_out}
         tmp = self.results_path.with_name(self.results_path.name + ".tmp")
-        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        os.replace(tmp, self.results_path)
+        for attempt in range(6):
+            try:
+                self.results_path.parent.mkdir(parents=True, exist_ok=True)
+                tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                os.replace(tmp, self.results_path)
+                return True
+            except OSError as e:
+                log.warning(f"[REPLAY] writing the results failed (try {attempt + 1}/6): {e}")
+                if attempt < 5:
+                    time.sleep(0.02 + 0.016 * attempt)    # 20 ms rising to 100 ms
+        return False

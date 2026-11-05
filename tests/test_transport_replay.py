@@ -286,3 +286,86 @@ def test_every_hook_the_main_program_calls_on_a_transport_exists_on_the_replay_t
     missing = sorted(name for name in called if not hasattr(t, name))
     assert missing == [], missing
     t.add_ws_handler("/x", lambda ws: None)              # accepted and ignored
+
+
+# ---- measurement fixes (B-56, B-57, B-63) ---------------------------------------------------------
+
+def write_wav_with_tail(path, speech_sec, tail_sec, amp=8000):
+    t = np.arange(int(16000 * speech_sec)) / 16000
+    pcm = np.concatenate([(amp * np.sin(2 * np.pi * 300 * t)).astype(np.int16), np.zeros(int(16000 * tail_sec), dtype=np.int16)])
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(pcm.tobytes())
+    return path
+
+
+def test_trailing_silence_is_counted_in_whole_20_ms_frames_from_the_end():
+    loud = (8000 * np.sin(np.arange(8000) / 7)).astype(np.int16)
+    clip = np.concatenate([loud, np.zeros(4800, dtype=np.int16)]).tobytes()          # 0.3 s of quiet at the end
+    assert transport_replay.trailing_silence_ms(clip) == 300
+    assert transport_replay.trailing_silence_ms(loud.tobytes()) == 0
+    assert transport_replay.trailing_silence_ms(b"") == 0
+    quiet_noise = np.concatenate([loud, (100 * np.sin(np.arange(3200))).astype(np.int16)]).tobytes()   # hiss under RMS 300 counts as quiet
+    assert transport_replay.trailing_silence_ms(quiet_noise) == 200
+
+
+def test_each_turn_records_the_silence_at_the_end_of_its_clip(tmp_path):
+    c = {"id": "c1", "shop": "s", "turns": [{"audio": str(write_wav_with_tail(tmp_path / "a.wav", 0.5, 0.3)), "text": "x"}]}
+    t = ReplayTransport(make_plan(tmp_path, [c]))
+    run_to_end(t, FakeAgent(t))
+    turn = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))["calls"][0]["turns"][0]
+    assert 280 <= turn["trailing_silence_ms"] <= 300 and turn["speech_seconds"] == 0.8
+
+
+def test_a_barge_in_still_lands_on_the_reply_when_min_turn_sec_is_longer_than_the_reply(tmp_path):
+    """Regression (B-56): the min-turn gap used to run first, the reply ended, and the turn was injected into silence."""
+    first = call(tmp_path, "c1", 2, seconds=0.5)
+    first["turns"][1]["barge_in_after_sec"] = 0.3
+    t = ReplayTransport(make_plan(tmp_path, [first], min_turn_sec=6))
+    run_to_end(t, FakeAgent(t, reply_sec=2.0, interruptible=True), limit=60)
+    c = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))["calls"][0]
+    assert c["interrupted_clips"] >= 1
+    assert c["turns"][1]["t_start"] - c["turns"][0]["t_start"] < 6        # it did not wait out the 6 s gap
+
+
+def test_a_results_write_that_fails_at_first_is_retried(tmp_path, monkeypatch):
+    """Regression (B-63): on Windows os.replace fails while the runner is reading the file."""
+    t = ReplayTransport(make_plan(tmp_path, []))
+    real, fails = transport_replay.os.replace, {"n": 0}
+
+    def flaky(a, b):
+        fails["n"] += 1
+        if fails["n"] <= 3:
+            raise PermissionError("in use")
+        return real(a, b)
+
+    monkeypatch.setattr(transport_replay.os, "replace", flaky)
+    assert t._write_results() is True and fails["n"] == 4
+    assert json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))["done"] is False
+
+
+def test_a_results_write_that_keeps_failing_never_marks_the_run_done(tmp_path, monkeypatch):
+    t = ReplayTransport(make_plan(tmp_path, [call(tmp_path, "c1", 1)]))
+    t._write_results()                                                  # a good file with done false exists
+    t._done = True
+    monkeypatch.setattr(transport_replay.os, "replace", lambda a, b: (_ for _ in ()).throw(PermissionError("in use")))
+    assert t._write_results() is False                                  # no exception either
+    assert json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))["done"] is False
+
+
+def test_one_failed_write_between_calls_does_not_abort_the_remaining_calls(tmp_path, monkeypatch):
+    t = ReplayTransport(make_plan(tmp_path, [call(tmp_path, "a", 1), call(tmp_path, "b", 1)]))
+    real, state = transport_replay.os.replace, {"n": 0}
+
+    def flaky(a, b):
+        state["n"] += 1
+        if state["n"] <= 6:                       # the first write (after call a) fails all 6 tries
+            raise PermissionError("in use")
+        return real(a, b)
+
+    monkeypatch.setattr(transport_replay.os, "replace", flaky)
+    run_to_end(t, FakeAgent(t))
+    data = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
+    assert data["done"] is True and [c["id"] for c in data["calls"]] == ["a", "b"]
