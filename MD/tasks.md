@@ -33,12 +33,15 @@ When you tick something, add the date and the build or InBul that carried it.
 ### Step 2b: Udyami loan guidance (DEC-027; build right after the Gnani integration)
 - [x] `loan_calculator.py`: project cost, loan, scheme selection, instalment (pure functions) **with unit tests** for the scheme boundaries (₹1.40 lakh, ₹50 lakh) and the PS's worked example (2026-10-28, InBul07; 38 tests)
 - [x] Decide and document the instalment formula (reducing balance, moratorium handling) (2026-10-28, DEC-028)
-- [ ] Slot filling: margin money, business, place, each confirmed back
-- [ ] Call-type detection in the first turn (order vs loan guidance), and switching
-- [ ] Prompt rules: speak only what the calculator returns; amounts in words; "indicative"
-- [ ] Loan summary files in `orders/`
-- [ ] 8–10 of the eval scripts cover loan guidance (clean and noisy), with exact expected numbers
-- [ ] Check the scheme figures against the official scheme documents before the README states them
+- [x] Slot filling: the amount, whether own money or project cost, business, place; the amount is read back in the answer (DEC-044, 2026-11-03)
+- [x] Call-type detection by keywords in English, Hindi, Telugu and Hinglish; loan mode is sticky for the call (DEC-044)
+- [x] The code speaks every figure; amounts of a lakh or more in lakh words because Timbre misreads long digit runs (B-37); the answer says "approximate"
+- [x] Loan summary files `orders/<shop>/loan_<id>.json`, shown by the dashboard
+- [x] 75 tests (`tests/test_loan_flow.py`); live check on the real model, 4 cases (2026-11-03)
+- [x] Four scripted loan calls with expected quotes in `evaluation/scripts/credit_loans.json`; the scorer checks them
+- [ ] Run those scripted calls as a scored run (needs model tokens)
+- [x] A loan panel on the call page: shows the `loan` event (DEC-047) with the calculator's figures, indicative, no arithmetic in the page; checked through the real `LoanSession`, transport and page in a real browser with a fake microphone (2026-11-03, branch `call-loan-panel`; needs a build)
+- [ ] Scheme figures: no public source found for them (DEC-047); Surya to check them against the SIH problem statement itself, and the README states them only as indicative figures from it
 
 ### Step 2c: Software-only transport (DEC-029, DEC-032; see [transport_plan.md](transport_plan.md))
 - [x] `Transport` interface (2026-10-28, InBul09)
@@ -60,9 +63,9 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Keyword retrieval kept Hindi and Telugu words whole (B-19, 14 tests) (2026-11-02)
 - [x] M5: product names given to Prisma as keyterms when a call starts (2026-11-02)
 - [ ] M4: the rule layer. The model extracts item and quantity; code checks `stock.json`, adds the lines, and writes the order (this is Step 8)
-- [ ] M7: T-WER (English words correct in either script) in the evaluation scoring
-- [ ] M9: count cutoffs and time to first audio together in the evaluation
-- [ ] M8: plain resampling for 8 kHz phone audio, when a phone number exists
+- [x] M7: T-WER in the scorer (product words count right in Latin or in Hindi or Telugu; 2026-11-03)
+- [x] M9: cut-off measures (split turns, under-half turns, unscripted agent cuts) in the scorer next to time to first audio (2026-11-03)
+- [x] M8: plain resampling for 8 kHz phone audio (numpy, `transport_telephony.py`, DEC-046, 2026-11-03); not yet measured on real phone audio
 
 ### Step 3: `stt_gnani.py`
 - [x] Session thread with its own asyncio loop; headers sent in **both** spellings (DEC-035); 1,024-byte framing, paced in real time (2026-11-02; tested against a stand-in server only)
@@ -118,11 +121,15 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Optional: a small order viewer page (the shopkeeper dashboard already shows the orders)
 
 ### Step 8b: Udhaar ledger (DEC-026; the first thing cut if time runs short)
-- [ ] Synthetic customer list (~15 names, credit limits, opening balances) in the knowledge files
-- [ ] `orders/<shop>/ledger.json` and `ledger.txt`: add to a balance, read a balance, record a promise-to-pay date
-- [ ] Prompt rules: confirm the name, the credit limit, unknown names become "credit pending", a neutral tone
-- [ ] The order summary carries payment type, customer and balances
-- [ ] 4–5 of the 20 eval scripts cover udhaar (add, balance enquiry, over the limit, unknown name)
+- [x] Synthetic customer list: 15 customers with limits and opening balances in `shops/<shop>/customers.json` (DEC-045, 2026-11-03)
+- [x] `credit.py` over `orders/<shop>/ledger.json`: find a customer by a spoken name, balance, limit check, atomic update (the dashboard already reads the file)
+- [x] The code asks for the name, approves within the limit, refuses over it, leaves unknown names to the shopkeeper, answers balance questions
+- [x] The order record carries the customer, status and balances; the ledger is settled when the call ends, re-checking the limit
+- [x] 79 tests (`tests/test_credit.py`); four scripted credit calls (approved, over the limit, unknown name, balance enquiry) in `evaluation/scripts/credit_loans.json`
+- [ ] Live check of the three credit paths on the real model (only the first step was seen live; the rest waits for model tokens)
+- [ ] Run the scripted credit and loan calls as a scored run
+- [ ] A native speaker checks the customer names in `customers.json` and the credit sentences (B-16)
+- [ ] Promise-to-pay dates (deliberately not built)
 
 ### Step 9: Evaluation
 - [ ] 20 order scripts
@@ -169,3 +176,10 @@ When you tick something, add the date and the build or InBul that carried it.
 ## Inherited from upstream (lower priority)
 - [ ] The edge-case audit upstream never finished (greeting interruption, reconnect mid-call, empty LLM or TTS response, long replies, a hallucinated transcript re-locking the language)
 - [ ] The full edge-case re-check (stop mid-reply, repeat in another language, a fresh call starting in Telugu, rapid hang-up and call-back, several interrupts in one call)
+
+### Phone number (DEC-046)
+- [x] `TelephonyTransport` for Twilio and Exotel streams, fail-closed token, busy line, marks and barge-in, 31 tests against a stand-in provider (2026-11-03)
+- [x] Gnani concurrency: 8 Prisma sessions at once, none refused (2026-11-03)
+- [ ] Start KYC with one provider (Surya; decision point Nov 5)
+- [ ] A public wss address (a tunnel is enough) and `TELEPHONY_TOKEN` set, when an account exists
+- [ ] A real call, then a noisy 8 kHz evaluation run (B-39)
