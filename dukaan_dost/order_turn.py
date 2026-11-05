@@ -41,10 +41,11 @@ SCHEMA = {
         "customer_name": {"type": ["string", "null"]},
         "delivery": {"type": ["string", "null"], "enum": ["home", "pickup", None]},
         "finish": {"type": "boolean"},
+        "balance_query": {"type": "boolean"},
         "price_of": {"type": "array", "items": {"type": "string"}},
         "not_sold": {"type": "array", "items": {"type": "string"}},
         "say": {"type": "string"}},
-    "required": ["ops", "payment", "customer_name", "delivery", "finish", "price_of", "not_sold", "say"],
+    "required": ["ops", "payment", "customer_name", "delivery", "finish", "balance_query", "price_of", "not_sold", "say"],
     "additionalProperties": False,
 }
 
@@ -56,6 +57,7 @@ class Plan:
     customer_name: str | None = None
     delivery: str | None = None
     finish: bool = False
+    balance_query: bool = False
     price_of: list = field(default_factory=list)
     not_sold: list = field(default_factory=list)
     say: str = ""
@@ -65,33 +67,20 @@ def prompt_section(examples: list | None = None) -> str:
     """The order-mode instructions. `examples` is [(sku, english name, unit), ...]; the first two are used."""
     a = examples[0] if examples else ("ITEM-A", "item A", "kg")
     b = examples[1] if examples and len(examples) > 1 else ("ITEM-B", "item B", "packet")
-    return f"""ORDER MODE. You do not add up money and you do not say the prices or totals of the order: the system does that and speaks them. Your whole answer, for every message the caller sends, is ONE JSON object and nothing else, even for a question, a greeting, or an item we do not have:
-{{"ops": [{{"op": "add", "sku": "{a[0]}", "qty": 2}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": [], "say": "short spoken reply"}}
-- ops: the changes to the order made by what the caller just said. op is add (more of an item), set (make the quantity exactly this) or remove (take the item out; give qty to take out only part). sku must be one of the SKUs shown in the product knowledge below. qty is in that item's own unit: kg and litre may be 0.25, 0.5, 0.75, 1, 1.5 and so on (500 gram is 0.5 kg); every other unit is a whole number. Number words: ek/okati 1, do/rendu 2, teen/moodu 3, char/naalugu 4, paanch/aidu 5, chhe/aaru 6, saat/edu 7, aath/enimidi 8, nau/tommidi 9, das/padi 10, aadha/ara 0.5, dedh 1.5, dhai 2.5. \"do\" is the number two, not the English word. If the item or the quantity is unclear, make no op and ask one short question in say.
-- Give one op for EVERY item the caller names in a message, even when another item in the same message is one we cannot sell: never drop an item because of another.
-- An item marked OUT OF STOCK still gets its add op (answer in JSON like any other message): the system tells the caller it is not available. An item that is not in the knowledge at all: no op, say so in say.
-- finish: true only when the caller says they want nothing more. The system then reads the whole order and the total aloud, so do not repeat it; ask how they will pay.
-- payment: cash, upi or udhaar, only once the caller has chosen. customer_name: only if the caller said their name. delivery: home or pickup, only if they said.
-- say: the spoken reply in the caller's language, one to three short sentences. Write [LINES] where the system should say what was just added or changed, with the running total, and [ORDER] where it should read the whole order with the total. Never write the price or total of the order yourself. Delivery charges, times and payment details: repeat the knowledge below, and if it is not there say the shopkeeper will tell them. Digits for numbers, never number words.
-- not_sold: the names, in the caller's words, of things they asked for that are not in the product knowledge at all (give no op for them). The system tells the caller.
-- price_of: the SKUs of items whose price the caller asked for. The system says the price from the stock list. Never write any price yourself, not even from the knowledge below, and never say that an item is out of stock or added or removed: the system says all of that.
-- If the order did not change (a question, a greeting, a payment choice), use "ops": [] and answer in say.
-Examples (the caller's words, then your JSON):
-Caller: "2 kilo {a[1]} and 1 {b[1]} please"
-{{"ops": [{{"op": "add", "sku": "{a[0]}", "qty": 2}}, {{"op": "add", "sku": "{b[0]}", "qty": 1}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": [], "say": "[LINES] Anything else?"}}
-Caller: "that's all"
-{{"ops": [], "payment": null, "customer_name": null, "delivery": null, "finish": true, "price_of": [], "not_sold": [], "say": "[ORDER] How would you like to pay: cash, UPI or credit?"}}
-Caller: "cash"
-{{"ops": [], "payment": "cash", "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": [], "say": "Thank you, your order is noted."}}
-Caller: "what does the {b[1]} cost?"
-{{"ops": [], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": ["{b[0]}"], "not_sold": [], "say": "Anything else?"}}
-Caller: "make the {a[1]} 1 kilo"
-{{"ops": [{{"op": "set", "sku": "{a[0]}", "qty": 1}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": [], "say": "[LINES] Anything else?"}}
-Caller: "take out the {b[1]}"
-{{"ops": [{{"op": "remove", "sku": "{b[0]}"}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": [], "say": "[LINES] Anything else?"}}
-Caller: "1 kilo of dragon fruit and 2 {b[1]}"
-{{"ops": [{{"op": "add", "sku": "{b[0]}", "qty": 2}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "price_of": [], "not_sold": ["dragon fruit"], "say": ""}}
-Remember: every answer is the JSON object, even when the only thing to say is a placeholder."""
+    return f"""ORDER MODE. Your whole answer, to every message, is ONE JSON object and nothing else (even for a question, a greeting or an item we do not sell). The system does all money and speaks all prices, totals and order confirmations: never write one.
+Fields: ops, payment, customer_name, delivery, finish, balance_query, price_of, not_sold, say.
+- ops: changes made by the caller's LAST message only, never items already in CURRENT ORDER or mentioned earlier. {{"op": "add"|"set"|"remove", "sku": <a SKU from the CATALOGUE>, "qty": number}}. add = more of it, set = make the quantity exactly this, remove = take it out (qty = only part). One op for EVERY item named, even if another item in the message is not sold. If the last message is only about payment, a name, delivery or "that is all", ops is []. If an item or quantity is unclear: no op, ask in say.
+- qty is in the item's own unit: kg and litre in steps of 0.25 (500 gram = 0.5), other units whole numbers. Number words: ek/okati 1, do/rendu 2 ("do" is two), teen/moodu 3, char/naalugu 4, paanch/aidu 5, chhe/aaru 6, saat/edu 7, aath/enimidi 8, nau/tommidi 9, das/padi 10, aadha/ara 0.5, dedh 1.5, dhai 2.5.
+- Match what the caller says to the CATALOGUE in any of its names or spellings (Hindi and Telugu words, plurals, small mis-hearings such as chini/cheeni/छीनी = sugar). An item marked OUT OF STOCK still gets its add op (the system tells the caller). Only an item that is truly not in the CATALOGUE: no op, put its name in not_sold (the caller's words).
+- price_of: SKUs whose price the caller asked for. finish: true only when the caller wants nothing more. payment: cash, upi or udhaar, only once chosen. customer_name: the caller's name whenever they say it, also when it is the whole message (the system asks for it when they want credit). delivery (home or pickup): only if said. balance_query: true when the caller asks how much they owe on credit (udhaar balance); the system answers from the credit book.
+- say: a short reply in the caller's language, only for what the system does not cover (a greeting, a question about the shop from the knowledge, a question back). Delivery and shop facts: repeat the knowledge; if it is not there, say the shopkeeper will tell them. Digits for numbers. Otherwise "".
+Examples (caller, then JSON):
+"2 kilo {a[1]} and 1 {b[1]}" -> {{"ops": [{{"op": "add", "sku": "{a[0]}", "qty": 2}}, {{"op": "add", "sku": "{b[0]}", "qty": 1}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "balance_query": false, "price_of": [], "not_sold": [], "say": ""}}
+"that's all" -> {{"ops": [], "payment": null, "customer_name": null, "delivery": null, "finish": true, "balance_query": false, "price_of": [], "not_sold": [], "say": ""}}
+"cash, my name is Ramesh" -> {{"ops": [], "payment": "cash", "customer_name": "Ramesh", "delivery": null, "finish": false, "balance_query": false, "price_of": [], "not_sold": [], "say": ""}}
+"make the {a[1]} 1 kilo, and what does the {b[1]} cost?" -> {{"ops": [{{"op": "set", "sku": "{a[0]}", "qty": 1}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "balance_query": false, "price_of": ["{b[0]}"], "not_sold": [], "say": ""}}
+"how much do I owe? I am Ramesh" -> {{"ops": [], "payment": null, "customer_name": "Ramesh", "delivery": null, "finish": false, "balance_query": true, "price_of": [], "not_sold": [], "say": ""}}
+"1 kilo of dragon fruit and 2 {b[1]}" -> {{"ops": [{{"op": "add", "sku": "{b[0]}", "qty": 2}}], "payment": null, "customer_name": null, "delivery": null, "finish": false, "balance_query": false, "price_of": [], "not_sold": ["dragon fruit"], "say": ""}}"""
 
 
 def extract_json(text: str):
@@ -114,6 +103,20 @@ def extract_json(text: str):
     return None
 
 
+# Number words in the three languages, for has_quantity(). "do" is also the Hinglish "give" (dena, de do), so it counts
+# as a number here: the cost of being wrong is only that a guard stays off.
+_QUANTITY_WORDS = ("one two three four five six seven eight nine ten half quarter dozen "
+                   "ek do teen char chaar paanch panch chhe saat aath nau das aadha adha dedh dhai sawa "
+                   "oka rendu moodu nalugu aidu ara "
+                   "एक दो तीन चार पांच पाँच छह सात आठ नौ दस आधा डेढ़ ఒక రెండు మూడు నాలుగు ఐదు అర").split()
+_QUANTITY_RE = re.compile(r"\d|(?<!\w)(?:" + "|".join(map(re.escape, _QUANTITY_WORDS)) + r")(?!\w)", re.IGNORECASE)
+
+
+def has_quantity(text: str) -> bool:
+    """Does the caller's sentence contain a digit or a number word? "UPI", "that is all" and "my name is Ramesh" do not."""
+    return bool(text) and _QUANTITY_RE.search(text) is not None
+
+
 def parse_plan(text: str) -> Plan | None:
     obj = extract_json(text)
     if obj is None:
@@ -125,6 +128,7 @@ def parse_plan(text: str) -> Plan | None:
         customer_name=obj.get("customer_name") if isinstance(obj.get("customer_name"), str) else None,
         delivery=obj.get("delivery") if isinstance(obj.get("delivery"), str) else None,
         finish=obj.get("finish") is True,
+        balance_query=obj.get("balance_query") is True,
         price_of=[s for s in obj["price_of"] if isinstance(s, str)] if isinstance(obj.get("price_of"), list) else [],
         not_sold=[s for s in obj["not_sold"] if isinstance(s, str)] if isinstance(obj.get("not_sold"), list) else [],
         say=obj.get("say") if isinstance(obj.get("say"), str) else "",
@@ -149,19 +153,30 @@ def compose(plan: Plan, result, session, language, closing: str | None = None) -
     lang = lang_key(language)
     prices = session.prices_text(plan.price_of, language)
     not_sold = session.not_sold_text(plan.not_sold, language)
+    credit = session.credit_text(result, language)
+    kinds = {e["kind"] for e in result.credit_events}
+    blocked = bool(kinds & {"need_name", "over_limit"})          # the caller has to answer or choose again first
+    # the order is complete on this turn: payment chosen (cash or UPI), credit approved or left to the shopkeeper,
+    # or credit chosen at a shop that keeps no credit book
+    completes = (not blocked) and (not session.is_empty) and bool(
+        (kinds & {"approved", "unknown"})
+        or (result.payment_set and (session.payment in ("cash", "upi") or (session.payment == "udhaar" and session.credit is None))))
     parts = []
 
     if plan.finish:
         parts += [session.rejections_text(result.changes, language), not_sold, session.readback(language)]
-    elif result.changes or prices or not_sold:
+    elif result.changes or prices or not_sold or credit:
         parts += [not_sold, session.changes_text(result.changes, language), prices]
-    elif not (closing and result.payment_set):
+    elif not (closing and completes):
         # nothing about the order happened: the model's own words, with a read-back where it asked for one
         text = say.replace("[ORDER]", session.readback(language)).replace("[LINES]", "")
         return " ".join(_PLACEHOLDER.sub("", text).split())
 
-    if closing and result.payment_set:
+    parts.append(credit)
+    if closing and completes:
         parts.append(closing)
+    elif blocked:
+        pass                                                     # the credit sentence already asks the next question
     elif plan.finish and not session.is_empty and session.payment is None:
         parts.append(SAY[lang]["pay"])
     elif not plan.finish:

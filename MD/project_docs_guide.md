@@ -27,6 +27,7 @@ Most live in `MD/`. A few sit at the repo root. `CHANGELOG.md` is generated, nev
 |---|---|
 | `decisions.md` | Every design decision as `DEC-NNN`, with the reasoning |
 | `bugs.md` | Every bug: open, fixed uncommitted, fixed (with the build or InBul id) |
+| `bugfixed.md` | A dated log of every fix with its proof, commit and build or InBul id |
 | `tasks.md` | Living task tracker with `[ ]`, `[/]`, `[x]`, `[~]` |
 | `tried_and_implemented.md`, `tried_and_failed.md` | What worked and what didn't |
 | `pain.md` | The shop's pain, and what can break delivery |

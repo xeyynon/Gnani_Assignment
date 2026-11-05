@@ -2,12 +2,43 @@
 
 Every bug gets an id, `B-NN`, and moves through three sections:
 - **Open**
-- **Fixed, uncommitted:** fixed in the working tree, not yet in a build or InBul
+- **Fixed, uncommitted / awaiting a build:** fixed in the working tree, or committed but not yet in a numbered build or InBul (none at the moment: everything up to 2026-11-05 is in Build 1013 or InBul21)
 - **Fixed:** with the build or InBul that carried the fix, e.g. "Fixed in Build 1003" or "Fixed in InBul04"
 
 Fixes to bugs found upstream, before this repo existed, are listed at the end for reference.
 
 ## Open
+### B-85 · Open (risk) · Steady broadband noise at 10 dB defeats the end-of-speech detector, and nothing is understood
+The noisy run of 2026-11-05 (gpt-oss-120b, 15 of 20 calls before the 30-minute limit, so INCOMPLETE and not quotable as a score) got a reply to **none** of its 47 turns. Checked offline on the noise file at the run's level (RMS 713, mean absolute value 589, against the detector's fixed energy gate of 180): webrtcvad marks 99.9 to 100 percent of the noise frames as speech in all four aggressiveness modes, so the recorder is triggered the moment the call starts, runs to the 12-second limit, and sends 12 seconds of noise with the caller's words somewhere in it; Prisma answered "No speech recognized" every time, and the scripted caller waited out its timeouts. Caveats before reading too much into it: the synthetic noise is hiss plus a low rumble plus a 50 and 100 Hz hum, steady for the whole call; real shop noise differs; and the replay transport bypasses the browser, whose call page asks for `noiseSuppression` and `echoCancellation` (so a real browser call is not this bad, a real phone line has its own suppression). What a fix would need: a speech gate relative to a measured noise floor instead of the fixed 180, or noise suppression in front of the detector. Not built. Next: a milder run (20 dB, then 15 dB) to find where the pipeline breaks; a run that gets no replies uses almost no model tokens, so the failing levels are cheap to measure.
+
+### B-83 · Open (risk) · Prisma returned nothing for a one-word answer (1 of 65 turns)
+In call h06 of the run of 2026-11-05 the final turn, "Cash" (1.2 s of audio, 19 speech frames), came back as "No speech recognized", the agent apologised, and the order stayed incomplete. All other short answers were heard, so this is rare, but a lost payment word costs the whole order. Possible handling, not built: ask again in a shorter, more specific way once, or retry the same audio with the language hint of the call. To be counted in the next valid run.
+
+### B-39 · Open (risk) · The phone transport has never touched a real provider
+`transport_telephony.py` (DEC-046) was built from the Twilio and Exotel documentation and tested against a stand-in that follows the same messages. Both providers gate streaming behind KYC with no published turnaround, and no account exists, so real behaviour is unknown: the exact timing of `mark` replies, whether a `clear` drops audio in flight, and how 8 kHz phone audio affects Prisma's accuracy (the papers say it costs Hindi accuracy; nothing here measures it). Until a real call happens, nothing about the phone line may appear in the README or the video as a result. Decision point Nov 5: if KYC has not cleared, the demo is the browser call.
+
+### B-34 · Open · The first valid evaluation: 9 of 20 orders exactly right (45%) before the catalogue fix
+Clean run, gpt-oss-120b, synthetic Timbre speech, saved as `evaluation/results/orders_clean_baseline_retrieval.*`. Totals matched the stock-list arithmetic 20/20, payment 17/20, median time to first audio 2.35 s (90th percentile 2.86 s), WER 0.41 raw and 0.29 number-normalised. Of 11 wrong orders, 8 were items the model refused with "we do not have it" because keyword retrieval had not handed it that product (B-35 below), 3 were quantity or hearing errors ("एक लीटर" heard as "8 लीटर" in d01; two corrections that were dropped as echoes). The catalogue fix and the echo fix target exactly these; a new valid run is needed to measure them (waits on the model's daily limit, B-33).
+
+**2026-11-05 (not a result):** the first run with every fix (gpt-oss-20b) was INVALID because of B-33, but its logs were still read for causes. Of the 7 wrong orders, 5 were the model repeating earlier changes (B-82, now guarded in code), 1 a speech-recognition error that turned "ek litre" into "8 litre" (B-24 again), and 1 the dropped one-word "Cash" (B-83); the rest followed from the daily limit. A valid run after the fixes is still to be taken.
+
+### B-33 · Open (risk) · Groq's daily token limit allows about one full evaluation run a day per model, in a rolling 24 hours
+Each model has 200,000 tokens a day on this account (`gpt-oss-20b`; the others have their own counters). A run of 20 calls (65 turns) cost about the whole day on the long prompt, and from call 12 of the third run every turn got the apology fallback ("Rate limit ... tokens per day"), so that run was thrown away. The order prompt was cut by 42 percent (about 3,200 to 1,900 tokens a turn, DEC-041), which lets one run use about 60 percent of a day. Plan runs accordingly: clean on one model, noisy on another or the next day; do not rerun casually. A rate-limited turn is visible in the agent log (`429`, `tokens per day`); the scorer does not yet flag it.
+
+**2026-11-05:** the limit is a rolling 24 hours, not a reset at midnight ("Used 198960 of 200000, try again in 17m"), so a model's tokens come back only as the run that spent them ages out. The first run with every fix (gpt-oss-20b, 20:59 to 21:27) spent the model's budget in its last minutes: 1 turn was refused for the per-minute limit and the last 4 for the daily one, so the scorer marked it INVALID and its 13 of 20 is not quoted. A valid clean run on a model therefore needs its previous full run to be a day old: plan one full run per model per day, and use `--only` for a partial rerun of a few calls.
+
+### B-30 · Open (guarded) · The model re-applied earlier items on a payment turn
+On a smoke call "Cash, my name is Ramesh" came back with ops that doubled the whole order (4 kg sugar, 16 L oil, total 2,816). The instructions now say ops come only from the caller's last message, and an example shows a payment-and-name turn with no ops. Unproven: the evaluation counts it. **Guard added 2026-11-03 (uncommitted):** `OrderSession` ignores a note that, on the turn payment is first chosen, adds every existing line again with the same quantity (the doubling shape); any other ops on a payment turn, such as "one more sugar, cash", are applied. Five tests. Narrow on purpose: a wider rule could drop a real change. Whether the model still produces it is for the next scored run.
+
+**2026-11-05:** it was not rare on gpt-oss-20b: 5 of the 7 wrong orders of the first valid-looking run (see B-82). The code guard now covers every turn, not only the first payment turn; whether it is enough is for the next valid run to show, and it stays open until then.
+
+### B-31 · Open · Time to first audio is above the 2 s target
+Measured end to end through the real agent (replay caller, Prisma, Groq, Timbre): 2.4 to 4.0 s from the caller's last word to the first audio on the smoke call. Parts seen in the log: the voice detector waits 0.65 s, Prisma 0.2 to 0.4 s, the model 0.6 to 2.2 s, Timbre 0.9 to 1.1 s to the first chunk, and the code-spoken first sentence waits for the model's whole JSON note (the reply is no longer streamed from the model). Candidates: a shorter prompt, a lower hangover, a warm Timbre connection (B-14), speaking an acknowledgement while the model works.
+
+**Part fixed 2026-11-03 (Build 1013):** opening the Timbre connection took 375 to 420 ms, more than the 200 to 300 ms from request to first audio. A spare connection is now kept open ahead of time (`tts_gnani.py`, DEC-047). Measured against the real service, five spoken sentences each way: first audio 454 to 672 ms without the spare, 203 to 312 ms with it after the first (532 ms) sentence of a run. About 300 ms saved per spoken sentence; the end-to-end median is not re-measured yet (it needs a scored run, B-33). Still open: the model's 0.6 to 2.2 s and the 0.65 s hangover. The hangover can now be tuned against the cut-off measure in the scorer instead of by guess.
+
+**2026-11-05:** time to first audio is now counted from the caller's last word (B-57, about 0.3 s more than the old figures say), and the spare-connection artefact of a paced run is fixed (B-81). No valid end-to-end figure exists yet after either change.
+
 ### B-02 · Fixed in Build 1008 · The model forgot items in long orders
 Every order turn now shows the model the order so far (items and quantities), so the history length no longer matters for the cart. `LLM_HISTORY` stays at 3.
 
@@ -32,7 +63,8 @@ Each sentence is a separate clip, and the server sends the next one only after t
 **Fix:** measure it. If audible, let the page queue the next clip while the last one plays.
 
 
-### B-10 · Open (risk) · The CI/CD workflows have never run on GitHub
+### B-10 · Open (risk) · The CI/CD workflows have never been seen running on GitHub
+_Update 2026-11-03: reproduced locally with `scripts/ci_local.py` (all green except the container build, which needs Docker running). CI starts only for `main` and pull requests, so pushes to a side branch run nothing; the `build-*` tags start the release workflow. The repository is private, so results can only be read on GitHub._
 They parse, their jobs are wired correctly and the scripts they call are tested, but a real run can still fail on things only GitHub shows: the container build (no Docker engine was available to try it), Python 3.10 on Ubuntu, the release and image steps.
 **Fix:** watch the first run after the first push and fix what is red (task in [tasks.md](tasks.md)).
 
@@ -80,6 +112,161 @@ The history stored the whole generated reply even when the caller cut in after t
 `\w+` does not include the vowel signs of Indian scripts, so "आटा" was read as "आट" and the knowledge search was mostly noise for Hindi and Telugu callers. The retriever now treats the Unicode block U+0900 to U+0DFF as word characters. 14 tests (`tests/test_knowledge_retriever.py`).
 
 ## Fixed
+### B-84 · Fixed in InBul21 · The laptop went to sleep in the middle of an evaluation run and the run ended half done
+The credit and loan run of 2026-11-05 shows a 26-minute hole in the agent's log (21:29:34 to 21:55:21) in the middle of its first call, although every wait in the scripted caller is limited to 30 or 40 seconds: the whole machine was asleep while no Claude turn was active. The runner's wall-clock timeout (1,800 s) then stopped the agent after 4 of 8 calls, so the result (4 loan calls right, no credit calls) is incomplete and is not quoted. `run_calls.py` now asks Windows not to sleep while it runs (`SetThreadExecutionState`, ended with the process; nothing in the system settings is changed). Before this change a long run needed someone at the keyboard. Test: `tests/test_score_calls.py` (harmless off Windows and when the call fails).
+
+### B-82 · Fixed in Build 1013 · The model copied earlier changes into later turns, which doubled orders (the main failure of the first valid run)
+On the run of 2026-11-05 (gpt-oss-20b, all fixes in), five of the seven wrong orders had one cause: a later note carried the earlier adds again. "Bas itna hi" (that is all) added the same two packets of Maggi a second time and "UPI" a third; "Aur ek Amul butter bhi" also bumped Maggi and Parle-G; a replayed "one kilo less rice" fired again on "Bas, cash". The instructions already say ops come only from the caller's last message, and B-30's first guard only covered the first payment turn. Now `OrderSession.drop_replayed_ops` decides in code, from the caller's own words: an op for a product the caller just named is kept; any other op that is exactly a change made on an earlier turn is dropped; and a sentence that names no product and gives no quantity cannot add or set anything. The conversation manager works out the named products (`named_skus`) and passes them in. Tests: `tests/test_order_turn.py` (the h02 call replayed turn by turn, a replayed remove, a legitimate repeat of a quantity, a sentence with nothing in it) and `tests/test_order_session.py`. Whether the larger model needed it is not known; the next valid run measures it.
+
+### B-41 · Fixed in Build 1013 · A damaged udhaar ledger was silently replaced with the opening balances
+`store.read_ledger` turned any read failure into an empty ledger, and `CreditBook._ensure_ledger` then seeded every customer from `opening_balance` and overwrote the file, so a truncated `ledger.json` wiped every real debt and entry. The credit book now reads the ledger strictly: a missing file is a new ledger, a file that is there but unreadable raises `LedgerUnreadable`, nothing is written, and the shop's credit is left to the shopkeeper (`app.py` already catches that at call start; mid-call the order flow treats credit as unknown). Found by the money bug finder and, independently, by the store finder. Tests: `tests/test_credit.py`.
+
+### B-42 · Fixed in Build 1013 · Windows file locks made writes fail with PermissionError, and orders could be saved as pending for no reason
+`os.replace` fails on Windows while another thread has the target open (the dashboard reading the ledger). One reader and one writer thread produced 1,244 failures in 1,500 writes in a tight loop; real polling collides far less often but there was no retry, so a hang-up could mark a credit order pending, and the admin tests failed now and then. `store.replace_file` retries a few times (6 tries, 20 to 120 ms) and is used by the order, ledger, PIN, shop-creation and results writes. Tests: `tests/test_credit.py` (a lock waited out).
+
+### B-43 · Fixed in Build 1013 · Removing part of a line could leave a quantity no add would accept
+Removing 0.1 kg from 1 kg of sugar left 0.9 kg and removing half a packet from 3 left 2.5 packets, which the read-back then spoke. The remainder is now checked like any quantity and refused with the usual sentence. A line updated and then removed in one note is reported only as removed (it used to say "Updated: ."). Tests: `tests/test_order_session.py`.
+
+### B-44 · Fixed in Build 1013 · A remove with a zero, negative or unreadable quantity deleted the whole line
+`_decimal` returns None for 0, negatives and garbage, which the remove code treated like "no quantity", so `remove` with `qty 0` or `"two"` emptied a 5 kg line. Only an absent quantity now removes the whole line; any other bad quantity is refused. Tests: `tests/test_order_session.py`.
+
+### B-45 · Fixed in Build 1013 · The first B-30 guard swallowed "one more maggi, cash" on a one-line order
+With a cart of one line, a correct add of the same item and quantity looks exactly like a replay, so the guard dropped it and the caller believed they had two. The narrow guard now needs two or more lines; the general protection is B-82. Tests: `tests/test_order_session.py`.
+
+### B-46 · Fixed in Build 1013 · Ordinary shop talk started the sticky loan mode
+"Do you charge interest on udhaar", "is the shop open for business", "what are the business hours", "मेरा व्यापार है, 20 किलो चावल", "I will invest in 10 kg of rice", "ब्याज कितना लगेगा" and the Telugu word for "postpone" all started loan mode, and loan mode lasts for the rest of the call, so the caller could no longer order. The detector now has two kinds of word: strong ones (loan, EMI, Mudra, Udyami, karz, "start a shop") start it alone unless a refusal sits beside them ("no loan, two kilo sugar"); weak ones (interest, business, subsidy, invest, ब्याज, योजना, వడ్డీ ...) only together with lakh, crore or thousand. Tests: `tests/test_loan_flow.py`. Cost: "byaj kitna hai" on its own is no longer a loan question; the caller says "loan" and carries on.
+
+### B-47 · Fixed in Build 1013 · A new customer named Venkatesh was matched to the customer Venkat
+The letter-overlap match scored "venkat" against "venkatesh" at 0.80, so the order was approved onto the wrong person's account, which the rule "a wrong person's debt is worse than a pending one" forbids. A longer name that only begins with a known one (more than one letter longer) now scores zero. "Ramesh Kumar" still does not match "Ramesh" and stays pending for the shopkeeper. Tests: `tests/test_credit.py`.
+
+### B-48 · Fixed in Build 1013 · An empty cart was told "your order is noted"
+"Cash" as the first message, or after everything was removed, produced the closing sentence while nothing was saved. The closing now needs at least one line. Tests: `tests/test_order_turn.py`.
+
+### B-49 · Fixed in Build 1013 · A tiny loan amount crashed the turn, and a quote of Rs 9 was possible
+An amount of 0.4 (or 1e-9) rounded to 0 and made `loan_calculator.quote` raise an uncaught ValueError; an amount of 1 quoted a loan of Rs 9 with an instalment of Rs 0. Amounts under Rs 1,000 are now "not understood" and the calculator's error is caught. Tests: `tests/test_loan_flow.py`.
+
+### B-50 · Fixed in Build 1013 · A Timbre spare connection that had gone quiet failed the sentence for 20 to 30 seconds
+The spare connection of DEC-047 was used while it looked open; if the peer no longer answered, the sentence failed after the 20 s timeout and the audio ended 10 s later because the close handshake was awaited inline (also for a stale spare, and at the end of every stream when the server did not answer the close). Closes now run in the background, and a spare that gives no first message in 1.5 s is dropped and the sentence retried once on a fresh connection. Tests: `tests/test_tts_gnani.py`. Checked against the real service afterwards.
+
+### B-51 · Fixed in Build 1013 · A speech segment with no transcript held the speech recogniser for 8 seconds
+If the service sent `speech_start` and never a transcript (a segment too short to keep), `finish()` waited the full 8 s. It now waits 1.5 s (`GNANI_STT_SPEECH_OPEN_GRACE_SEC`) after the commit. The number is a judgement, not a measurement: the real service sends the transcript late and without a `processing` message, so a shorter wait would discard real speech. Tests: `tests/test_stt_gnani.py`.
+
+### B-52 · Fixed in Build 1013 · Any HTTP 400 on a schema request turned the strict schema off for the whole run
+A context-length 400 added the model to the "does not support json_schema" set for the life of the process, so every later order turn ran in plain JSON mode (B-23's risk). Only an error that mentions the schema does that now. Tests: `tests/test_llm_groq.py`.
+
+### B-53 · Fixed in Build 1013 · A rate limit with a long retry-after was retried at once
+A 429 asking for more than 2 s of waiting was retried immediately, which was refused again and spent another request and more tokens. It now gives up at once with a clear log line. Tests: `tests/test_llm_groq.py`.
+
+### B-54 · Fixed in Build 1013 · An error in the middle of a streamed reply was invisible
+A mid-stream error event, or a stream that ended without `[DONE]`, left a truncated reply that was spoken as if complete, with nothing in the log. Both are logged as warnings now. Tests: `tests/test_llm_groq.py`.
+
+### B-55 · Fixed in Build 1013 · An inline comment in .env became part of the key
+`GROQ_API_KEY=gsk_abc # my key` was read as `gsk_abc # my key`, and a quoted value kept its quotes when a comment followed. A ` #` after an unquoted value and anything after a closing quote are now ignored; a `#` with no space before it stays. Tests: `tests/test_envfile.py`.
+
+### B-56 · Fixed in InBul21 · A scripted barge-in never barged in when the gap between turns was longer than the reply
+The scripted caller slept the minimum gap before waiting for the agent to speak, so the reply was over and the interruption landed in silence, and `interrupted_clips` stayed 0. No current script has a barge-in turn, so no result was affected. Barge-in turns now skip the gap and time themselves from the reply's first sound. Tests: `tests/test_transport_replay.py`.
+
+### B-57 · Fixed in InBul21 · Time to first audio was measured from the end of the audio file, not from the caller's last word
+The Timbre clips end with a median 0.30 s of silence (mean 0.38 s, longest 1.44 s over the 67 clips), so every earlier figure, including the 2.35 s of the first baseline, was too small by about that much. The scorer now adds the silence back and shows the old figure beside the new one. Existing result files were not rewritten and keep the old meaning. Tests: `tests/test_score_calls.py`, `tests/test_transport_replay.py`.
+
+### B-58 · Fixed in InBul21 · The "10 dB" noise level was about 7.4 dB by the plain definition
+The speech level used only samples above 300 (it dropped 45 percent of all samples), and only for the calls kept by `--only`. It is now the RMS of all the speech clips of the full script, the definition is saved with the result and printed in the scorer's title. Tests: `tests/test_score_calls.py`.
+
+### B-59 · Fixed in InBul21 · Edited script text could play stale cached audio
+The audio cache was keyed by call id and turn number only, so changing a sentence in a script kept playing the old recording, and a killed run could leave a half-written file that was then reused. The cache now records a hash of (text, language, voice) next to each clip and writes through a temporary file; clips from before that are kept and given a record. Tests: `tests/test_score_calls.py`.
+
+### B-60 · Fixed in InBul21 · A truncated run was reported as valid
+A timeout or an early exit of the agent left fewer calls in the result, and the scorer still printed `valid_run: true` with rates over the calls that finished. The run now records whether it completed, the scorer compares the calls that finished with the script, and the table says INCOMPLETE RUN. Tests: `tests/test_score_calls.py`.
+
+### B-61 · Fixed in InBul21 · The model of a run was recorded as the word "default"
+Results said `"model": "default"` whenever `LLM_MODEL` was unset. The runner now reads the model and provider the agent itself logged at start. Tests: `tests/test_score_calls.py`.
+
+### B-62 · Fixed in Build 1013 · On a phone call the caller's words and order were also sent to the phone provider
+`TelephonyTransport` did not override `send_event`, so the events meant for the browser page (transcripts, order lines, customer names, loan quotes) were written to the provider's socket as non-protocol frames on every turn. Phone sessions now send nothing; a browser on the same server still gets its events. Tests: `tests/test_transport_telephony.py`.
+
+### B-63 · Fixed in InBul21 · A failed write of the run's result file could abort the remaining calls and still mark the run done
+On Windows `os.replace` can fail while the runner reads the file. The write is retried, and a write that keeps failing never marks the run done. Tests: `tests/test_transport_replay.py`.
+
+### B-64 · Fixed in Build 1013 · A turn still running at hang-up leaked into the next call
+If the caller hung up while the model was thinking and a new call started before it finished, the old reply was written into the new call's history (so the model was told not to greet) and into the "repeat" memory. The generation now moves on before the history is cleared and the old turn's writes are skipped when the generation changed. Tests: `tests/test_lifecycle_fixes.py`.
+
+### B-65 · Fixed in Build 1013 · When speech synthesis failed completely the caller heard nothing but the history said it was said
+A sentence was added to the recorded reply before its audio existed. Only sentences that produced audio are recorded now; a reply with no audio at all stays out of the history and the shop's fallback sentence is played once. Tests: `tests/test_lifecycle_fixes.py`.
+
+### B-66 · Fixed in Build 1013 · At hang-up the customer was charged before the order file was written
+`OrderSession.close` settled the credit and then wrote the order; a failed write (disk full) left the customer charged and no order for the shopkeeper. The order is written first and the ledger second; if the ledger write fails the order is rewritten as waiting for the shopkeeper. Tests: `tests/test_credit.py`.
+
+### B-67 · Fixed in Build 1013 · One malformed stock.json stopped every call to that shop and the greeting never played
+A stock list of the wrong shape raised AttributeError out of the product-name boost into the watchdog, which then repeated "call detected" on every poll, bumping the call generation each time (14 times in 1.5 s). The boost and the conversation manager catch it, a shop that cannot be built answers with a built-in sentence in the caller's language, and the error is logged once per call. `stock.validate` itself never raises now. Tests: `tests/test_lifecycle_fixes.py`, `tests/test_admin_actions.py`.
+
+### B-68 · Fixed in Build 1013 · A loan turn still in flight after hang-up quoted and showed figures to the next page
+`LoanSession.apply` had no closed check (the order session did), so a late turn computed a quote and sent it to whichever page was connected, and nothing saved it. A closed session now does nothing. Tests: `tests/test_loan_flow.py`.
+
+### B-69 · Fixed in Build 1013 · "Add one kilo sugar again" was treated as a request to repeat the last reply
+The repeat words (again, dobara, phir se) won over the order flow, so the item was dropped; "repeat my order" replayed the previous sentence instead of reading the order; and "repeat that in Hindi" sent the totals through the free model. While an order is active a sentence with a product or a quantity is an order turn, "repeat my order" is read back by the code, and the synthetic instruction never enters the history. The clip-timeout case is no longer counted as heard, and "repeat" right after the greeting replays the greeting. Tests: `tests/test_lifecycle_fixes.py`.
+
+### B-70 · Fixed in Build 1013 · A prefetched knowledge context could be served to another shop or after a price edit
+The speculative retrieval cache had one slot keyed by nothing but the words; the next call at another shop, or at the same shop after the owner changed a price, could be answered with the old shop's or the old price's text. The slot now remembers the shop and the modification times of its files. Tests: `tests/test_knowledge_retriever.py`.
+
+### B-71 · Fixed in Build 1013 · A stock edit without a pack size wrote stock.json and then failed, and every later save failed too
+`stock.validate` did not check the pack, nor that prices are finite, nor the types of names and aliases, and raised on a null item; `save_stock` wrote `stock.json` before rendering the product file, so a failure left the two out of step. Validation is complete and never raises, and both files are built before either is written. Tests: `tests/test_admin_actions.py`.
+
+### B-72 · Fixed in InBul21 · A call that saved nothing could take the next call's order in the scorer
+The scripted calls follow each other with no gap, and the scorer matched an order to a call by a time window that reached 5 s into the next call. Records are now given out in time order, each to one call. Tests: `tests/test_score_calls.py`.
+
+### B-73 · Fixed in InBul21 · Loan calls inflated the headline rows of the score
+Every loan call counted as payment right and recall and precision 1.0. Loan calls are now scored on their own row and left out of the order figures. Tests: `tests/test_score_calls.py`.
+
+### B-74 · Fixed in InBul21 · The English-word error rate counted generic Hindi and Telugu words as right
+A Latin word's accepted spellings were the union of every product containing it, so "oil" accepted "का", "तेल" and every other oil. Only words that identify exactly one product now count. Tests: `tests/test_score_calls.py`.
+
+### B-75 · Fixed in InBul21 · Rate-limit detection missed Gemini, missed a missing log, and counted every refusal twice
+Refused requests are counted once each; Gemini quota failures count; a run with no agent log cannot be verified and is not valid. Tests: `tests/test_score_calls.py`.
+
+### B-76 · Fixed in Build 1013 · A truncated auth.json lost every other shop's PIN on the next PIN change
+`auth._load` read any failure as an empty table and `set_pin` wrote it back. Setting a PIN now refuses to write over a file it cannot read; checking a PIN on such a file fails closed; a file of the wrong shape no longer raises. Tests: `tests/test_admin_actions.py`.
+
+### B-77 · Fixed in Build 1013 · Activity-log entries with certain characters disappeared
+`str.splitlines` also splits on U+2028, U+2029 and U+0085, which JSON can leave raw inside a note, so such an entry became two bad lines and was skipped. Tests: `tests/test_admin_actions.py`.
+
+### B-78 · Fixed in Build 1013 · A trailing newline passed the shop-name and call-id checks, and an infinite total broke the dashboards
+The patterns ended in `$`, which matches before a final newline; they are matched in full now (the stock SKU too). `store._int` did not catch OverflowError, so a record with `"total": 1e999` made the snapshot, and with it the shop and admin pages, raise. Tests: `tests/test_shops_auth_store.py`, `tests/test_admin_actions.py`.
+
+### B-79 · Fixed in Build 1013 · A WebSocket frame that was not a JSON object ended the call
+`123` or `[]` made `data.get` raise in the browser transport's handler. Such frames are ignored. Tests: `tests/test_transport_websocket.py`.
+
+### B-80 · Fixed in Build 1013 · The repository's own hygiene check failed on a committed test file, so GitHub's CI would have been red
+`scripts/check_repo.py` flagged the made-up `TOKEN` value (24 characters or more, not starting with "test") in the telephony tests as a key assigned in code. It was not seen earlier because the file was untracked until it was committed; the local CI copy passed on the untracked tree. The test secret now starts with "test", which the check allows. Found when the full suite was run after the commit. Tests: `tests/test_ci_scripts.py`.
+
+### B-81 · Fixed in Build 1013 · The spare Timbre connection was thrown away between sentences of a paced run, adding about a second to every reply
+In the first valid run, time from request to first audio inside the agent was 2,036 ms at the median against 945 ms the day before. The spare was discarded when older than 12 s, the scripted calls are 22 s or more apart (to stay under the model's rate limit), so every spare was stale and closing it inline plus opening a new one cost more than having no spare. Measured against the real service on 2026-11-05: an idle Timbre connection still answered after 90 s. The limit is now 60 s, the dead-spare check of B-50 covers a connection the server did drop, and the close is in the background. The runs of 2026-11-05 were taken before this change, so their time to first audio carries the artefact and is not quoted. Tests: `tests/test_tts_gnani.py`.
+
+### B-37 · Fixed in Build 1013 · Timbre read six- and seven-digit numbers wrongly in Hindi and Telugu
+Played through Timbre and read back with Prisma: "100000" came back as 10000000 in Hindi and 10000 in Telugu; "4500000" as 45000000. English was right, and numbers up to five digits were right in all three languages. For a loan quote that is a serious error (a crore for a lakh). Amounts from one lakh up are now spoken as "1 लाख", "45 లక్షల", "45 lakh" (`loan_session.spoken_amount`), which all came back correct. Order totals stay far below one lakh, but the same function is available if a shop's totals grow. Not yet applied to order sentences.
+
+### B-38 · Fixed in Build 1013 · A name said with "ji" in Hindi script did not match the customer
+`रमेश जी` scored 0.73 against `रमेश`, below the match threshold, because only Latin honorifics were removed. Honorifics are now removed in Devanagari and Telugu as well. Found by a test.
+### B-35 · Fixed in Build 1013 · The model said "we do not have onions" for items we stock
+The order prompt carried only the few product sections that a keyword search picked. It missed items when the Hindi spelling differed by a dot (प्याज vs प्याज़), a Telugu word was plural or spelled differently (బంగాళాదుంపలు vs బంగాళదుంపలు, సబ్బులు), a crowd of similar items (all the oils) filled the 1,200-character budget, or the speech recogniser mis-heard (छेनी for cheeni). The model then told the caller the shop did not sell it. Order turns now send the whole compact catalogue (every SKU with its English, Hindi and Telugu name and unit, 3,400 characters, no prices) and the search supplies only shop facts. On the exact phrases that failed, all six now give the right order. DEC-042.
+
+### B-36 · Fixed in Build 1013 · A caller repeating an item was dropped as an "echo"
+`_is_self_echo` (built for the phone line) discarded "टमाटर 1 किलो कर दीजिए" because 89 percent of its words were in the agent's last confirmation. In an order call callers repeat items the agent just said, so corrections vanished (calls d03, t03, e-calls in the baseline run). The filter is now on only for a transport that needs an echo tail (`SELF_ECHO_FILTER=1/0` overrides). Found by reading the agent log of the baseline run.
+
+### B-26 · Fixed in Build 1013 · Prisma rejected the language list, so every turn without a locked language failed
+The agent sent `language_code: hi-IN,en-IN,te-IN` when no language was locked yet. The real service answers "exactly one locale is required" (its docs say a list of up to four is allowed on v3.0), the speech turn failed and the agent only apologised. Earlier tests always locked one language, so none met it. `indic-auto` is accepted and detected Hindi, Telugu, English and Hinglish correctly on five test sentences, so it is now the default (`GNANI_STT_LANGUAGES`). Found by the first full-loop run (2026-11-02). docs.gnani.ai disagrees with the service here: trust the service.
+
+### B-27 · Fixed in Build 1013 · Every call after the first had no order
+The watchdog opens a call's order and then resets the history with the reason "new node ...", and that reset also closed (and dropped) the order it had just opened. Only the first call of a run could take an order. Now only a "call ended" reset closes the order, and opening a new order first saves any leftover one. 3 regression tests. Found by the first full evaluation run, which scored 0 of 20 until this was fixed. It would have hit browser calls too.
+
+### B-28 · Fixed in Build 1013 · Two orders in the same second would have overwritten each other
+Call ids were timestamps to the second. They now end in milliseconds.
+
+### B-29 · Fixed in InBul21 · The scorer left the Hindi full stop on the last word
+`।` (U+0964) lies inside the Indian-script range the scorer keeps, so Hindi sentences ending with it counted as wrong words. Found by a test of the scorer.
+
+### B-32 · Fixed in InBul21 · The scripted caller crashed on the admin page's new transport hook
+`app.py` began calling `add_ws_handler()` on the transport, which only the browser transport had. The base class now has a no-op, and a test checks that every transport method `app.py` calls exists on the replay transport.
+
 ### B-01 · Fixed in Build 1001 · The startup check missed the example placeholder
 `main()` only caught `"your-project-id-here"`, but `local_config.example.py` ships `"your-project-id-or-number-here"`. Now it checks for `"your-project-id"` (both) and for an empty project, via `_gemini_credentials_ok()` (8 tests), and is skipped entirely when `GEMINI_API_KEY` is set, because the Gemini Developer API needs no Google Cloud project.
 
@@ -107,3 +294,6 @@ Clips that a stop skipped never counted themselves down, so the playback counter
 | Synchronous VAD-metrics CSV writes on the hot path | Moved to a writer thread |
 | False barge-in interrupts, STT decode bias, repeat-command bug | Fixed 2026-08-19 |
 | `/tmp` log filling RAM on the Pi | Redirect to `/dev/null`; rely on the rotating `dukaan_dost.log` |
+
+### B-40 · Fixed in Build 1013 · A test of the admin page failed now and then by chance
+`test_a_generated_pin_is_returned_once_and_works` checked that the generated 6-digit PIN does not appear anywhere in the stored auth file. A run of six digits can appear by chance inside a hex hash, so it failed rarely. It now compares the PIN with the stored values instead of searching the text. One other admin test (`test_an_item_can_be_added_and_removed`) failed once with a permission error while writing a file and could not be reproduced in 12 reruns; it looks like a Windows file lock and is noted, not fixed.

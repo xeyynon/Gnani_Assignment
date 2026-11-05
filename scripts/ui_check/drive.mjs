@@ -3,7 +3,8 @@
 // steps.mjs exports  steps = [{ name, js, expect?, shot? }].  js is an async snippet run in the page (use return);
 // expect is compared as JSON with what it returns (PASS or FAIL);  shot is a file to save a screenshot to after the step. Overflow is
 // checked after every step that takes a shot. Exit code is 1 if anything failed. Run each flow on a FRESH server: a flow
-// that creates things is not safe to run twice against the same one. Wait until the server answers before starting.
+// that creates things is not safe to run twice against the same one. CHROME_FLAGS adds browser flags, for example
+// '--use-fake-ui-for-media-stream --use-fake-device-for-media-stream' so a page can open a fake microphone. Wait until the server answers before starting.
 import { existsSync } from 'node:fs';
 function chromePath() {                     // CHROME=/path/to/chrome overrides; otherwise the usual places
   const candidates = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -23,7 +24,7 @@ const [url, stepsFile, w = '1280', hgt = '900', scheme = 'light', auth = ''] = p
 const { steps } = await import(pathToFileURL(stepsFile).href);
 const port = 9800 + Math.floor(Math.random() * 150);
 const chrome = spawn(chromePath(),
-  ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp'))}`, 'about:blank'], { stdio: 'ignore' });
+  ['--headless=new', '--disable-gpu', ...(process.env.CHROME_FLAGS ? process.env.CHROME_FLAGS.split(' ') : []), `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp'))}`, 'about:blank'], { stdio: 'ignore' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let target;
 for (let i = 0; i < 50 && !target; i++) { await sleep(200); try { target = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(t => t.type === 'page'); } catch {} }

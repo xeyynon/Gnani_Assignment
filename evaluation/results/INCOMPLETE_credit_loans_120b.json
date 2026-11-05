@@ -1,0 +1,234 @@
+{
+  "source_run": "run_credit_loans_1.json",
+  "script": "credit_loans.json",
+  "noise_snr_db": null,
+  "snr_definition": null,
+  "elapsed_sec": 1800,
+  "model": "openai/gpt-oss-120b",
+  "llm_provider": "Groq",
+  "speech": "synthetic (Timbre)",
+  "overall": {
+    "calls": 0,
+    "exact_orders": 0,
+    "exact_rate": null,
+    "exact_ci95": [
+      0.0,
+      0.0
+    ],
+    "item_recall": null,
+    "item_precision": null,
+    "payment_right": 0,
+    "orders_saved": 0
+  },
+  "loans": {
+    "calls": 4,
+    "exact": 4,
+    "exact_rate": 1.0,
+    "exact_ci95": [
+      0.51,
+      1.0
+    ],
+    "quotes_saved": 4
+  },
+  "by_language": {},
+  "by_tag": {},
+  "total_matches_stock_list": "0/0",
+  "turns": 6,
+  "turns_without_response": 0,
+  "time_to_first_audio_ms": {
+    "n": 6,
+    "median": 3466,
+    "p90": 4435,
+    "min": 640,
+    "max": 5051,
+    "basis": "from the caller's last word: first_audio_after_ms plus the quiet at the end of the clip",
+    "turns_without_silence_correction": 0
+  },
+  "time_to_first_audio_from_clip_end_ms": {
+    "n": 6,
+    "median": 3172,
+    "p90": 4235,
+    "min": 500,
+    "max": 4891,
+    "basis": "from the end of the audio file, uncorrected"
+  },
+  "wer_raw": null,
+  "wer_number_normalised": null,
+  "t_wer": null,
+  "english_words": 0,
+  "cut_off": {
+    "turns_heard": 0,
+    "split_into_pieces": 0,
+    "under_half_the_words": 0,
+    "agent_clips_cut_by_the_caller_unscripted": 0
+  },
+  "rate_limited_requests": 0,
+  "agent_log_found": true,
+  "complete": false,
+  "calls_finished": 4,
+  "calls_expected": 8,
+  "calls_missing": [
+    "U01",
+    "U02",
+    "U03",
+    "U04"
+  ],
+  "run_done_flag": false,
+  "valid_run": false,
+  "reference_words": 0,
+  "calls_detail": [
+    {
+      "id": "L01",
+      "lang": "hi-IN",
+      "tags": [
+        "loan",
+        "hi-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 1000000,
+        "loan_amount": 900000,
+        "monthly_instalment": 15438
+      },
+      "loan_got": {
+        "project_cost": 1000000,
+        "loan_amount": 900000,
+        "monthly_instalment": 15438
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L02",
+      "lang": "te-IN",
+      "tags": [
+        "loan",
+        "te-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 500000,
+        "loan_amount": 450000,
+        "monthly_instalment": 7719
+      },
+      "loan_got": {
+        "project_cost": 500000,
+        "loan_amount": 450000,
+        "monthly_instalment": 7719
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L03",
+      "lang": "en-IN",
+      "tags": [
+        "loan",
+        "en-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 1200000,
+        "loan_amount": 1080000,
+        "monthly_instalment": 18526
+      },
+      "loan_got": {
+        "project_cost": 1200000,
+        "loan_amount": 1080000,
+        "monthly_instalment": 18526
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L04",
+      "lang": "hi-en",
+      "tags": [
+        "loan",
+        "hi-en"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 100000,
+        "loan_amount": 90000,
+        "monthly_instalment": 3034
+      },
+      "loan_got": {
+        "project_cost": 100000,
+        "loan_amount": 90000,
+        "monthly_instalment": 3034
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    }
+  ],
+  "not_computed": []
+}

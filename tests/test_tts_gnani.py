@@ -6,6 +6,7 @@ client does what the docs say; they cannot show the real service agrees.
     python -m pytest tests/test_tts_gnani.py
 """
 
+import asyncio
 import base64
 import importlib
 import io
@@ -30,6 +31,7 @@ from dukaan_dost import tts_gnani  # noqa: E402
 def env(monkeypatch):
     monkeypatch.setenv("GNANI_API_KEY", "test-key")
     monkeypatch.delenv("GNANI_TTS_LANGUAGE", raising=False)
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", False)          # the spare-connection tests switch it on
     monkeypatch.setattr("dukaan_dost.tts_gnani.with_retry",
                         lambda fn, attempts=2, delay=0.0: _retry(fn, attempts))
 
@@ -258,3 +260,145 @@ def test_both_backends_offer_the_names_the_app_imports():
     from dukaan_dost import tts_google
     for name in ("synthesize", "warmup", "start_streaming_synthesis", "needs_digit_spelling"):
         assert callable(getattr(tts_gnani, name)) and callable(getattr(tts_google, name))
+
+
+# ---- the spare connection -------------------------------------------------------------------
+
+def counting_server(opened):
+    async def handler(ws):
+        opened.append(time.monotonic())
+        async for raw in ws:
+            await ws.send(json.dumps({"type": "audio", "data": {"chunk_index": 1, "audio": b64(pcm(10)), "is_final": False}}))
+            await ws.send(json.dumps({"type": "complete", "data": {"chunk_index": 2, "audio": "", "is_final": True}}))
+    return FakeServer(handler)
+
+
+def wait_until(predicate, timeout=3.0):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def test_the_next_sentence_uses_a_connection_opened_ahead_of_time(monkeypatch):
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", True)
+    opened = []
+    with counting_server(opened) as s:
+        point_at(s, monkeypatch)
+        try:
+            assert list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())      # opens one, then a spare behind it
+            assert wait_until(lambda: len(opened) == 2)
+            before = len(opened)
+            assert list(tts_gnani.start_streaming_synthesis("b", "en-IN").chunks())      # takes the spare: no new wait
+            assert wait_until(lambda: len(opened) == before + 1)                          # and a fresh spare is opened
+        finally:
+            tts_gnani.close_spare()
+
+
+def test_a_stale_spare_is_not_used(monkeypatch):
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", True)
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE_MAX_AGE_SEC", 0.0)
+    opened = []
+    with counting_server(opened) as s:
+        point_at(s, monkeypatch)
+        try:
+            list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())
+            assert wait_until(lambda: len(opened) == 2)
+            stream = tts_gnani.start_streaming_synthesis("b", "en-IN")
+            assert list(stream.chunks()) and not stream.failed                       # works, by a new connection
+        finally:
+            tts_gnani.close_spare()
+
+
+def test_a_spare_for_another_address_is_not_used(monkeypatch):
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", True)
+    first, second = [], []
+    with counting_server(first) as a, counting_server(second) as b:
+        try:
+            point_at(a, monkeypatch)
+            list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())
+            assert wait_until(lambda: len(first) == 2)
+            point_at(b, monkeypatch)
+            assert list(tts_gnani.start_streaming_synthesis("b", "en-IN").chunks())
+            assert len(second) >= 1
+        finally:
+            tts_gnani.close_spare()
+
+
+def test_with_the_spare_switched_off_every_sentence_opens_its_own_connection(monkeypatch):
+    opened = []
+    with counting_server(opened) as s:
+        point_at(s, monkeypatch)
+        list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())
+        list(tts_gnani.start_streaming_synthesis("b", "en-IN").chunks())
+        time.sleep(0.2)
+        assert len(opened) == 2
+
+
+# ---- a spare that died quietly, and closes that must not be waited for ------------------------
+
+def dead_spare_server(opened, dead_numbers, paused_after_complete=False):
+    """Connection numbers in dead_numbers stop reading and never answer; the rest behave normally."""
+    async def handler(ws):
+        opened.append(time.monotonic())
+        me = len(opened)
+        if me in dead_numbers:
+            ws.transport.pause_reading()
+            await asyncio.sleep(60)
+            return
+        async for raw in ws:
+            await ws.send(json.dumps({"type": "audio", "data": {"chunk_index": 1, "audio": b64(pcm(10)), "is_final": False}}))
+            await ws.send(json.dumps({"type": "complete", "data": {"chunk_index": 2, "audio": "", "is_final": True}}))
+            if paused_after_complete:
+                ws.transport.pause_reading()       # the close frame will never be answered
+                await asyncio.sleep(60)
+    return FakeServer(handler)
+
+
+def test_a_spare_that_died_quietly_is_replaced_by_a_fresh_connection(monkeypatch):
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", True)
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE_FIRST_MESSAGE_SEC", 0.3)
+    monkeypatch.setattr("dukaan_dost.tts_gnani.REQUEST_TIMEOUT_SEC", 4.0)
+    opened = []
+    with dead_spare_server(opened, {2}) as s:
+        point_at(s, monkeypatch)
+        try:
+            assert list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())
+            assert wait_until(lambda: len(opened) == 2)                  # the spare, which is the dead one
+            t0 = time.monotonic()
+            stream = tts_gnani.start_streaming_synthesis("b", "en-IN")
+            chunks = list(stream.chunks())
+            assert chunks and not stream.failed
+            assert time.monotonic() - t0 < 3.0
+        finally:
+            tts_gnani.close_spare()
+
+
+def test_a_stale_spare_whose_peer_is_silent_does_not_delay_the_next_sentence(monkeypatch):
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE", True)
+    monkeypatch.setattr("dukaan_dost.tts_gnani.SPARE_MAX_AGE_SEC", 0.3)
+    opened = []
+    with dead_spare_server(opened, {2}) as s:
+        point_at(s, monkeypatch)
+        try:
+            list(tts_gnani.start_streaming_synthesis("a", "en-IN").chunks())
+            assert wait_until(lambda: len(opened) == 2)
+            time.sleep(0.5)                                             # now older than the limit
+            t0 = time.monotonic()
+            stream = tts_gnani.start_streaming_synthesis("b", "en-IN")
+            assert list(stream.chunks()) and not stream.failed
+            assert time.monotonic() - t0 < 3.0                          # not the 10 s close timeout
+        finally:
+            tts_gnani.close_spare()
+
+
+def test_the_stream_ends_at_complete_even_if_the_peer_never_answers_the_close(monkeypatch):
+    opened = []
+    with dead_spare_server(opened, set(), paused_after_complete=True) as s:
+        point_at(s, monkeypatch)
+        t0 = time.monotonic()
+        stream = tts_gnani.start_streaming_synthesis("a", "en-IN")
+        assert list(stream.chunks()) and not stream.failed
+        assert time.monotonic() - t0 < 3.0

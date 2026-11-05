@@ -22,7 +22,7 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{1,39}$")
 
 
 def valid_name(name) -> bool:
-    return isinstance(name, str) and bool(NAME_RE.match(name))
+    return isinstance(name, str) and bool(NAME_RE.fullmatch(name))
 
 
 def shop_dir(name: str, root: Path | None = None) -> Path:

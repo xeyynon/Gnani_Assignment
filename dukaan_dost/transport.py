@@ -21,7 +21,8 @@ Audio is 16 kHz, mono, signed 16-bit little-endian PCM on the capture side
 and a WAV file on the playback side (app.SAMPLE_RATE). A transport carrying a
 different rate converts at its own edge.
 
-Pick one with AUDIO_TRANSPORT (default "websocket": a call page in a browser).
+Pick one with AUDIO_TRANSPORT (default "websocket": a call page in a browser; "replay": a scripted caller
+for the evaluation, see transport_replay.py).
 """
 
 import os
@@ -70,6 +71,9 @@ class Transport:
     def add_http_handler(self, handler) -> None:
         """Serve extra HTTP routes (the dashboards). Transports without a web server ignore it."""
 
+    def add_ws_handler(self, path: str, handler) -> None:
+        """Serve an extra WebSocket route (the admin page). Transports without a web server ignore it."""
+
     def call_shop(self):
         """The shop the current call is for, or None (use the default shop)."""
         return None
@@ -109,4 +113,13 @@ def create(name: str | None = None) -> Transport:
     if name == "websocket":
         from .transport_websocket import WebSocketTransport
         return WebSocketTransport()
-    raise ValueError(f"AUDIO_TRANSPORT={name!r} is not a known transport (expected 'websocket')")
+    if name == "replay":
+        from .transport_replay import ReplayTransport
+        plan = os.environ.get("REPLAY_PLAN")
+        if not plan:
+            raise ValueError("AUDIO_TRANSPORT=replay needs REPLAY_PLAN=<path to the plan file>")
+        return ReplayTransport.from_file(plan)
+    if name == "telephony":
+        from .transport_telephony import TelephonyTransport
+        return TelephonyTransport()
+    raise ValueError(f"AUDIO_TRANSPORT={name!r} is not a known transport (expected 'websocket', 'replay' or 'telephony')")

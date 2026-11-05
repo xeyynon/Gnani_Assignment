@@ -18,6 +18,10 @@ Protocol, read from docs.gnani.ai/api/TTS/tts-websocket.md on 2026-11-02:
     data.is_final=false), then complete (is_final=true, no audio), or error.
   - Send one request at a time. Each synthesis here gets its own connection, so
     two sentences can be in flight without sharing a socket.
+  - Opening a connection took 375 to 420 ms against the real service (2026-11-03), more than the
+    200 to 300 ms from request to first audio. So one spare connection is kept open ahead of time and
+    used by the next synthesis (a socket is still used for one request only); a new spare is opened as
+    soon as it is taken. GNANI_TTS_SPARE=0 turns this off.
   - Numbers, dates and currency should be written as spoken words (the docs
     say raw digit strings can be mispronounced); see normalize_text().
 
@@ -52,6 +56,10 @@ DEFAULT_LANGUAGE = "en-IN"
 VOICE = os.getenv("GNANI_TTS_VOICE", "Shivani")
 MODEL = os.getenv("GNANI_TTS_MODEL", "timbre-v3.0")
 SPEED = float(os.getenv("GNANI_TTS_SPEED", "1.0"))        # documented range 0.85 to 1.15
+
+SPARE = os.getenv("GNANI_TTS_SPARE", "1") != "0"
+SPARE_MAX_AGE_SEC = float(os.getenv("GNANI_TTS_SPARE_MAX_AGE_SEC", "60"))     # Timbre kept an idle socket open for at least 90 s (2026-11-05); a dead one is caught by the first-message check
+SPARE_FIRST_MESSAGE_SEC = float(os.getenv("GNANI_TTS_SPARE_FIRST_MESSAGE_SEC", "1.5"))   # a spare that says nothing by then is dead
 
 _SUPPORTED = {"hi-IN", "en-IN", "ta-IN", "te-IN", "kn-IN", "ml-IN", "mr-IN", "pa-IN", "bn-IN", "gu-IN"}
 
@@ -130,6 +138,102 @@ def _request_payload(text: str, language_code: str) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# One background event loop, and the spare connection that lives on it
+# ---------------------------------------------------------------------------
+
+_loop = None
+_loop_lock = threading.Lock()
+_spare = None            # (connection, url, key, opened at); touched only on the loop thread
+_closing: set = set()    # background close tasks, kept so they are not collected half-done
+
+
+def _shared_loop():
+    global _loop
+    with _loop_lock:
+        if _loop is None or _loop.is_closed():
+            loop = asyncio.new_event_loop()
+            threading.Thread(target=loop.run_forever, daemon=True, name="tts-gnani-loop").start()
+            _loop = loop
+        return _loop
+
+
+async def _open(url: str, key: str):
+    from websockets.asyncio.client import connect
+    return await asyncio.wait_for(
+        connect(url, additional_headers={"X-API-Key-ID": key, "Content-Type": "application/json"}, max_size=None),
+        timeout=CONNECT_TIMEOUT_SEC)
+
+
+def _close_later(ws) -> None:
+    """Close a connection in the background. A peer that never answers the close frame makes close()
+    wait out the library's 10 s timeout, and nothing the caller does should wait for that."""
+    async def close():
+        try:
+            await ws.close()
+        except Exception:
+            pass
+    task = asyncio.get_running_loop().create_task(close())
+    _closing.add(task)
+    task.add_done_callback(_closing.discard)
+
+
+async def _refill(url: str, key: str):
+    global _spare
+    if _spare is not None:
+        return
+    try:
+        ws = await _open(url, key)
+    except Exception as e:
+        log.debug(f"[TTS-GNANI] spare connection not opened: {e}")
+        return
+    if _spare is not None:                      # another refill won
+        await ws.close()
+        return
+    _spare = (ws, url, key, time.monotonic())
+
+
+async def _take():
+    """(connection, came from the spare): a ready connection if the spare is fresh, else a new one;
+    then start opening the next spare."""
+    global _spare
+    url, key = _url(), _api_key()
+    ws = None
+    from_spare = False
+    spare, _spare = _spare, None
+    if spare is not None:
+        old, s_url, s_key, opened = spare
+        from websockets.protocol import State
+        if (s_url == url and s_key == key and time.monotonic() - opened < SPARE_MAX_AGE_SEC
+                and old.state is State.OPEN):
+            ws = old
+            from_spare = True
+        else:
+            _close_later(old)
+    if ws is None:
+        ws = await _open(url, key)
+    if SPARE:
+        asyncio.get_running_loop().create_task(_refill(url, key))
+    return ws, from_spare
+
+
+def close_spare() -> None:
+    """Drop the spare connection (tests, shutdown)."""
+    loop = _loop
+    if loop is None or loop.is_closed():
+        return
+
+    async def drop():
+        global _spare
+        spare, _spare = _spare, None
+        if spare is not None:
+            await spare[0].close()
+    try:
+        asyncio.run_coroutine_threadsafe(drop(), loop).result(timeout=3)
+    except Exception:
+        pass
+
+
 class StreamingSynthesis:
     """
     Runs one synthesis in a daemon thread and exposes raw 16 kHz mono s16 PCM
@@ -161,7 +265,9 @@ class StreamingSynthesis:
         # The sentinel must go out whatever happens, or a consumer blocked in
         # chunks() hangs forever (the same lesson as tts_google.py).
         try:
-            asyncio.run(asyncio.wait_for(self._stream(text, language_code), timeout=REQUEST_TIMEOUT_SEC))
+            asyncio.run_coroutine_threadsafe(
+                asyncio.wait_for(self._stream(text, language_code), timeout=REQUEST_TIMEOUT_SEC),
+                _shared_loop()).result()
         except asyncio.TimeoutError:
             self._error = f"timed out after {REQUEST_TIMEOUT_SEC:g}s"
             log.error(f"[TTS-GNANI] {self._error}")
@@ -172,18 +278,50 @@ class StreamingSynthesis:
             self._queue.put(None)
 
     async def _stream(self, text: str, language_code: str):
-        from websockets.asyncio.client import connect
-
         if not text or not text.strip():
             return
+        _api_key()                            # fail at once, with the clear message, when there is no key
         t0 = time.monotonic()
-        headers = {"X-API-Key-ID": _api_key(), "Content-Type": "application/json"}
-        ws = await asyncio.wait_for(connect(_url(), additional_headers=headers, max_size=None),
-                                    timeout=CONNECT_TIMEOUT_SEC)
+        ws, from_spare = await _take()
+        try:
+            await self._exchange(ws, text, language_code, t0, SPARE_FIRST_MESSAGE_SEC if from_spare else None)
+        except _SpareSilent as e:
+            # A spare can die quietly while it waits. Nothing has been yielded yet, so one fresh
+            # connection can take over without the caller noticing more than the wait.
+            log.warning(f"[TTS-GNANI] the spare connection did not answer ({e}); retrying on a new one")
+            ws = await _open(_url(), _api_key())
+            await self._exchange(ws, text, language_code, t0, None)
+
+    async def _exchange(self, ws, text: str, language_code: str, t0: float, first_message_sec):
+        """One request on one socket, which is then closed (in the background: the end of the
+        stream must not wait for a peer that does not answer the close frame). With
+        first_message_sec set, _SpareSilent is raised if no message comes back in that time."""
         leftover = b""                        # a chunk may end mid-sample; carry the odd byte over
         try:
-            await ws.send(json.dumps(_request_payload(text, language_code), ensure_ascii=False))
-            async for raw in ws:
+            first = first_message_sec is not None
+            try:
+                await ws.send(json.dumps(_request_payload(text, language_code), ensure_ascii=False))
+            except Exception as e:
+                if first:
+                    raise _SpareSilent(str(e) or type(e).__name__) from None
+                raise
+            messages = ws.__aiter__()
+            while True:
+                try:
+                    if first:
+                        raw = await asyncio.wait_for(messages.__anext__(), timeout=first_message_sec)
+                    else:
+                        raw = await messages.__anext__()
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    raise _SpareSilent(f"nothing in {first_message_sec:g}s") from None
+                except Exception as e:
+                    if first:
+                        raise _SpareSilent(str(e) or type(e).__name__) from None
+                    raise
+                if first:
+                    first = False
                 msg = json.loads(raw)
                 kind = msg.get("type")
                 if kind == "audio":
@@ -206,10 +344,11 @@ class StreamingSynthesis:
                     raise RuntimeError(msg.get("message") or "error from the speech service")
             raise RuntimeError("connection closed before the synthesis completed")
         finally:
-            try:
-                await ws.close()
-            except Exception:
-                pass
+            _close_later(ws)
+
+
+class _SpareSilent(Exception):
+    """The spare connection gave no first message in time (or broke before one)."""
 
 
 def start_streaming_synthesis(text: str, language_code: str) -> StreamingSynthesis:

@@ -149,7 +149,7 @@ def get_core_context(shop_dir: Path) -> str:
     return core_path.read_text(encoding="utf-8")
 
 
-def get_relevant_context(shop_dir: Path, transcript: str) -> str:
+def get_relevant_context(shop_dir: Path, transcript: str, skip: tuple = ()) -> str:
     """
     Scores every section of every topic file in knowledge/ against the
     transcript and returns the top-matching sections, up to
@@ -166,6 +166,8 @@ def get_relevant_context(shop_dir: Path, transcript: str) -> str:
     knowledge_dir = shop_dir / "knowledge"
 
     for filename in KNOWLEDGE_FILES:
+        if filename in skip:
+            continue
         file_path = knowledge_dir / filename
         if not file_path.exists():
             continue
@@ -208,6 +210,21 @@ def get_relevant_context(shop_dir: Path, transcript: str) -> str:
 _speculative_lock = threading.Lock()
 _speculative_partial = ""
 _speculative_context: str | None = None
+_speculative_source = None       # (shop folder, signature of its knowledge files) the cached context was built from
+
+
+def _source_key(shop_dir: Path):
+    """Which shop and which version of its files a context came from. A cached context is reused only for the same
+    shop and unchanged files: otherwise the last call of one shop (or a price just edited in the admin page) could
+    answer the next caller of another shop (or the same shop) with the wrong prices."""
+    folder = Path(shop_dir) / "knowledge"
+    sig = []
+    try:
+        for f in sorted(folder.rglob("*.md")):
+            sig.append((str(f.relative_to(folder)), f.stat().st_mtime_ns))
+    except OSError:
+        pass
+    return (str(Path(shop_dir).resolve()), tuple(sig))
 
 
 def prefetch_relevant_context(shop_dir: Path, partial_transcript: str) -> None:
@@ -217,11 +234,13 @@ def prefetch_relevant_context(shop_dir: Path, partial_transcript: str) -> None:
     background thread — it does the same work get_relevant_context()
     does, just earlier, on a partial rather than the final transcript.
     """
-    global _speculative_partial, _speculative_context
+    global _speculative_partial, _speculative_context, _speculative_source
+    source = _source_key(shop_dir)
     context = get_relevant_context(shop_dir, partial_transcript)
     with _speculative_lock:
         _speculative_partial = partial_transcript
         _speculative_context = context
+        _speculative_source = source
 
 
 def get_relevant_context_maybe_cached(shop_dir: Path, final_transcript: str) -> str:
@@ -237,8 +256,9 @@ def get_relevant_context_maybe_cached(shop_dir: Path, final_transcript: str) -> 
     with _speculative_lock:
         cached_partial = _speculative_partial
         cached_context = _speculative_context
+        cached_source = _speculative_source
 
-    if cached_partial and cached_context is not None:
+    if cached_partial and cached_context is not None and cached_source == _source_key(shop_dir):
         partial_words = _tokens(cached_partial)
         final_words = _tokens(final_transcript)
         if partial_words and partial_words.issubset(final_words):

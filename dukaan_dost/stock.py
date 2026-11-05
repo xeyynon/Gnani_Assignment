@@ -17,6 +17,7 @@ Keeping one source stops the three from drifting apart.
 """
 
 import json
+import math
 import re
 from pathlib import Path
 
@@ -40,27 +41,40 @@ def load(shop_dir) -> list:
 
 
 def validate(items) -> list:
+    """Every problem found, as text. Never raises, whatever shape the file has: a malformed stock list must be reported,
+    not crash the caller (an admin edit, or the agent starting a call)."""
+    if not isinstance(items, list):
+        return ["items must be a list"]
     problems, seen = [], set()
     for i, it in enumerate(items):
-        where = it.get("sku", f"item {i}")
+        if not isinstance(it, dict):
+            problems.append(f"item {i}: must be an object")
+            continue
         sku = it.get("sku", "")
-        if not SKU.match(sku):
+        where = sku if isinstance(sku, str) and sku else f"item {i}"
+        if not isinstance(sku, str) or not SKU.fullmatch(sku):
             problems.append(f"{where}: sku must be capital letters, digits and hyphens")
         if sku in seen:
             problems.append(f"{where}: duplicate sku")
-        seen.add(sku)
+        if isinstance(sku, str):
+            seen.add(sku)
+        names = it.get("name") if isinstance(it.get("name"), dict) else {}
         for lang in LANGUAGES:
-            if not str(it.get("name", {}).get(lang, "")).strip():
+            value = names.get(lang, "")
+            if not isinstance(value, str) or not value.strip():
                 problems.append(f"{where}: missing {lang} name")
         if it.get("unit") not in UNITS:
             problems.append(f"{where}: unit {it.get('unit')!r} is not one of {sorted(UNITS)}")
         price = it.get("price")
-        if not isinstance(price, (int, float)) or isinstance(price, bool) or price <= 0:
+        if (not isinstance(price, (int, float)) or isinstance(price, bool) or not math.isfinite(price) or price <= 0):
             problems.append(f"{where}: price must be a positive number")
         if not isinstance(it.get("in_stock"), bool):
             problems.append(f"{where}: in_stock must be true or false")
-        if not it.get("aliases"):
+        aliases = it.get("aliases")
+        if not isinstance(aliases, list) or not aliases or not all(isinstance(a, str) and a.strip() for a in aliases):
             problems.append(f"{where}: needs at least one alias (how callers say it in Latin letters)")
+        if not isinstance(it.get("pack"), str) or not it["pack"].strip():
+            problems.append(f"{where}: needs a pack size, for example '1 kg'")
     return problems
 
 
@@ -78,6 +92,29 @@ def render_products_md(items) -> str:
         lines.append("Also called: " + ", ".join(it["aliases"]))
         sections.append("\n".join(lines))
     return "\n\n".join(sections) + "\n"
+
+
+def catalogue_text(items, only=None) -> str:
+    """
+    Every item on one short line, for the order prompt: "SKU | English | Hindi | Telugu | unit [| OUT OF STOCK]".
+    No prices (the code says those). Sent on every order turn so the model can match whatever the caller
+    says, in any of the three languages or in Latin letters, to a SKU. Keyword retrieval used to pick a few
+    product sections and missed items (the Hindi spelling with or without a dot under the letter, a Telugu
+    plural, or a crowd of oils filling the 1,200-character budget), so the model said "we do not have onions".
+    """
+    lines = []
+    for it in items:
+        if only is not None and it["sku"] not in only:
+            continue
+        n = it["name"]
+        english = re.sub(r"\s*\(.*?\)", "", n["en"]).strip()
+        parts = [it["sku"], english, n["hi"], n["te"], it["unit"]]
+        if not it["in_stock"]:
+            parts.append("OUT OF STOCK")
+        lines.append(" | ".join(parts))
+    head = ("CATALOGUE (SKU | English | Hindi | Telugu | unit):" if only is None else
+            "CATALOGUE, the items that best match what the caller said (SKU | English | Hindi | Telugu | unit). The caller may mean other items of the shop, but only these are listed:")
+    return head + "\n" + "\n".join(lines)
 
 
 def keyterms(items, limit: int = 200) -> list:

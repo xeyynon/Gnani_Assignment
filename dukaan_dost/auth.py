@@ -28,6 +28,7 @@ import threading
 import time
 from pathlib import Path
 
+from . import store
 from .shops import PROJECT_ROOT, valid_name
 
 AUTH_FILE = PROJECT_ROOT / "data" / "auth.json"
@@ -40,11 +41,25 @@ def _hash(pin: str, salt: bytes) -> bytes:
     return hashlib.scrypt(pin.encode("utf-8"), salt=salt, **_SCRYPT)
 
 
-def _load(path: Path) -> dict:
+class AuthFileUnreadable(ValueError):
+    """auth.json is there but cannot be read or understood. Writing a new PIN over it would erase every other shop's PIN."""
+
+
+def _load(path: Path, strict: bool = False) -> dict:
+    """The PIN table. A missing file is an empty table. A file that is there but unreadable also reads as empty for
+    checking a PIN (nobody gets in), but strict=True (used before writing) raises instead."""
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and isinstance(data.get("shops"), dict):
+            return data
+        problem = "it has no table of shops"
+    except FileNotFoundError:
         return {"shops": {}}
+    except (OSError, ValueError) as e:
+        problem = str(e)
+    if strict:
+        raise AuthFileUnreadable(f"{path} cannot be read ({problem}); fix or remove it before setting a PIN")
+    return {"shops": {}}
 
 
 def set_pin(shop: str, pin: str, path: Path | None = None) -> None:
@@ -55,12 +70,12 @@ def set_pin(shop: str, pin: str, path: Path | None = None) -> None:
     path = path or AUTH_FILE
     salt = secrets.token_bytes(16)
     with _lock:
-        data = _load(path)
+        data = _load(path, strict=True)
         data.setdefault("shops", {})[shop] = {"salt": salt.hex(), "hash": _hash(pin, salt).hex()}
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
-        os.replace(tmp, path)
+        store.replace_file(tmp, path)
 
 
 def has_pin(shop: str, path: Path | None = None) -> bool:
@@ -69,7 +84,7 @@ def has_pin(shop: str, path: Path | None = None) -> bool:
 
 def check_pin(shop: str, pin: str, path: Path | None = None) -> bool:
     entry = _load(path or AUTH_FILE).get("shops", {}).get(shop)
-    if not entry or not isinstance(pin, str):
+    if not entry or not isinstance(entry, dict) or not isinstance(pin, str):
         return False
     try:
         expected = bytes.fromhex(entry["hash"])

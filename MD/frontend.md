@@ -31,13 +31,13 @@ Rules to keep:
 
 Not taken: a router, a state library, lazy-loaded screens, a status page and a build-label dialog. They solve problems these two small pages do not have yet.
 
-## The visual mix: bento, glass, brutalist accents, minimal (DEC-041)
-Four design ideas, each with one job so they do not fight:
+## The visual mix: bento, brutalist accents, minimal (DEC-041, glass removed by DEC-049)
+Glass and the coloured glows were taken out on 2026-11-05 (DEC-049): every page now uses one neutral charcoal and off-white palette, with one calm green accent, flat solid surfaces and no gradients. The text below that still says glass is history; the working rules are these three ideas, each with one job so they do not fight:
 
 | Idea | Its job | Where it lives |
 |---|---|---|
 | **Bento** | The layout: unequal cells on a 12-column grid, one hero | `dashboard/layout.css` (the overview), `call/layout.css`; panels carry `b-*` classes |
-| **Glass** | The chrome only: side menu, top bar, chips, small buttons, the call card, floating over soft colour blobs | `shared/glass.css`; tokens `--glass`, `--glass-line`, `--blur`, `--blob-1..3` |
+| ~~Glass~~ | Removed (DEC-049): no blur, no blobs, no `--glass`/`--blob` tokens, no `shared/glass.css` | |
 | **Brutalist accents** | The few things that matter most: a thick border and a hard offset shadow that presses in on click (the call button, End call, the hero number); monospace numerals; small uppercase labels | `shared/brutal.css` (class `brut`); `--mono`, `--brut`, `--hard-shadow` |
 | **Minimal** | The base: one 22 px radius, generous gaps, no shadows on ordinary cells, nothing decorative beyond the above | `shared/tokens.css` |
 
@@ -45,10 +45,10 @@ Four design ideas, each with one job so they do not fight:
 - **The hero tile is one row, not two:** the Sales tile is the widest and has the biggest number but is no taller than its neighbours; a first version two rows tall was mostly empty. The three tiles are one row on a laptop, and the check for sideways scrolling is run at 1440, 1280, 1100, 1001, 900, 600, 390 and 360 px, menu open and hidden.
 
 Rules that keep the mix honest:
-1. **Glass never carries a number.** Cards with figures (the tiles, the order table, the lists, the chart) are solid. Glass has an opaque fallback where `backdrop-filter` is missing and under `prefers-reduced-transparency`.
+1. **Every surface is solid.** No glass, no gradient, no blur (a test on the admin page and the contrast tool's exact arithmetic both rely on this).
 2. **Brutalism is an accent, never the base.** Use `brut` on at most the one call to action and the one hero figure per screen. It respects reduced motion (the press animation only runs when motion is allowed).
 3. **One hero per page.** On the dashboard it is Sales today (tall, blue, hard-edged); on the call page it is the call card.
-4. **Colours still come only from tokens.** The blob colours, the glass tints and the brutalist ink are tokens in each theme (the brutalist ink is dark green-black in light and the brand green in dark). The colour test covers the new files.
+4. **Colours still come only from tokens.** The brutalist ink is a token in each theme (near-black in light, near-white in dark, so the hard shadow is never the same colour as the green button it sits under). The colour test covers the new files.
 5. **Cells dissolve into the grid.** On the dashboard the old wrappers (`.cols`, `.stack`, the tile row) are `display:contents` so each cell is placed directly by its `b-*` class. Phone: two columns, then one, hero first.
 
 ## Component structure (DEC-040)
@@ -84,9 +84,10 @@ Adding a component: write `components/<page or shared>/<name>.{html,css,js}`, ad
 - **States** (worked out by the page itself from what it is doing): listening (the waveform follows the caller's own microphone), thinking (after the caller's words arrive, until the first reply clip; given up after 12 s because not every turn gets a spoken reply), speaking (the waveform follows the agent's voice), muted, ended.
 - **Live transcript:** what the caller said and what the agent said, one bubble per reply. A reply cut off by the caller is marked "(interrupted)". The agent's text is shown when it is queued for speech, a moment before it is heard.
 - **Current order:** read-only (the caller changes the order by voice; totals are computed in code). It shows "coming soon" until the agent sends `order` messages, which waits for the order state (build step 8, DEC-006).
+- **Loan guidance** (added 2026-11-03): sits under the order. Empty it says "Ask about a business loan and the figures appear here". After each quote the agent sends a `loan` event and the panel shows, in the calculator's own words: where (business and place, if said), the project cost, the caller's margin money, the loan, the scheme and its rate, the total interest, and a highlighted **instalment a month for N months, after an M-month moratorium**. If the loan is capped it says the caller puts in more than the margin. If the project is above the scheme's limit it shows no loan and no instalment and says no scheme applies. A new quote replaces the old one in place; the last quote stays after the call ends and is cleared when the next call starts. It is always tagged **indicative** and carries a footnote that the figures come from the scheme terms this project uses, not a bank or the government (DEC-047: the scheme figures could not be verified). **The page shows only the figures it is given and does no arithmetic**: a test checks that the panel code has none, and another that a changed instalment is shown as sent and not recomputed. Amounts are in monospace, text in the normal font.
 - **Plain messages** for the common failures: a page that is not `localhost` or `https` (no microphone), permission denied, the agent not running, another call in progress.
 - **Not taken from the mockup:** a speaker button (meaningless in a browser tab), a language picker (Prisma detects the language and the app locks it for the call), +/- buttons on order lines.
-- **New protocol messages**, server to page: `user` (`text`, `lang`), `agent` (`reply`, `text`), `order` (`items`, `total`). Sent through `Transport.send_event`, which never blocks the call. Listed at the top of `transport_websocket.py`.
+- **New protocol messages**, server to page: `user` (`text`, `lang`), `agent` (`reply`, `text`), `order` (`items`, `total`), `loan` (the calculator's figures plus `business`, `place`, `heard_amount`, `kind`, `indicative`). Sent through `Transport.send_event`, which never blocks the call. Listed at the top of `transport_websocket.py`.
 - **Everything the server sends is shown as text, never as HTML**, and a Node test fails if `innerHTML` and friends appear.
 - Needs `localhost` or `https`. **Still not tried with a real microphone in a real browser** (B-08). Checked as a render in headless Chrome at 1280, 700 and 390 px wide, light and dark, with the states driven by script: no horizontal overflow.
 
@@ -121,3 +122,10 @@ Adding a component: write `components/<page or shared>/<name>.{html,css,js}`, ad
 - Synthetic data only in screenshots and the video (R-2).
 - Anything a caller or shopkeeper sees ships as a build.
 - Readable on a phone screen.
+
+## Checking the pages: three tools and a folder (branch `frontend-audit`, 2026-11-05)
+Taken from the comparison with another project's design guide: measure, don't judge by eye, and keep the evidence.
+- **`scripts/ui_check/contrast.py`**: WCAG contrast of 22 text/part pairs in light and dark (44 measurements), read from the real tokens. `tests/test_ui_contrast.py` checks the tool itself (its first version read dark twice and never measured light). It found one real failure: light amber on amber-soft was 4.21:1, so `--amber` is now `#A64C08` (4.81:1).
+- **`scripts/ui_check/audit.mjs`**: audits a page as rendered, in headless Chrome: sideways scroll, controls with no name, duplicate ids, targets under 24 px (error) or 44 px on touch (warning), the contrast of every visible text node, `<title>`, `lang`, `<main>`. It found and we fixed: no `<main>` on the call page, the Auto-scroll switch 20 px tall, the admin search field, hide-menu button and notice close button under 44 px on touch. It sets the theme through `localStorage` because the admin page defaults to dark whatever the system says (an earlier "light" admin run was really dark).
+- **`scripts/ui_check/snapshots.mjs`**: full-page screenshots into `snapshots/<page>/<NN>-<state>/<theme>-<device>-<width>.png`: 3 pages, 13 states, light and dark, phone 390, tablet 768, desktop 1280 (78 images, about 13 MB), plus `snapshots/INDEX.md` and `snapshots/reports/` (the contrast table and the audit result). Retake against the made-up-data preview; same-named files are overwritten so `git diff --stat snapshots/` shows which screens changed. Not yet taken: a live call with a real microphone, the 1.3x text size, landscape phone.
+- **Last result**: 0 errors and 0 warnings on all three pages at 360, 390, 768 and 1280 px in both themes (24 runs, `snapshots/reports/audit.txt`).

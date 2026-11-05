@@ -1,0 +1,125 @@
+"""
+loan_turn.py
+
+One turn of a loan-guidance call, between the language model and loan_session.py (see that file for why).
+
+  detect(text)       does the caller want loan guidance? A keyword check in code, no model call, so it costs no
+                     tokens and cannot hallucinate. A miss just leaves the call in the shop-order flow.
+  prompt_section()   the instructions that make the model return one JSON object: the amount as rupees in digits,
+                     whether it is the caller's own money or the whole project cost, the business and the place.
+  parse_plan()       reads that object defensively.
+  compose()          the reply: always the code's sentences. The model's own words are used only for a plain
+                     question about the schemes, and never when they contain a digit (a wrong figure spoken
+                     confidently is the failure to avoid).
+"""
+
+import json
+import logging
+import re
+from dataclasses import dataclass
+
+from .order_turn import extract_json
+
+log = logging.getLogger("loan_turn")
+
+# Words that mean "I want a loan". Hindi and Telugu words are written as callers and Prisma write them.
+# Telugu అప్పు (debt, also "on credit") is NOT here: in a shop it means udhaar.
+_STRONG_WORDS = [
+    r"\bloans?\b", r"\bemi\b", r"\bmudra\b", r"\budyami\b", r"\bmoratorium\b", r"\bkarz\w*", r"\bkarj\w*",
+    r"\bstart (?:a|my) (?:shop|business)\b", r"\b(?:dukaan|dukan|shop|business)\s+(?:khol|shuru|start)\w*", r"लोन", r"कर्ज", r"कर्ज़", r"ऋण", r"किस्त", r"दुकान खोल", r"లోన్", r"రుణం", r"రుణ",
+    r"ఈఎంఐ", r"కిస్తీ", r"కిస్తు",
+]
+# Words that are ordinary shop talk on their own ("do you charge interest on udhaar", "is the shop open for business",
+# "I will invest in 10 kg of rice", "postpone it to tomorrow"). They start loan mode only beside a money-scale word
+# (lakh, crore, thousand), because loan mode is sticky: one wrong start would stop the caller ordering for the rest of the call.
+_WEAK_WORDS = [
+    r"\binterest\b", r"\bsubsidy\b", r"\bbyaj\b", r"\bvyapar\b", r"\bbusiness\b", r"\bfund(?:ing)?\b", r"\binvest\w*",
+    r"ब्याज", r"कारोबार", r"व्यापार", r"बिज़नेस", r"बिजनेस", r"निवेश", r"योजना", r"వడ్డీ", r"వ్యాపారం", r"బిజినెస్", r"పెట్టుబడి",
+    r"పథకం", r"వాయిదా",
+]
+_SCALE_WORDS = [r"\blakhs?\b", r"\blacs?\b", r"\bcrores?\b", r"\bhaz[a-z]*ar\b", r"\bthousand\b", r"लाख", r"करोड़", r"करोड", r"हज़ार",
+                r"हजार", r"లక్ష", r"కోటి", r"వేల"]
+_STRONG_RE = re.compile("|".join(_STRONG_WORDS), re.IGNORECASE)
+_WEAK_RE = re.compile("|".join(_WEAK_WORDS), re.IGNORECASE)
+_SCALE_RE = re.compile("|".join(_SCALE_WORDS), re.IGNORECASE)
+
+
+_NEGATION_RE = re.compile(r"^\W{0,3}(?:नहीं|नही|nahi|nahin|not|no|dont|don't|వద్దు|లేదు)(?!\w)", re.IGNORECASE)
+
+
+_REFUSED_BEFORE_RE = re.compile(r"(?:^|\W)(?:no|not|without|dont|don't)\W*$", re.IGNORECASE)
+
+
+def _asked_for(match_re, text: str) -> bool:
+    """A match counts unless a refusal sits right beside it ("मुझे लोन नहीं, दो किलो चीनी चाहिए", "no loan, two kilo sugar")."""
+    return any(not _NEGATION_RE.match(text[m.end():m.end() + 12]) and not _REFUSED_BEFORE_RE.search(text[max(0, m.start() - 10):m.start()])
+               for m in match_re.finditer(text))
+
+
+def detect(text: str) -> bool:
+    if not text:
+        return False
+    if _asked_for(_STRONG_RE, text):
+        return True
+    return _asked_for(_WEAK_RE, text) and _SCALE_RE.search(text) is not None
+
+
+def prompt_section() -> str:
+    return """LOAN MODE. The caller wants guidance on a small-business loan. You never work out or say any loan figure: the system does, from the amount you report. Your whole answer, to every message, is ONE JSON object and nothing else:
+{"amount": <number or null>, "amount_kind": "margin_money" | "project_cost" | null, "business": <string or null>, "place": <string or null>, "say": ""}
+- amount: the rupee amount the caller just said, as a plain number in rupees with no commas. Convert Indian units: 1 lakh = 100000, 1 crore = 10000000, 1 hazaar / hajar / हज़ार / వేలు = 1000, so 50 hazaar = 50000, dedh lakh = 150000, 2.5 lakh = 250000, saade teen lakh = 350000, paanch lakh = 500000. null if no amount was said in the LAST message.
+- amount_kind: "margin_money" if the caller means their own money or what they can invest or put in themselves (mere paas, main laga sakta hoon, nijanga petagalanu); "project_cost" if they mean what the whole shop or project will cost. null if it is not clear.
+- business: the kind of business (kirana, tea stall, dairy, tailoring), in English letters, if said. place: the town or village, if said.
+- say: leave it "" unless the caller asked a plain question about the schemes that has no number in the answer (what is a moratorium, how do I apply). Then answer in the caller's language in one short sentence with NO digits. Never state an amount, rate, instalment or period.
+Examples (caller, then JSON):
+"mujhe dukaan kholni hai, mere paas ek lakh hai" -> {"amount": 100000, "amount_kind": "margin_money", "business": "shop", "place": null, "say": ""}
+"project ka kharcha dedh lakh hoga" -> {"amount": 150000, "amount_kind": "project_cost", "business": null, "place": null, "say": ""}
+"I want a loan for a tea stall in Kurnool" -> {"amount": null, "amount_kind": null, "business": "tea stall", "place": "Kurnool", "say": ""}
+"50 hazaar" -> {"amount": 50000, "amount_kind": null, "business": null, "place": null, "say": ""}"""
+
+
+SCHEMA = {
+    "type": "object",
+    "properties": {
+        "amount": {"type": ["number", "null"]},
+        "amount_kind": {"type": ["string", "null"], "enum": ["margin_money", "project_cost", None]},
+        "business": {"type": ["string", "null"]},
+        "place": {"type": ["string", "null"]},
+        "say": {"type": "string"}},
+    "required": ["amount", "amount_kind", "business", "place", "say"],
+    "additionalProperties": False,
+}
+
+
+@dataclass
+class LoanPlan:
+    amount: object = None
+    kind: str | None = None
+    business: str | None = None
+    place: str | None = None
+    say: str = ""
+
+
+def parse_plan(text: str) -> LoanPlan | None:
+    obj = extract_json(text)
+    if obj is None:
+        return None
+    amount = obj.get("amount")
+    return LoanPlan(
+        amount=amount if isinstance(amount, (int, float)) and not isinstance(amount, bool) else None,
+        kind=obj.get("amount_kind") if obj.get("amount_kind") in ("margin_money", "project_cost") else None,
+        business=obj.get("business") if isinstance(obj.get("business"), str) else None,
+        place=obj.get("place") if isinstance(obj.get("place"), str) else None,
+        say=obj.get("say") if isinstance(obj.get("say"), str) else "",
+    )
+
+
+def compose(plan: LoanPlan, result, session, language) -> str:
+    """The reply: the code's sentences, plus the model's words only for a digit-free question about the schemes."""
+    text = session.text(result, language)
+    say = " ".join(plan.say.split())
+    if say and not re.search(r"\d", say) and result.status in ("ask_amount", "ask_kind") and plan.amount is None:
+        return f"{say} {text}"
+    if say and re.search(r"\d", say):
+        log.warning(f"[LOAN] the model put a number in its own words, dropped: {say!r}")
+    return text

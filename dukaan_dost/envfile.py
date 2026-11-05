@@ -8,7 +8,10 @@ looked at. .env is gitignored; .env.example shows the names.
 
 Rules, kept deliberately small:
   - blank lines and lines starting with # are skipped; "export KEY=value" is accepted
-  - a value may be wrapped in matching single or double quotes
+  - a value may be wrapped in matching single or double quotes; what follows the closing quote
+    (a " # comment") is ignored
+  - in an unquoted value, a "#" preceded by whitespace starts a comment and is cut off with the
+    whitespace before it; a "#" with no space before it stays (a URL fragment, a token)
   - a blank value, or one that still starts with "your-" (the placeholder style used in
     local_config.example.py), counts as not set
   - a variable that is already set in the real environment is never overridden
@@ -16,9 +19,26 @@ Rules, kept deliberately small:
 """
 
 import os
+import re
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _clean(value: str) -> str:
+    """The value without its quotes or its trailing comment. `value` still has the space that
+    followed the "=", so "A= # note" is seen as a comment and "A=#x" is not."""
+    value = value.rstrip()
+    if value.lstrip()[:1] in ("\"", "'"):
+        value = value.lstrip()
+    if value[:1] in ("\"", "'"):
+        close = value.find(value[0], 1)
+        if close > 0 and (not value[close + 1:].strip() or value[close + 1:].lstrip().startswith("#")):
+            return value[1:close]
+        if len(value) >= 2 and value[0] == value[-1]:
+            return value[1:-1]
+        return value
+    return re.split(r"\s+#", value, maxsplit=1)[0].strip()
 
 
 def parse(text: str) -> dict:
@@ -30,9 +50,8 @@ def parse(text: str) -> dict:
         if line.startswith("export "):
             line = line[len("export "):].lstrip()
         key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-            value = value[1:-1]
+        key = key.strip()
+        value = _clean(value)
         if not key.replace("_", "").isalnum() or not value or value.startswith("your-"):
             continue
         values[key] = value

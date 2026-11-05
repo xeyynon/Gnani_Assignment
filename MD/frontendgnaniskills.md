@@ -110,7 +110,7 @@ Write `components/<shared or page>/<name>.{html,css,js}`, add its include line t
 ### 5.1 Tokens (names matter more than values)
 Surfaces: `--bg`, `--surface`, `--surface2`. Text: `--ink`, `--muted`. Line: `--line`. Roles: `--green` (brand, active), `--blue` (sales, processing), `--credit` (credit), `--amber` (pending), `--warn` (error), `--end` (hang up); each with a `-soft` tint and, for text on a tint, `--green-ink`. Text on a filled colour is its own token (`--on-green`, `--on-end`) so a button's text colour is never a literal. Shape: `--radius-card`, `--radius-button`, `--shadow-card`. Effects: `--glass`, `--glass-line`, `--blur`, `--blob-1..3`. Accent edge: `--brut`, `--hard-shadow`. Numbers: `--mono`.
 
-**Values used here** (examples): brand light bg `#EDF1EC`, card `#FAFBF8`, ink `#1E2A23`, green `#16803D`. Brand dark bg `#0B1220`, green `#4CC38A`. **Admin dark** (taken from a dark workspace reference): bg `#09090B`, card `#0F0F12`, lime accent `#C6F135` with text `#0A0A0A` on it. Card radius 22 px on the shop pages and 16 px on the admin; button radius 12 px.
+**Values used here** (examples; the palette was made neutral on 2026-11-05, DEC-049): light bg `#F3F3F1`, card `#FFFFFF`, ink `#1C1C1E`, green `#1F7A4D`. Dark bg `#141415`, card `#1D1D1F`, ink `#ECECEE`, green `#5DBB8A`. All pages share it; no separate admin palette. Card radius 22 px; button radius 12 px.
 
 Every pair of text and background was chosen for contrast, but **contrast was checked by eye, not with a tool** (section 15).
 
@@ -133,7 +133,7 @@ Inter first, then the system font (nothing is fetched from outside, so Inter sho
 | **Brutalist accents** | The one action and the one figure that matter | Thick border and a hard offset shadow that presses in on click. At most one call to action and one hero figure per screen. Respect reduced motion. |
 | **Minimal** | The base | One radius, generous gaps, no shadows on ordinary cells. |
 
-The soft colour blobs behind the glass are a gradient, the one exception to "no gradients"; they are tokens, low in contrast and fixed behind the page.
+**Update 2026-11-05:** the glass and the colour blobs were removed (DEC-049): the user found the navy-and-glow dark theme too much, and flat solid surfaces measure exactly (no translucent colour to approximate). Lesson: a decorative layer that cannot be measured is the first thing to drop when someone asks for plainer. Also: a brutalist hard shadow must not be the same colour as the thing it sits under, or it looks like a rendering fault.
 
 ### 5.5 Colour roles (use the same colour for the same meaning, everywhere)
 Green: brand, active, ready, confirmed. Blue: money in, sales, "thinking". Violet: credit. Amber: pending, warning. Red: error, hang up, broken. Grey: neutral and idle. Status is always a pill with the **word** (Ready, Needs attention, Broken, Confirmed, Credit pending, Incomplete, Error, Warning).
@@ -175,6 +175,7 @@ Each: what it is, how it was built, the catch.
 | **Panel with a drill-down** | A title, a one-line caption and a "View all" link to the full list; the panel shows only the first few ("View all 9" when there are more) | Taken from a reference dashboard's card-per-metric layout. The link is hidden when there is nothing to view. |
 | **Copy a link** | A button that copies the full address (origin + path) and says what was copied; if the clipboard is blocked it shows the link instead | The clipboard needs https or localhost and a user gesture; never fail silently. |
 | **Activity log** | What was done, to which shop, when; newest first | Never a secret or typed text. Reading is not an event; a refused command is not an event. |
+| **Read-only panel fed by the server** | The page shows what an event carried and does no arithmetic; a test checks the panel code has none; an event with no usable figures changes nothing; the last value stays until the next session starts | Money, totals and loan figures are computed on the server (the model only speaks them), so a page that recomputed could disagree with what the caller heard. |
 | **Call screen** | States: idle, connecting, listening, thinking, speaking, muted, ended; a waveform that follows the mic then the agent's voice; a timer; a live transcript; a read-only order panel | "Thinking" gives up after 12 s because not every turn gets a spoken reply. The order is changed by voice, never by buttons, and totals are computed on the server. |
 | **Theme switch, drawer menu** | Section 5.3 and 6 | Persist, apply before paint, remember "Auto". |
 | **"Soon" placeholders** | Shown, disabled and labelled while they are a promise | **Remove them when built or when not needed.** Do not leave dead buttons. |

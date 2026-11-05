@@ -18,7 +18,7 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Fix B-01 (the placeholder project check) (2026-10-28, Build 1001)
 
 ### Step 2: Smoke test
-- [ ] Read the account's concurrent-session and request limits on app.gnani.ai (B-07), or run `gnani_smoke_test.py concurrency`
+- [x] Gnani concurrency measured: 8 Prisma sessions at once, none refused; higher untested (`gnani_smoke_test.py concurrency`, 2026-11-03, DEC-046)
 - [ ] Note the credit cost per minute of STT and per sentence of TTS (not published)
 - [x] With and without key terms (2026-11-02): 61 main English names help, 200 with Latin aliases hurt (DEC-038)
 - [ ] Prisma v3.0 vs v2.5 on the same clips; `codemix` vs `transcribe`
@@ -33,12 +33,15 @@ When you tick something, add the date and the build or InBul that carried it.
 ### Step 2b: Udyami loan guidance (DEC-027; build right after the Gnani integration)
 - [x] `loan_calculator.py`: project cost, loan, scheme selection, instalment (pure functions) **with unit tests** for the scheme boundaries (₹1.40 lakh, ₹50 lakh) and the PS's worked example (2026-10-28, InBul07; 38 tests)
 - [x] Decide and document the instalment formula (reducing balance, moratorium handling) (2026-10-28, DEC-028)
-- [ ] Slot filling: margin money, business, place, each confirmed back
-- [ ] Call-type detection in the first turn (order vs loan guidance), and switching
-- [ ] Prompt rules: speak only what the calculator returns; amounts in words; "indicative"
-- [ ] Loan summary files in `orders/`
-- [ ] 8–10 of the eval scripts cover loan guidance (clean and noisy), with exact expected numbers
-- [ ] Check the scheme figures against the official scheme documents before the README states them
+- [x] Slot filling: the amount, whether own money or project cost, business, place; the amount is read back in the answer (DEC-044, 2026-11-03)
+- [x] Call-type detection by keywords in English, Hindi, Telugu and Hinglish; loan mode is sticky for the call (DEC-044)
+- [x] The code speaks every figure; amounts of a lakh or more in lakh words because Timbre misreads long digit runs (B-37); the answer says "approximate"
+- [x] Loan summary files `orders/<shop>/loan_<id>.json`, shown by the dashboard
+- [x] 75 tests (`tests/test_loan_flow.py`); live check on the real model, 4 cases (2026-11-03)
+- [x] Four scripted loan calls with expected quotes in `evaluation/scripts/credit_loans.json`; the scorer checks them
+- [ ] Run those scripted calls as a scored run (needs model tokens)
+- [x] A loan panel on the call page: shows the `loan` event (DEC-047) with the calculator's figures, indicative, no arithmetic in the page; checked through the real `LoanSession`, transport and page in a real browser with a fake microphone (2026-11-03, branch `call-loan-panel`; needs a build)
+- [ ] Scheme figures: no public source found for them (DEC-047); Surya to check them against the SIH problem statement itself, and the README states them only as indicative figures from it
 
 ### Step 2c: Software-only transport (DEC-029, DEC-032; see [transport_plan.md](transport_plan.md))
 - [x] `Transport` interface (2026-10-28, InBul09)
@@ -46,8 +49,8 @@ When you tick something, add the date and the build or InBul that carried it.
 - [ ] Try the call page in a real browser (Chrome and Firefox): microphone, a clip playing, hang up, call again (B-08)
 - [ ] Measure and close the gap between sentence clips in the browser (B-09)
 - [ ] Re-tune per [transport_plan.md](transport_plan.md), one setting at a time, measured: mic mute while the agent speaks, speak-over barge-in, hangover, VAD thresholds
-- [ ] `ReplayTransport`: feed recorded or synthetic caller audio through the whole pipeline with no browser, and capture the reply audio and timings (the backbone of the evaluation)
-- [ ] Stretch: a phone-number transport on the same WebSocket interface (8 kHz µ-law handling, the provider's barge-in signal)
+- [x] `ReplayTransport`: synthetic caller audio through the whole pipeline with no browser, with the reply timings captured (DEC-048, 2026-11-02); the evaluation runs on it
+- [x] A phone-number transport on the same interface (Twilio and Exotel streams, mu-law 8 kHz, clear on barge-in), tested against a stand-in provider only (DEC-046, B-39)
 
 ### Step 2d: Performance (DEC-031)
 - [x] Profile the per-frame audio work on a laptop (2026-10-28, `python -m evaluation.profile_frame_cost`): 0.1% of a frame
@@ -60,19 +63,19 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] Keyword retrieval kept Hindi and Telugu words whole (B-19, 14 tests) (2026-11-02)
 - [x] M5: product names given to Prisma as keyterms when a call starts (2026-11-02)
 - [ ] M4: the rule layer. The model extracts item and quantity; code checks `stock.json`, adds the lines, and writes the order (this is Step 8)
-- [ ] M7: T-WER (English words correct in either script) in the evaluation scoring
-- [ ] M9: count cutoffs and time to first audio together in the evaluation
-- [ ] M8: plain resampling for 8 kHz phone audio, when a phone number exists
+- [x] M7: T-WER in the scorer (product words count right in Latin or in Hindi or Telugu; 2026-11-03)
+- [x] M9: cut-off measures (split turns, under-half turns, unscripted agent cuts) in the scorer next to time to first audio (2026-11-03)
+- [x] M8: plain resampling for 8 kHz phone audio (numpy, `transport_telephony.py`, DEC-046, 2026-11-03); not yet measured on real phone audio
 
 ### Step 3: `stt_gnani.py`
 - [x] Session thread with its own asyncio loop; headers sent in **both** spellings (DEC-035); 1,024-byte framing, paced in real time (2026-11-02; tested against a stand-in server only)
 - [x] `finish()` sends `commit` plus trailing silence, joins segments, times out; returns `detected_language_code` (2026-11-02)
 - [x] `is_stale` and a concurrency semaphore (`GNANI_STT_MAX_CONCURRENT_SESSIONS`, default 4 until E5 measures the real cap)
 - [x] Register `STT_PROVIDER=gnani` (2026-11-02)
-- [ ] Generate the keyterms from `products_pricing.md` (needs the shop content). `set_keyterms()` exists; non-ASCII names are skipped because HTTP headers are ASCII
+- [x] Keyterms generated from the stock list: the 61 main English names (`stock.keyterms`); non-ASCII names are skipped because HTTP headers are ASCII
 
 ### Step 4: `tts_gnani.py` and `tts_provider.py`
-- [ ] Warm, persistent WebSocket. **Not done:** each synthesis opens its own connection (DEC-035). Decide after E2 shows what the handshake costs (B-14)
+- [x] A spare Timbre connection is opened ahead of time (a socket still serves one request): about 0.3 s saved per sentence on the real service (DEC-047, B-14, B-31)
 - [x] `synthesize()` (2026-11-02): through the documented realtime WebSocket instead of REST, so it reuses the one tested path
 - [x] Thin pre-pass `normalize_text()` with unit tests: `Rs. 260` and `₹45` become `260 rupees` / `45 rupees`, `1,25,000` becomes `125000`. Digits are left to Timbre; spelling them out in Hindi/Telugu waits for E2
 - [x] `tts_provider.py` (`TTS_PROVIDER`); `app.py` imports from it; startup refuses a Gnani provider with no `GNANI_API_KEY` (2026-11-02)
@@ -80,7 +83,7 @@ When you tick something, add the date and the build or InBul that carried it.
 ### Step 5a: Groq as the language model for now (DEC-038)
 - [x] `llm_groq.py`, `llm_provider.py`, `LLM_PROVIDER`, startup check, 22 tests (2026-11-02)
 - [x] Tried the real shop conversation on Qwen: digits spoken, totals right, unlisted items declined (informal)
-- [ ] Pace the evaluation to Groq's 8,000 tokens a minute (B-20)
+- [x] The evaluation runner paces turns to Groq's 8,000 tokens a minute (`--min-turn-sec`, B-20)
 - [ ] Switch back to Gemini when a key exists; compare the two on the evaluation set
 
 ### Step 5: Gemini with an API key
@@ -111,23 +114,27 @@ When you tick something, add the date and the build or InBul that carried it.
 - [x] `LLM_HISTORY=3` is enough for orders: the model is shown the order so far every turn (B-02, DEC-039)
 - [x] Tried with the real model on Hinglish, Telugu and English orders (informal runs, not saved; see the hand-over)
 - [x] The code speaks on every turn that touches the order; prices from the stock list; the shop's own closing sentence; unsold items named (DEC-039)
-- [ ] Reduce the prompt (about 2,000 tokens a turn) so more turns fit in Groq's 8,000 a minute (B-20)
+- [x] Order prompt cut 42 percent (DEC-041); the catalogue then added back about 1,100 tokens (DEC-042); search mode cuts the product part by about 90 percent (rag_plan.md)
 - [ ] Optional: offer an in-stock alternative chosen by code, by category (B-21 is closed by saying nothing)
-- [ ] Save a scripted order conversation as a repeatable evaluation run (the runs so far were informal)
+- [x] Scripted order conversations saved as repeatable evaluation runs (`evaluation/scripts/`)
 - [ ] Hindi and Telugu wording of the code-spoken sentences checked by a native speaker (B-16)
 - [ ] Optional: a small order viewer page (the shopkeeper dashboard already shows the orders)
 
 ### Step 8b: Udhaar ledger (DEC-026; the first thing cut if time runs short)
-- [ ] Synthetic customer list (~15 names, credit limits, opening balances) in the knowledge files
-- [ ] `orders/<shop>/ledger.json` and `ledger.txt`: add to a balance, read a balance, record a promise-to-pay date
-- [ ] Prompt rules: confirm the name, the credit limit, unknown names become "credit pending", a neutral tone
-- [ ] The order summary carries payment type, customer and balances
-- [ ] 4–5 of the 20 eval scripts cover udhaar (add, balance enquiry, over the limit, unknown name)
+- [x] Synthetic customer list: 15 customers with limits and opening balances in `shops/<shop>/customers.json` (DEC-045, 2026-11-03)
+- [x] `credit.py` over `orders/<shop>/ledger.json`: find a customer by a spoken name, balance, limit check, atomic update (the dashboard already reads the file)
+- [x] The code asks for the name, approves within the limit, refuses over it, leaves unknown names to the shopkeeper, answers balance questions
+- [x] The order record carries the customer, status and balances; the ledger is settled when the call ends, re-checking the limit
+- [x] 79 tests (`tests/test_credit.py`); four scripted credit calls (approved, over the limit, unknown name, balance enquiry) in `evaluation/scripts/credit_loans.json`
+- [ ] Live check of the three credit paths on the real model (only the first step was seen live; the rest waits for model tokens)
+- [ ] Run the scripted credit and loan calls as a scored run
+- [ ] A native speaker checks the customer names in `customers.json` and the credit sentences (B-16)
+- [ ] Promise-to-pay dates (deliberately not built)
 
 ### Step 9: Evaluation
-- [ ] 20 order scripts
-- [ ] Clean and noisy audio (~10 dB SNR)
-- [ ] Runner: WER, order accuracy, time to first audio
+- [x] 20 order scripts, 65 turns (`evaluation/scripts/orders.json`), plus 4 loan and 4 credit calls (`credit_loans.json`)
+- [x] Clean and noisy audio: Timbre speech, steady synthetic noise mixed at a chosen SNR (`run_calls.py --noise 10`); the noisy run is not done yet
+- [x] Runner and scorer: WER (raw and number-normalised), English-word WER, cut-off counts, order accuracy, time to first audio (`run_calls.py`, `score_calls.py`)
 - [ ] A/B against Sarvam and Google TTS as a baseline (if credits allow)
 - [ ] Results table
 
@@ -169,3 +176,23 @@ When you tick something, add the date and the build or InBul that carried it.
 ## Inherited from upstream (lower priority)
 - [ ] The edge-case audit upstream never finished (greeting interruption, reconnect mid-call, empty LLM or TTS response, long replies, a hallucinated transcript re-locking the language)
 - [ ] The full edge-case re-check (stop mid-reply, repeat in another language, a fresh call starting in Telugu, rapid hang-up and call-back, several interrupts in one call)
+
+### Phone number (DEC-046)
+- [x] `TelephonyTransport` for Twilio and Exotel streams, fail-closed token, busy line, marks and barge-in, 31 tests against a stand-in provider (2026-11-03)
+- [x] Gnani concurrency: 8 Prisma sessions at once, none refused (2026-11-03)
+- [ ] Start KYC with one provider (Surya; decision point Nov 5)
+- [ ] A public wss address (a tunnel is enough) and `TELEPHONY_TOKEN` set, when an account exists
+- [ ] A real call, then a noisy 8 kHz evaluation run (B-39)
+
+### Bug hunt and evaluation of 2026-11-05
+- [x] Five finders (money and credit, call lifecycle, speech and server, phone and scripted caller, scorer and dashboards) reproduced about 40 defects; each fixed with a regression test (B-41 to B-85, `bugfixed.md`)
+- [x] The model repeating earlier changes into later turns is caught in code on every turn (B-82); measured effect still to come from a valid run
+- [x] Evaluation harness made honest: time to first audio from the caller's last word, noise level from whole-clip RMS, a truncated or log-less run is not valid, loan calls scored apart (B-57 to B-61, B-72 to B-75)
+- [x] A first run with all fixes (gpt-oss-20b): INVALID (daily limit), read for causes only; a credit and loan run: INCOMPLETE (laptop slept); a noisy 10 dB run: INCOMPLETE and nothing understood (B-85)
+- [ ] A valid clean run on gpt-oss-20b, default catalogue mode (earliest about 21:30 on Nov 6, when the Nov 5 run has aged out of the daily window)
+- [ ] A valid search-mode run on gpt-oss-120b (started Nov 5 22:32)
+- [ ] The credit and loan calls again (8 calls), after the daily window allows
+- [ ] Noise at 20 dB and 15 dB to find where the pipeline breaks (B-85)
+- [ ] Decide what to do about the one-word answers Prisma sometimes drops (B-83) and about "ek litre" heard as "8 litre" (B-24)
+- [ ] Re-score and publish the valid runs in `evaluation/results/`, then fill the README results block
+

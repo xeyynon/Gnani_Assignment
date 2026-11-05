@@ -1,6 +1,0 @@
-  /* Glass is for the chrome only (the side menu, the top bar, chips, small buttons, the call card), floating over soft colour.
-     Cards that carry numbers stay solid: a number must never sit on a blur. */
-  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(640px 420px at 8% 6%,var(--blob-1),transparent 70%),radial-gradient(560px 460px at 96% 14%,var(--blob-2),transparent 70%),radial-gradient(620px 460px at 58% 100%,var(--blob-3),transparent 70%)}
-  :is(aside,.top,header,.callcard,.chip:not(.on),.themebtn,.shop-chip){background:var(--glass);border-color:var(--glass-line);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);backdrop-filter:blur(var(--blur)) saturate(1.5)}
-  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:is(aside,.top,header,.callcard,.chip:not(.on),.themebtn,.shop-chip){background:var(--surface)}}
-  @media (prefers-reduced-transparency:reduce){:is(aside,.top,header,.callcard,.chip:not(.on),.themebtn,.shop-chip){background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}

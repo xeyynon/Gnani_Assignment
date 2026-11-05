@@ -30,15 +30,18 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | `stt_gnani.py` / `tts_gnani.py` / `tts_provider.py` | ✅ Working against the real services in four languages (DEC-035, B-22 fixed); `.env` selects them. Noise, 8 kHz and the session limit untested (B-13) |
 | Gemini via API key | 🟡 Done in Build 1001 (tested offline; needs a key) |
 | Groq as the language model | ✅ `LLM_PROVIDER=groq` in `.env` for now (DEC-038). Default `openai/gpt-oss-20b`; tight limits (B-20) |
-| Loan calculator (`loan_calculator.py`) | ✅ Done and tested (InBul07); not yet connected to the agent |
+| Loan guidance on the call | ✅ Built (DEC-044): keyword routing, the calculator's figures spoken by code, lakh words because Timbre misreads long numbers (B-37); 75 tests; 4 cases checked on the live model. Not yet a scored run; figures are indicative |
 | Shopkeeper dashboard | ✅ Built (Build 1003), rebuilt from components in the new look with a hideable menu and a fair comparison with yesterday (Build 1007); shows real orders now that the agent writes them (Build 1008), loan summaries and credit balances still not written. Not tried on a real phone. Admin dashboard next (DEC-034) |
 | Web pages (call page and dashboard) | ✅ Built from components that the server stitches together (DEC-040), in a mix of bento grid, glass, hard-edged accents and minimalism (DEC-041), with a theme switch (Auto, Light, Dark) and a hideable menu (Build 1007). Not tried on a real phone or in a real call (B-08) |
 | Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
 | Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
+| Evaluation and bug hunt (2026-11-05) | 🟡 A bug hunt fixed about 40 defects (Build 1013, InBul21; `bugfixed.md`). The first run with every fix was INVALID (the model's daily limit), the credit/loan run INCOMPLETE (the laptop slept) and the noisy run understood nothing (B-85), so **no valid score exists after the fixes yet**; a search-mode run on gpt-oss-120b is going and a default-mode run on gpt-oss-20b is due on Nov 6 evening. Plan: [poa_nov5_to_9.md](poa_nov5_to_9.md) |
+| Phone transport | 🟡 Built for Twilio and Exotel streams (DEC-046, 31 tests against a stand-in provider). Never run on a real provider: both gate streaming behind KYC (B-39). Decision point Nov 5; otherwise the demo is the browser call |
 | Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16) |
 | Research | ✅ [research_papers.md](research_papers.md) (papers and methods M1 to M11) and [pipeline_expectations.md](pipeline_expectations.md) (evidence, targets, experiments E1 to E7) |
 | Fixes from the research | ✅ Price splitting, history after an interruption, Hindi/Telugu retrieval (B-17 to B-19) |
-| Order flow and order files | ✅ Built, tested (558 tests) and tried with the real model in Hinglish, Telugu and English (DEC-039): the model reads the order, the code checks the stock list, does every sum and says every amount, and writes `orders/<shop>/`. Model: Groq gpt-oss-20b. Udhaar balances not yet; accuracy not yet measured (B-24) |
+| Order flow and order files | ✅ Built, tested (a full test suite) and tried with the real model in Hinglish, Telugu and English (DEC-039): the model reads the order, the code checks the stock list, does every sum and says every amount, and writes `orders/<shop>/`. Model: Groq gpt-oss-20b. accuracy measured once, 45% before the fixes (B-34) |
+| Udhaar credit book | ✅ Built (DEC-045): 15 synthetic customers, name matching, limits, balance enquiries, ledger settled at hang-up; 79 tests. Only the first step seen on the live model; scored run waits for model tokens (B-33) |
 | Evaluation | ❌ Not started |
 | README and SETUP | 🟡 Front page and setup written; results table waits for the eval |
 | Videos, posts | ❌ Not started |
@@ -50,6 +53,9 @@ The live checklist is in [tasks.md](tasks.md).
 ## Document map
 | File | Read it when |
 |---|---|
+| [poa_loan_udhaar_ci_phone.md](poa_loan_udhaar_ci_phone.md) | You want the plan for loan guidance, the udhaar credit book, GitHub CI, and the phone number and several callers |
+| [rag_plan.md](rag_plan.md) | You want the plan for retrieval: what failed, the product search and its benchmark, catalogue vs search, what is still to measure |
+| [version_control.md](version_control.md) | You are about to commit: how builds and InBuls work, the exact steps, pushing, what never to commit, the history so far |
 | [project_docs_guide.md](project_docs_guide.md) | You need to know where things are written down, and how builds and InBuls work |
 | [readme.md](readme.md) | You want the quick rules for writing in this folder |
 | [../CHANGELOG.md](../CHANGELOG.md), [builds/](builds/) | You want what shipped in each build (generated; don't edit) |
@@ -76,12 +82,17 @@ The live checklist is in [tasks.md](tasks.md).
 | [rules.md](rules.md) | Always. Hard rules for code, data and commits |
 | [agents.md](agents.md) | You want the pipeline's agents (threads), or you're an AI coding agent working here |
 | [bugs.md](bugs.md) | Known bugs and risks |
+| [bugfixed.md](bugfixed.md) | You want the dated log of every fix: what, the proof, the commit, the build |
 | [pain.md](pain.md) | The user's pain and ours |
 | [ci_cd.md](ci_cd.md) | You want the GitHub Actions pipelines, what they check, the one-time GitHub setup and the first push |
 | [deployment.md](deployment.md) | Running it, keys and settings |
 | [pipeline_expectations.md](pipeline_expectations.md) | You want what each stage should do, the evidence, our targets, and the first experiments to run |
 | [research_papers.md](research_papers.md) | You want published papers behind each design choice, and where the literature has gaps |
+| [poa_final_week.md](poa_final_week.md) | You want the plan for Nov 2 to 9: who owns what, the critical path, day by day, risks and cut rules |
+| [poa_nov5_to_9.md](poa_nov5_to_9.md) | You want the plan from the evening of Nov 5 to submission: evaluation runs, the bug cycle, real-world checks, submission material, cut rules |
+| [submission_drafts.md](submission_drafts.md) | You want the post drafts, the 60-second demo script, the walkthrough outline and the submission form answers, with what may and may not be claimed |
 | [session_handover_2026-11-02.md](session_handover_2026-11-02.md) | You want the newest hand-over: what was done, what is uncommitted, what is next |
+| [session_handover_2026-11-05.md](session_handover_2026-11-05.md) | You want the newest hand-over: Build 1013 and InBul21, what is proven, what is running, what is next |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
 | [origin.md](origin.md) | What we inherit from the upstream project |
 | [tried_and_failed.md](tried_and_failed.md) | Approaches that didn't work (not models) |

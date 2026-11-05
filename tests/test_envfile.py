@@ -81,3 +81,17 @@ def test_importing_the_package_reads_the_projects_env_file(tmp_path):
             env_file.write_bytes(backup)
         else:
             env_file.unlink()
+
+
+def test_an_inline_comment_is_not_part_of_the_value():
+    text = "A=gsk_abc # my key\nB=\"k\" # note\nC='x y'   # why\nD=plain\t# tab\n"
+    assert envfile.parse(text) == {"A": "gsk_abc", "B": "k", "C": "x y", "D": "plain"}
+
+
+def test_a_hash_with_no_space_before_it_stays_in_the_value():
+    text = "URL=http://h/p#frag\nTOK=ab#cd\nQ=\"a # b\"\n"
+    assert envfile.parse(text) == {"URL": "http://h/p#frag", "TOK": "ab#cd", "Q": "a # b"}
+
+
+def test_a_value_that_is_only_a_comment_is_not_set():
+    assert envfile.parse("A= # nothing here") == {}
