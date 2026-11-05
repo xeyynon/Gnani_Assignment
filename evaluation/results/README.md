@@ -6,6 +6,6 @@ A file whose name starts with **INVALID_** or **INCOMPLETE_** is kept as evidenc
 - `INVALID_`: the language model refused some requests (its rate or daily limit), so some turns were answered with the apology instead of the model's note.
 - `INCOMPLETE_`: the run stopped before every scripted call finished (a timeout, the agent exiting, or the machine going to sleep).
 
-Do not quote the figures in those files. What they showed is written up in `MD/bugs.md` (B-33, B-34, B-81, B-84, B-85).
+Do not quote the figures in those files. They are kept only as evidence of runs that did not finish.
 
 Older files (before 2026-11-05) were scored with an earlier scorer: their time to first audio is measured from the end of the audio file and their noise level used a different definition. They say so in their own header.
