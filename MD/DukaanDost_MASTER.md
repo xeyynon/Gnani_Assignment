@@ -35,6 +35,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Web pages (call page and dashboard) | ✅ Built from components that the server stitches together (DEC-040), in a mix of bento grid, glass, hard-edged accents and minimalism (DEC-041), with a theme switch (Auto, Light, Dark) and a hideable menu (Build 1007). Not tried on a real phone or in a real call (B-08) |
 | Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
 | Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
+| Evaluation and bug hunt (2026-11-05) | 🟡 A bug hunt fixed about 40 defects (Build 1013, InBul21; `bugfixed.md`). The first run with every fix was INVALID (the model's daily limit), the credit/loan run INCOMPLETE (the laptop slept) and the noisy run understood nothing (B-85), so **no valid score exists after the fixes yet**; a search-mode run on gpt-oss-120b is going and a default-mode run on gpt-oss-20b is due on Nov 6 evening. Plan: [poa_nov5_to_9.md](poa_nov5_to_9.md) |
 | Phone transport | 🟡 Built for Twilio and Exotel streams (DEC-046, 31 tests against a stand-in provider). Never run on a real provider: both gate streaming behind KYC (B-39). Decision point Nov 5; otherwise the demo is the browser call |
 | Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16) |
 | Research | ✅ [research_papers.md](research_papers.md) (papers and methods M1 to M11) and [pipeline_expectations.md](pipeline_expectations.md) (evidence, targets, experiments E1 to E7) |
@@ -81,13 +82,17 @@ The live checklist is in [tasks.md](tasks.md).
 | [rules.md](rules.md) | Always. Hard rules for code, data and commits |
 | [agents.md](agents.md) | You want the pipeline's agents (threads), or you're an AI coding agent working here |
 | [bugs.md](bugs.md) | Known bugs and risks |
+| [bugfixed.md](bugfixed.md) | You want the dated log of every fix: what, the proof, the commit, the build |
 | [pain.md](pain.md) | The user's pain and ours |
 | [ci_cd.md](ci_cd.md) | You want the GitHub Actions pipelines, what they check, the one-time GitHub setup and the first push |
 | [deployment.md](deployment.md) | Running it, keys and settings |
 | [pipeline_expectations.md](pipeline_expectations.md) | You want what each stage should do, the evidence, our targets, and the first experiments to run |
 | [research_papers.md](research_papers.md) | You want published papers behind each design choice, and where the literature has gaps |
 | [poa_final_week.md](poa_final_week.md) | You want the plan for Nov 2 to 9: who owns what, the critical path, day by day, risks and cut rules |
+| [poa_nov5_to_9.md](poa_nov5_to_9.md) | You want the plan from the evening of Nov 5 to submission: evaluation runs, the bug cycle, real-world checks, submission material, cut rules |
+| [submission_drafts.md](submission_drafts.md) | You want the post drafts, the 60-second demo script, the walkthrough outline and the submission form answers, with what may and may not be claimed |
 | [session_handover_2026-11-02.md](session_handover_2026-11-02.md) | You want the newest hand-over: what was done, what is uncommitted, what is next |
+| [session_handover_2026-11-05.md](session_handover_2026-11-05.md) | You want the newest hand-over: Build 1013 and InBul21, what is proven, what is running, what is next |
 | [external_research.md](external_research.md) | Facts from Gnani's, Sarvam's and Google's docs |
 | [origin.md](origin.md) | What we inherit from the upstream project |
 | [tried_and_failed.md](tried_and_failed.md) | Approaches that didn't work (not models) |
