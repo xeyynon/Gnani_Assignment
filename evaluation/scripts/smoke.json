@@ -1,5 +1,50 @@
-{"calls": [{"id": "smoke1", "shop": "dukaan_dost", "tts_lang": "hi-en", "turns": [
-  {"text": "Do kilo cheeni aur ek litre sunflower oil chahiye"},
-  {"text": "Bas itna hi"},
-  {"text": "Cash, mera naam Ramesh hai"}],
-  "expected": {"items": {"SUGAR-1KG": 2, "OIL-1L": 1}, "payment": "cash"}}]}
+{
+ "calls": [
+  {
+   "id": "smoke1",
+   "shop": "dukaan_dost",
+   "tts_lang": "hi-en",
+   "turns": [
+    {
+     "text": "Do kilo cheeni aur ek litre sunflower oil chahiye"
+    },
+    {
+     "text": "Bas itna hi"
+    },
+    {
+     "text": "Cash, mera naam Ramesh hai"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash"
+   }
+  },
+  {
+   "id": "smoke2",
+   "shop": "dukaan_dost",
+   "tts_lang": "hi-en",
+   "turns": [
+    {
+     "text": "Ek packet Maggi aur do packet Parle-G chahiye"
+    },
+    {
+     "text": "Bas itna hi"
+    },
+    {
+     "text": "UPI se dunga"
+    }
+   ],
+   "expected": {
+    "items": {
+     "MAGGI-70": 1,
+     "PARLEG-100": 2
+    },
+    "payment": "upi"
+   }
+  }
+ ]
+}
