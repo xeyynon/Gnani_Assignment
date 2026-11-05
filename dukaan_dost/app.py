@@ -1098,7 +1098,12 @@ def _clear_history(reason=""):
         # The generation moves on BEFORE the history is emptied, under the lock the processor holds when it
         # writes a finished turn into the history: a turn still running at hang-up sees the new generation
         # and drops its result instead of writing call A's exchange into call B (B-64).
-        _call_gen += 1
+        if (reason or "").startswith(("call ended", "new call")):
+            # Only the two boundaries the watchdog handles move the generation. "new node ..." comes from the recorder
+            # thread a moment AFTER the greeting was queued for the new call; moving the generation there discarded the
+            # greeting as "from an earlier call", the greeting guard then never cleared, and every call after the first
+            # was deaf (found by the first full run after the B-64 change, 2026-11-05; see B-86).
+            _call_gen += 1
         _no_speech_apologized = False
         _locked_language_code = None
         _history.clear()

@@ -125,6 +125,34 @@ def test_clearing_the_history_moves_the_generation_on_first(app):
     assert app._call_gen > before
 
 
+def test_the_recorders_new_node_reset_does_not_move_the_generation_or_drop_the_greeting(app):
+    """B-86: the order is call detected -> reset ("new call") -> drain -> greeting queued -> the recorder resets again
+    ("new node ..."). That last reset must not move the generation, or the greeting is discarded as stale, the
+    greeting guard never clears and the recorder stays deaf for the whole call (every call after the first)."""
+    app._clear_history("new call")
+    app._drain_queues("new call")
+    greeting_gen = app._call_gen
+    app.reply_q.put((greeting_gen, b"greeting", 1, False))
+    app._clear_history("new node replay-h02")
+    assert app._call_gen == greeting_gen
+    gen, wav, _, _ = app.reply_q.get_nowait()
+    assert gen == app._call_gen                                   # the greeting is still current when the playback thread sees it
+
+
+@pytest.mark.parametrize("reason", ["call ended", "call ended (node changed)", "new call"])
+def test_the_boundaries_the_watchdog_handles_do_move_the_generation(app, reason):
+    before = app._call_gen
+    app._clear_history(reason)
+    assert app._call_gen > before
+
+
+@pytest.mark.parametrize("reason", ["new node abc", "", "test", "barge-in"])
+def test_other_resets_leave_the_generation_alone(app, reason):
+    before = app._call_gen
+    app._clear_history(reason)
+    assert app._call_gen == before
+
+
 def test_a_turn_that_finishes_after_hang_up_leaves_the_next_call_clean(app, rig):
     release = threading.Event()
     entered = threading.Event()
