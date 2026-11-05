@@ -33,9 +33,9 @@ Groq allows about 200,000 tokens a day per model, so each model gets about one f
 | # | Run | Model | Saved as | Status |
 |---|---|---|---|---|
 | 1.1 | Clean, 20 calls / 65 turns, all fixes | gpt-oss-20b (the default) | `INVALID_orders_clean_fixes_20b` | ❌ ran 20:59 to 21:27, INVALID: the model's daily limit ran out in its last minutes (B-33); read for causes only. A valid rerun is possible from about 21:30 on Nov 6 |
-| 1.2 | Credit and loan calls (8 calls) | gpt-oss-120b | `INCOMPLETE_credit_loans_120b` | ❌ INCOMPLETE: the laptop slept for 26 minutes and 4 of 8 calls finished (the 4 loan calls were all right); needs a rerun (B-84, fixed for the future) |
+| 1.2 | Credit and loan calls (8 calls) | gpt-oss-120b | `credit_loans_clean_120b` | ✅ valid, 2026-11-06: 8 of 8 exactly right (earlier run `INCOMPLETE_credit_loans_120b` kept as evidence) |
 | 1.3 | Noisy, 10 dB SNR, 20 calls | gpt-oss-120b | `INCOMPLETE_orders_noisy10db_120b` | ❌ INCOMPLETE and no turn was understood: the end-of-speech detector treats steady noise as speech (B-85). Next: 20 dB and 15 dB |
-| 1.4 | Search mode (`ORDER_CATALOGUE=search`), 20 calls | gpt-oss-120b (moved up: its budget was free on the night of Nov 5) | `orders_clean_search_120b` | 🟡 started 2026-11-05 22:32 |
+| 1.4 | Search mode (`ORDER_CATALOGUE=search`), 20 calls | gpt-oss-120b | `INVALID_orders_clean_search_120b` | ❌ INVALID, 2026-11-06: 3 requests refused in the last call (daily limit); 16 of 20 exact for causes only. Not repeated before the 120b budget returns |
 | 1.5 | Re-run of the calls that fail, after the fixes | 20b, Nov 6 or 7 | `orders_clean_after_fixes_20b` | ⬜ |
 
 A run with any rate-limited request is flagged INVALID by the scorer and is not quoted (B-33).
