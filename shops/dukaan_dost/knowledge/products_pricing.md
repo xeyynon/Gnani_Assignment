@@ -8,9 +8,17 @@ Also called: rice, chawal, biyyam, sona masoori
 SKU BASMATI-1KG · per kg · ₹110 per kg · in stock
 Also called: basmati, basmati chawal
 
-## Atta (wheat flour) — आटा — గోధుమ పిండి
+## Atta (loose) — आटा (खुला) — గోధుమ పిండి (లూజు)
+SKU ATTA-1KG · per kg, loose · ₹55 per kg · in stock
+Also called: atta, aata, aate, loose atta, wheat flour, gehu ka atta, godhuma pindi, chakki atta
+
+## Atta 5 kg bag — आटा 5 किलो बैग — గోధుమ పిండి 5 కిలోల బస్తా
 SKU ATTA-5KG · 5 kg bag · ₹260 per bag · in stock
-Also called: atta, aata, wheat flour, gehu ka atta, godhuma pindi
+Also called: 5 kg atta, 5 kg atta bag, atta bag, atta packet, aashirvaad atta
+
+## Atta 10 kg bag — आटा 10 किलो बैग — గోధుమ పిండి 10 కిలోల బస్తా
+SKU ATTA-10KG · 10 kg bag · ₹510 per bag · in stock
+Also called: 10 kg atta, 10 kg atta bag, big atta bag
 
 ## Maida (refined flour) — मैदा — మైదా
 SKU MAIDA-500 · 500 g packet · ₹28 per packet · in stock

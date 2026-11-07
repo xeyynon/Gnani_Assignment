@@ -21,6 +21,7 @@ import yaml
 
 from .knowledge_retriever import get_core_context, get_relevant_context, get_relevant_context_maybe_cached
 from . import loan_turn, order_turn
+from .call_stats import CURRENT as _call_stats
 from .product_search import ProductSearch, normalise
 from . import stock as _stock
 from .llm_provider import ask as gemini_ask, ask_json as gemini_ask_json, stream as gemini_stream     # Gemini or Groq, by LLM_PROVIDER
@@ -310,6 +311,7 @@ class ConversationManager:
             plan = order_turn.parse_plan(raw)
         if plan is None:
             log.warning(f"[ORDER] the model's answer was not usable JSON: {raw[:200]!r}")
+            _call_stats.model_failure()
             yield self._fallback_for(detected_language), reply_language
             return
 
@@ -360,6 +362,7 @@ class ConversationManager:
             plan = loan_turn.parse_plan(raw)
         if plan is None:
             log.warning(f"[LOAN] the model's answer was not usable JSON: {raw[:200]!r}")
+            _call_stats.model_failure()
             yield self._fallback_for(detected_language), reply_language
             return
         result = loan.apply(plan.amount, plan.kind, plan.business, plan.place, language=reply_language)
