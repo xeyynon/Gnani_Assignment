@@ -32,11 +32,13 @@ Status: ⬜ not started · 🟡 in progress · ✅ done
 Groq allows about 200,000 tokens a day per model, so each model gets about one full run a day. The runner works from a frozen copy of the tree, so fixes made while a run goes cannot change what it measures.
 | # | Run | Model | Saved as | Status |
 |---|---|---|---|---|
-| 1.1 | Clean, 20 calls / 65 turns, all fixes | gpt-oss-20b (the default) | `INVALID_orders_clean_fixes_20b` | ❌ ran 20:59 to 21:27, INVALID: the model's daily limit ran out in its last minutes (B-33); read for causes only. A valid rerun is possible from about 21:30 on Nov 6 |
+| 1.1 | Clean, 20 calls / 65 turns, all fixes | gpt-oss-20b (the default) | `INVALID_orders_clean_fixes_20b`, `INVALID_orders_clean_20b` | ❌ both INVALID: the model's daily limit ran out near the end (B-33); 16 of 20 exact on the second, read for causes only |
 | 1.2 | Credit and loan calls (8 calls) | gpt-oss-120b | `credit_loans_clean_120b` | ✅ valid, 2026-11-06: 8 of 8 exactly right (earlier run `INCOMPLETE_credit_loans_120b` kept as evidence) |
 | 1.3 | Noisy, 10 dB SNR, 20 calls | gpt-oss-120b | `INCOMPLETE_orders_noisy10db_120b` | ❌ INCOMPLETE and no turn was understood: the end-of-speech detector treats steady noise as speech (B-85). Next: 20 dB and 15 dB |
 | 1.4 | Search mode (`ORDER_CATALOGUE=search`), 20 calls | gpt-oss-120b | `INVALID_orders_clean_search_120b` | ❌ INVALID, 2026-11-06: 3 requests refused in the last call (daily limit); 16 of 20 exact for causes only. Not repeated before the 120b budget returns |
 | 1.5 | Re-run of the calls that fail, after the fixes | 20b, Nov 6 or 7 | `orders_clean_after_fixes_20b` | ⬜ |
+| 1.6 | Prisma alone, 65 turns, four ways (clean or simulated phone line, language chosen or named) | no model | `stt_accuracy_prisma` | ✅ valid 2026-11-07; it led to naming the call's language (B-94) |
+| 1.7 | **Valid full-call run, 20 calls, search mode** | gpt-oss-20b, from about 20:40 on Nov 8, nothing else on that model | `orders_clean_search_20b` | ⬜ the one number still missing for the README |
 
 A run with any rate-limited request is flagged INVALID by the scorer and is not quoted (B-33).
 
@@ -60,19 +62,19 @@ The Nov 4 attempt used 20 agents at once and hit the usage limit. This one is sm
 ### 4. Real-world checks (Surya, with the UI session)
 | # | Task | Why it cannot be skipped | Status |
 |---|---|---|---|
-| 4.1 | One real call in Chrome with a microphone: allow the mic, say a Hinglish order, interrupt once, hear the total, hang up, see the order on the dashboard (B-08, B-09) | The demo video is this call. Gaps, echo and cut-offs are unknown until someone does it. | ⬜ |
+| 4.1 | One real call in Chrome with a microphone: allow the mic, say a Hinglish order, interrupt once, hear the total, hang up, see the order on the dashboard (B-08, B-09) | The demo video is this call. Gaps, echo and cut-offs are unknown until someone does it. | 🟡 two real PHONE calls made on Nov 7 (one saved an order); the browser call with a microphone is still ⬜ |
 | 4.2 | A native Hindi and Telugu reader checks the sentences in `order_session.py`, the loan and credit sentences and the names in `stock.json` and `customers.json` (B-16) | Wrong wording on camera costs more than any missing feature | ⬜ |
 | 4.3 | Open the GitHub Actions page and tell this session which jobs are red (B-10); set the `BANNED_TERMS` variable | The CI has run only on this machine | ⬜ |
-| 4.4 | Decide on the phone line: start KYC with one provider now, or drop the phone line from the demo (B-39). If it is not verified by Nov 8, it is out. | No provider promises a turnaround | ⬜ |
+| 4.4 | Decide on the phone line: it works on an Exotel trial number through a temporary tunnel (B-39 partly answered). If it is not shown working again by Nov 8 evening, the demo is the browser call. | The tunnel address changes whenever it restarts. | 🟡 |
 | 4.5 | Check the loan scheme figures against the SIH problem statement (DEC-047) | The README states them only as indicative until then | ⬜ |
 
 ### 5. Submission material (this session writes, Surya publishes)
 | # | Task | Status |
 |---|---|---|
-| 5.1 | README: problem, architecture diagram, how Prisma and Timbre are used, results table (from saved runs only), how to run, the synthetic-data note, honest limits | ⬜ the table waits for 1.x |
+| 5.1 | README: problem, architecture diagram, how Prisma and Timbre are used, results table (from saved runs only), how to run, the synthetic-data note, honest limits | 🟡 results filled from valid runs on Nov 8 (Prisma alone, 8 credit and loan calls); the 20-call row waits for 1.7 |
 | 5.2 | Post drafts for LinkedIn and X (tags: Gnani AI, #GreatIndianAIInternshipChallenge, #GnaniAI), with the list of claims each may use | ✅ in `submission_drafts.md`; the result blanks wait for a valid run |
 | 5.3 | A shot list and spoken script for the 60-second demo, and an outline for the 2 to 3 minute walkthrough | ✅ in `submission_drafts.md` |
-| 5.4 | Submission form answers drafted in one file: title, problem, target users, Gnani models used, links | ⬜ Nov 7 |
+| 5.4 | Submission form answers drafted in one file: title, problem, target users, Gnani models used, links | ✅ in `submission_drafts.md` (Nov 8); the links are filled on the day |
 | 5.5 | Surya records both videos, publishes the posts, sends the form | ⬜ Nov 6 to 9 |
 
 ### 6. Housekeeping (this session)
