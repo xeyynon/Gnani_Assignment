@@ -361,7 +361,7 @@ def test_one_failed_write_between_calls_does_not_abort_the_remaining_calls(tmp_p
 
     def flaky(a, b):
         state["n"] += 1
-        if state["n"] <= 6:                       # the first write (after call a) fails all 6 tries
+        if state["n"] <= transport_replay.RESULT_WRITE_TRIES:     # the first write (after call a) fails every try
             raise PermissionError("in use")
         return real(a, b)
 
