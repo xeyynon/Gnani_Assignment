@@ -47,6 +47,7 @@ log = logging.getLogger("transport_replay")
 FRAME_BYTES_PER_SEC = 16000 * 2
 GREETING_WAIT_SEC = 20.0
 END_CALL_WAIT_SEC = 8.0           # how long to let the agent notice the call has ended and save the order
+RESULT_WRITE_TRIES = 12            # tries to write the results file; on Windows the replace fails while a reader has the file open
 
 
 def _wav_pcm(path: str) -> bytes:
@@ -366,14 +367,14 @@ class ReplayTransport(Transport):
         data = {"done": self._done, "aborted": self._error is not None, "error": self._error,
                 "written_iso": datetime.now().astimezone().isoformat(timespec="seconds"), "calls": self._calls_out}
         tmp = self.results_path.with_name(self.results_path.name + ".tmp")
-        for attempt in range(6):
+        for attempt in range(RESULT_WRITE_TRIES):
             try:
                 self.results_path.parent.mkdir(parents=True, exist_ok=True)
                 tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
                 os.replace(tmp, self.results_path)
                 return True
             except OSError as e:
-                log.warning(f"[REPLAY] writing the results failed (try {attempt + 1}/6): {e}")
-                if attempt < 5:
-                    time.sleep(0.02 + 0.016 * attempt)    # 20 ms rising to 100 ms
+                log.warning(f"[REPLAY] writing the results failed (try {attempt + 1}/{RESULT_WRITE_TRIES}): {e}")
+                if attempt < RESULT_WRITE_TRIES - 1:
+                    time.sleep(min(0.25, 0.02 + 0.02 * attempt))    # 20 ms rising to 250 ms: about 2 seconds in all
         return False

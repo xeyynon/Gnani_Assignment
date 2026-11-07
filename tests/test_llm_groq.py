@@ -155,6 +155,48 @@ def test_an_unreachable_server_gives_an_empty_stream(monkeypatch):
 
 # ---- blocking ------------------------------------------------------------------------------------
 
+def test_a_long_rate_limit_on_one_gpt_oss_model_falls_back_to_the_other_one(monkeypatch):
+    monkeypatch.delenv("LLM_FALLBACK_MODEL", raising=False)
+    with FakeGroq([(429, {"retry-after": "30"}, b"x"), (200, {}, completion("Ji, bilkul."))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask("openai/gpt-oss-20b", MESSAGES, 10, 0.1) == "Ji, bilkul."
+    assert [r["body"]["model"] for r in s.requests] == ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+
+
+def test_the_streaming_call_falls_back_the_same_way(monkeypatch):
+    monkeypatch.delenv("LLM_FALLBACK_MODEL", raising=False)
+    with FakeGroq([(429, {"retry-after": "30"}, b"x"), (200, {}, sse("ok."))]) as s:
+        point_at(s, monkeypatch)
+        assert list(llm_groq.stream("openai/gpt-oss-120b", MESSAGES, 10, 0.1)) == ["ok."]
+    assert [r["body"]["model"] for r in s.requests] == ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
+
+
+def test_the_fallback_is_tried_once_and_never_loops(monkeypatch):
+    monkeypatch.delenv("LLM_FALLBACK_MODEL", raising=False)
+    with FakeGroq([(429, {"retry-after": "30"}, b"x"), (429, {"retry-after": "30"}, b"x")]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask("openai/gpt-oss-20b", MESSAGES, 10, 0.1) == ""
+    assert len(s.requests) == 2
+
+
+def test_the_fallback_can_be_turned_off_or_named(monkeypatch):
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", "off")
+    assert llm_groq.fallback_model("openai/gpt-oss-20b") is None
+    monkeypatch.setenv("LLM_FALLBACK_MODEL", "qwen/other")
+    assert llm_groq.fallback_model("openai/gpt-oss-20b") == "qwen/other"
+    monkeypatch.delenv("LLM_FALLBACK_MODEL")
+    assert llm_groq.fallback_model("m") is None                    # an unknown model has no default fallback
+    assert llm_groq.fallback_model("openai/gpt-oss-120b") == "openai/gpt-oss-20b"
+
+
+def test_a_short_rate_limit_is_still_just_waited_out(monkeypatch):
+    monkeypatch.delenv("LLM_FALLBACK_MODEL", raising=False)
+    with FakeGroq([(429, {"retry-after": "0"}, b"x"), (200, {}, completion("ok"))]) as s:
+        point_at(s, monkeypatch)
+        assert llm_groq.ask("openai/gpt-oss-20b", MESSAGES, 10, 0.1) == "ok"
+    assert [r["body"]["model"] for r in s.requests] == ["openai/gpt-oss-20b", "openai/gpt-oss-20b"]
+
+
 def test_ask_returns_the_trimmed_reply(monkeypatch):
     with FakeGroq([(200, {}, completion("  Ji, bilkul.  "))]) as s:
         point_at(s, monkeypatch)

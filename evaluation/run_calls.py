@@ -209,7 +209,8 @@ def main():
         raw_results.unlink()
 
     env = dict(os.environ, AUDIO_TRANSPORT="replay", REPLAY_PLAN=str(plan_path), ORDERS_DIR=str(orders_dir),
-               ORDER_SYNTHETIC="1", PYTHONIOENCODING="utf-8", PYTHONWARNINGS="ignore")
+               ORDER_SYNTHETIC="1", PYTHONIOENCODING="utf-8", PYTHONWARNINGS="ignore",
+               LLM_FALLBACK_MODEL="off")      # a run measures one model: no silent switch to another when one is rate limited
     log = open(out.with_suffix(".agent.log"), "w", encoding="utf-8")
     proc = subprocess.Popen([sys.executable, "-m", "dukaan_dost"], cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT)
     t0 = time.time()

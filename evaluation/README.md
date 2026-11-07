@@ -45,3 +45,6 @@ python -m evaluation.profile_frame_cost     # CPU cost of the per-frame audio wo
 ## Where things go
 - `results/` is committed. Every number in the README, the videos and the posts must come from a saved run there (rule R-5).
 - `audio/` (generated speech, raw run files, agent logs) is not committed.
+
+## Running a whole evaluation on a frozen copy
+`python evaluation/run_snapshot.py --runs search20b` copies the working folder, puts every tracked file back to its committed state, runs the listed runs from that copy, scores them and saves the results in `evaluation/results/` (a run in which the model refused any request, or that did not finish, is saved with an `INVALID_` or `INCOMPLETE_` prefix and is never quoted). Run names are in the script; `smoke` (two calls) checks the set-up first. The copy means fixes made while a run goes cannot change what it measures. A model's daily token limit is about one full 20-call run, so give a model one full run a day and nothing else; `--min-turn-sec` (28 by default) keeps a run under the per-minute limit. The Prisma-alone accuracy script is `python evaluation/stt_accuracy.py --out evaluation/results/stt_accuracy_prisma`.

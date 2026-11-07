@@ -170,7 +170,13 @@ def compose(plan: Plan, result, session, language, closing: str | None = None) -
     elif not (closing and completes):
         # nothing about the order happened: the model's own words, with a read-back where it asked for one
         text = say.replace("[ORDER]", session.readback(language)).replace("[LINES]", "")
-        return " ".join(_PLACEHOLDER.sub("", text).split())
+        text = " ".join(_PLACEHOLDER.sub("", text).split())
+        if not text:
+            # The model said nothing and changed nothing (a name, a "hello", a word it did not follow). That used
+            # to fall through to "Sorry, I did not catch that", which a caller heard three times in a row on the
+            # first phone call (2026-11-07) after saying their own name. Say what comes next instead.
+            return SAY[lang]["what" if session.is_empty else "more"]
+        return text
 
     parts.append(credit)
     if closing and completes:
