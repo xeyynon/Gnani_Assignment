@@ -69,6 +69,7 @@ The live checklist is in [tasks.md](tasks.md).
 | [prd.md](prd.md) | You need the product requirements: what the agent must do on a call |
 | [architecture.md](architecture.md) | You need the components and how they connect |
 | [flow.md](flow.md) | You need the step-by-step runtime flow (threads, per call, per utterance) |
+| [frontendgnani.md](frontendgnani.md) | You are carrying this project's frontend method into another project: the full design-and-build guide (principles, process, honest states, security, this stack, checklist, build order, file map), in the same shape as the Calley guide, each rule tied to a DEC, bug or build |
 | [frontendgnaniskills.md](frontendgnaniskills.md) | You are starting or auditing an interface (here or in another project): Surya's working style, the component structure, the design system, UX patterns, how to check it, the traps hit, and an audit checklist |
 | [frontend.md](frontend.md) | You're building the order viewer (planned) |
 | [system_design_and_boundary.md](system_design_and_boundary.md) | You need to know what's in scope, what's out and where the trust boundaries are |

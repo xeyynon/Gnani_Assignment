@@ -95,5 +95,14 @@
       "Everything else looks the same as the release before."
     ],
     "not_looked_at": "a real phone keyboard, a real password manager, and https. The sign-in error and locked states are in snapshots/latest/sign-in-shop/."
+  },
+  "12-build-1017": {
+    "title": "The dashboard links to the shop's call page",
+    "summary": "The dashboard's side menu gets a 'Call page' item with a phone icon, between Loan enquiries and Stock & prices; it opens that shop's own call page.",
+    "visible": [
+      "Dashboard: one new menu item, 'Call page'. Everything else looks the same as the release before.",
+      "The figures, dates and order times differ only because the made-up demo data is generated for the day the picture was taken."
+    ],
+    "not_looked_at": "the menu on a phone with the drawer open (the item is there; the landing picture shows the drawer closed)."
   }
 }

@@ -1,0 +1,15 @@
+{
+ "label": "12-build-1017",
+ "rev": "build-1017",
+ "commit": "5694eaa",
+ "date": "2026-11-08",
+ "title": "The shop dashboard links to its own call page",
+ "ran_code_of": "build-1017",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}

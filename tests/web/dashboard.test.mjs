@@ -219,3 +219,15 @@ test("the menu can be hidden and brought back, by button and by key, and focus i
 test("the menu has the curved right end", () => {
   assert.match(html, /aside\{[^}]*border-radius:0 30px 30px 0/);
 });
+
+test("the menu has a Call page link, and it goes to this shop's own call page", () => {
+  assert.match(html, /<a class="nav" id="callpage" href="\/"[^>]*>[\s\S]*?Call page<\/a>/);
+  assert.match(script, /\$\('callpage'\)\.setAttribute\('href', callPageUrl\(location\.pathname\)\)/);
+  const { callPageUrl } = new Function(`${helperSource}; return { callPageUrl };`)();
+  assert.equal(callPageUrl("/s/dukaan_dost/dashboard"), "/s/dukaan_dost/");
+  assert.equal(callPageUrl("/s/alpha/dashboard/"), "/s/alpha/");
+  assert.equal(callPageUrl("/s/a-b_1/dashboard"), "/s/a-b_1/");
+  assert.equal(callPageUrl("/dashboard"), "/");                         // not a shop's address: the plain call page
+  assert.equal(callPageUrl("/s/x/dashboard/data"), "/");
+  assert.equal(callPageUrl(undefined), "/");
+});
