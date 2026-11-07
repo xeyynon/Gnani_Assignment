@@ -4,6 +4,14 @@ A dated log of every fix, newest first. [bugs.md](bugs.md) is the register (what
 
 | Date | Bug | Fix | Proof (test or run) | Commit | Build or InBul |
 |---|---|---|---|---|---|
+| 2026-11-07 | B-94 | A Hindi or Telugu call names its language to Prisma from the second turn (Telugu 10 of 16 exact against 5 of 16) | `evaluation/results/stt_accuracy_prisma`; `tests/test_lifecycle_fixes.py` | a439851 | Build 1016 |
+| 2026-11-07 | B-93 | An empty turn is heard again with the language named (8 of 8 problem clips recovered against 1 of 8) | `tests/test_lifecycle_fixes.py`, four tests; synthetic-clip experiment in bugs.md | a439851 | Build 1016 |
+| 2026-11-07 | B-92 | The demo shop sells atta loose by the kilo and in 5 and 10 kg bags | `tests` pass (1,220); retrieval benchmark 76 of 76 at top 8 | a439851 | Build 1016 |
+| 2026-11-07 | B-91 | A silent, no-change model turn asks what comes next instead of apologising | `tests/test_order_turn.py` | a439851 | Build 1016 |
+| 2026-11-07 | B-90 | Hindi and Telugu log lines no longer fail to print on a Windows console | startup code in `app.py`; the next phone call's log | a439851 | Build 1016 |
+| 2026-11-07 | B-89 | Phone barge-in needs 8 frames instead of 4, and the greeting is shorter (unmeasured) | the next quiet phone call (not yet made) | a439851 | Build 1016 |
+| 2026-11-07 | B-88 | A call with no order leaves a call record, and the dashboard data carries it | `tests/test_call_stats.py`, `tests/test_lifecycle_fixes.py` | a439851 | Build 1016 |
+| 2026-11-07 | B-87 | A long rate limit makes the agent ask the other gpt-oss model instead of failing | `tests/test_llm_groq.py`, five tests | a439851 | Build 1016 |
 | 2026-11-05 | B-86 | Every call after the first was deaf (a regression from the B-64 fix, in Build 1013) | `tests/test_lifecycle_fixes.py`; three live calls in a row, 3 of 3 exact | Build 1014 | Build 1014 |
 | 2026-11-05 | B-84 | The laptop went to sleep in the middle of an evaluation run and the run ended half done | see the entry in [bugs.md](bugs.md) (tests named there) | InBul21 | InBul21 |
 | 2026-11-05 | B-80 | The repository's own hygiene check failed on a committed test file, so GitHub's CI would have been red | see the entry in [bugs.md](bugs.md) (tests named there) | e8cde76 | Build 1013 |

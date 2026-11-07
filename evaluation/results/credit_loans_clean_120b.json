@@ -1,0 +1,426 @@
+{
+  "source_run": "run_credit_loans_2.json",
+  "script": "credit_loans.json",
+  "noise_snr_db": null,
+  "snr_definition": null,
+  "elapsed_sec": 548,
+  "model": "openai/gpt-oss-120b",
+  "llm_provider": "Groq",
+  "speech": "synthetic (Timbre)",
+  "overall": {
+    "calls": 4,
+    "exact_orders": 4,
+    "exact_rate": 1.0,
+    "exact_ci95": [
+      0.51,
+      1.0
+    ],
+    "item_recall": 1.0,
+    "item_precision": 1.0,
+    "payment_right": 4,
+    "orders_saved": 3
+  },
+  "loans": {
+    "calls": 4,
+    "exact": 4,
+    "exact_rate": 1.0,
+    "exact_ci95": [
+      0.51,
+      1.0
+    ],
+    "quotes_saved": 4
+  },
+  "by_language": {
+    "en-IN": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 1
+    },
+    "hi-en": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 2
+    }
+  },
+  "by_tag": {
+    "approved": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 1
+    },
+    "balance": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 0
+    },
+    "credit": {
+      "calls": 4,
+      "exact_orders": 4,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.51,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 3
+    },
+    "over_limit": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 1
+    },
+    "unknown_name": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 1
+    }
+  },
+  "total_matches_stock_list": "3/3",
+  "turns": 18,
+  "turns_without_response": 0,
+  "time_to_first_audio_ms": {
+    "n": 18,
+    "median": 2526,
+    "p90": 3403,
+    "min": 1928,
+    "max": 4035,
+    "basis": "from the caller's last word: first_audio_after_ms plus the quiet at the end of the clip",
+    "turns_without_silence_correction": 0
+  },
+  "time_to_first_audio_from_clip_end_ms": {
+    "n": 18,
+    "median": 2281,
+    "p90": 3064,
+    "min": 1172,
+    "max": 3875,
+    "basis": "from the end of the audio file, uncorrected"
+  },
+  "wer_raw": 0.474,
+  "wer_number_normalised": 0.421,
+  "t_wer": 0.456,
+  "english_words": 57,
+  "cut_off": {
+    "turns_heard": 12,
+    "split_into_pieces": 0,
+    "under_half_the_words": 0,
+    "agent_clips_cut_by_the_caller_unscripted": 0
+  },
+  "rate_limited_requests": 0,
+  "agent_log_found": true,
+  "complete": true,
+  "calls_finished": 8,
+  "calls_expected": 8,
+  "calls_missing": [],
+  "run_done_flag": true,
+  "valid_run": true,
+  "reference_words": 57,
+  "calls_detail": [
+    {
+      "id": "L01",
+      "lang": "hi-IN",
+      "tags": [
+        "loan",
+        "hi-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 1000000,
+        "loan_amount": 900000,
+        "monthly_instalment": 15438
+      },
+      "loan_got": {
+        "project_cost": 1000000,
+        "loan_amount": 900000,
+        "monthly_instalment": 15438
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L02",
+      "lang": "te-IN",
+      "tags": [
+        "loan",
+        "te-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 500000,
+        "loan_amount": 450000,
+        "monthly_instalment": 7719
+      },
+      "loan_got": {
+        "project_cost": 500000,
+        "loan_amount": 450000,
+        "monthly_instalment": 7719
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L03",
+      "lang": "en-IN",
+      "tags": [
+        "loan",
+        "en-IN"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 1200000,
+        "loan_amount": 1080000,
+        "monthly_instalment": 18526
+      },
+      "loan_got": {
+        "project_cost": 1200000,
+        "loan_amount": 1080000,
+        "monthly_instalment": 18526
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "L04",
+      "lang": "hi-en",
+      "tags": [
+        "loan",
+        "hi-en"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "kind": "loan",
+      "recall": null,
+      "precision": null,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": null,
+      "payment_got": null,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null,
+      "loan_expected": {
+        "project_cost": 100000,
+        "loan_amount": 90000,
+        "monthly_instalment": 3034
+      },
+      "loan_got": {
+        "project_cost": 100000,
+        "loan_amount": 90000,
+        "monthly_instalment": 3034
+      },
+      "loan_right": {
+        "project_cost": true,
+        "loan_amount": true,
+        "monthly_instalment": true
+      }
+    },
+    {
+      "id": "U01",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "credit",
+        "approved"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": "Ramesh",
+      "customer_got": "Ramesh",
+      "order_total": 44,
+      "status": "confirmed"
+    },
+    {
+      "id": "U02",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "credit",
+        "over_limit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": "Suresh",
+      "order_total": 330,
+      "status": "confirmed"
+    },
+    {
+      "id": "U03",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "credit",
+        "unknown_name"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": "पप्पू",
+      "order_total": 520,
+      "status": "credit_pending"
+    },
+    {
+      "id": "U04",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "credit",
+        "balance"
+      ],
+      "order_saved": false,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": null,
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": null,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": null,
+      "status": null
+    }
+  ],
+  "not_computed": []
+}

@@ -17,9 +17,10 @@ Read [DukaanDost_MASTER.md](DukaanDost_MASTER.md) for the status and [poa_nov5_t
 - The browser call has still not been used by a person with a microphone.
 
 ## What is running or due
-- The search-mode run of 22:32 is saved as `INCOMPLETE_orders_clean_search_120b`: it ran into B-86 (every call after the first deaf) and timed out, so it says nothing about search mode. No run is going now.
-- Due **Nov 6 from about 21:30**: the default-mode clean run on gpt-oss-20b (the model's window will have emptied). One full run per model per 24 hours, in a rolling window.
-- Then: the 8 credit and loan calls; noise at 20 dB and 15 dB.
+- **Valid, saved:** `credit_loans_clean_120b` (2026-11-06 01:06, Build 1014 code, gpt-oss-120b): 4 of 4 order calls and 4 of 4 loan calls exactly right, 0 of 18 turns without a reply, no rate limit. Only 8 calls, so the interval is wide (51% to 100%).
+- **Evidence only:** `INVALID_orders_clean_search_120b` (2026-11-06 01:15, search mode, gpt-oss-120b): 16 of 20 orders exact, but the model refused 3 requests in the last call (e04, the daily limit), so it is INVALID and may not be quoted. Of the 3 other wrong calls, 2 were hearing (B-24 again: "ek litre" heard as "8 litre"; Telugu "అర కిలో" heard as "కిలో") and 1 was the model (t04: kandipappu mapped to urad dal). The run no longer shows the repeat-of-earlier-changes failure (B-82).
+- Due **Nov 6 from about 21:30**: the default-mode clean run on gpt-oss-20b (the model's window will have emptied). One full run per model per 24 hours, in a rolling window. The 120b budget is now spent for the day.
+- Then: noise at 20 dB and 15 dB (B-85).
 
 ## Pitfalls learned tonight
 - **Build 1013 broke every call after the first (B-86), fixed in Build 1014.** The live check before the commit ran one call. Always run two or more calls (`evaluation/scripts/smoke.json` now has two) before calling a change to the call lifecycle done.
