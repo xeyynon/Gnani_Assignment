@@ -4,6 +4,7 @@ A dated log of every fix, newest first. [bugs.md](bugs.md) is the register (what
 
 | Date | Bug | Fix | Proof (test or run) | Commit | Build or InBul |
 |---|---|---|---|---|---|
+| 2026-11-08 | B-95 | The replay transport waits about 2 s, not 0.4 s, for a locked results file; a flaky Windows test is steadier | `tests/test_transport_replay.py`; the suite passed 3 times with no `.env` | InBul31 | InBul31 |
 | 2026-11-07 | B-94 | A Hindi or Telugu call names its language to Prisma from the second turn (Telugu 10 of 16 exact against 5 of 16) | `evaluation/results/stt_accuracy_prisma`; `tests/test_lifecycle_fixes.py` | a439851 | Build 1016 |
 | 2026-11-07 | B-93 | An empty turn is heard again with the language named (8 of 8 problem clips recovered against 1 of 8) | `tests/test_lifecycle_fixes.py`, four tests; synthetic-clip experiment in bugs.md | a439851 | Build 1016 |
 | 2026-11-07 | B-92 | The demo shop sells atta loose by the kilo and in 5 and 10 kg bags | `tests` pass (1,220); retrieval benchmark 76 of 76 at top 8 | a439851 | Build 1016 |
