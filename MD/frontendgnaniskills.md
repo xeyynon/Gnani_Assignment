@@ -1,5 +1,7 @@
 # Frontend skills: how Surya builds and checks an interface
 
+> **To carry this project's frontend into another project, start with [frontendgnani.md](frontendgnani.md)** (2026-11-08): the full guide in the same shape as the Calley one, with principles, process, this stack, a checklist and a build order. This file stays as the longer catalogue of patterns (section 7) and traps, which that guide links.
+
 A reference to carry into other projects: the working style, the structure, the design system, the UX patterns, the way an interface is checked, the traps that were hit, and an audit checklist.
 
 **Written for:** Surya's own future projects, and any AI coding agent working for Surya. Use it as a brief (sections 2, 3 and 12), as an audit (section 13), or as a skill (all of it).
