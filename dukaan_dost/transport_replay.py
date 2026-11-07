@@ -196,6 +196,12 @@ class ReplayTransport(Transport):
         self._closed = True
         with self._cond:
             self._cond.notify_all()
+        # `_done` is set just BEFORE the last results file is written, so a caller that sees it and reads the file
+        # at once races the write (on Windows the reader's open handle makes the replace fail with "Access is
+        # denied"). Waiting for the caller thread to finish makes close() return only when the file is written.
+        thread = self._thread
+        if thread is not None and thread is not threading.current_thread() and thread.is_alive():
+            thread.join(timeout=10.0)
 
     # ---- the microphone ---------------------------------------------------------------------------------
 
