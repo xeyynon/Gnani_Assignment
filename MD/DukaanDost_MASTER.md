@@ -2,7 +2,7 @@
 
 The one page to read first. Everything else in `MD/` hangs off this.
 
-**Last updated:** 2026-11-02 (night) · **Latest build:** 1008 · **Latest InBul:** InBul17 · **Uncommitted:** nothing. The last push to GitHub was Build 1006; builds 1007 and 1008 and InBul15 to InBul17 are local (see [session_handover_2026-11-02.md](session_handover_2026-11-02.md))
+**Last updated:** 2026-11-08 (early morning) · **Latest build:** 1016 · **Latest InBul:** InBul28 · **Uncommitted:** nothing on the backend branch. Everything up to InBul28 is pushed to `backend-fixes-and-evaluation` (PR 17); the hand-over is [session_handover_2026-11-08.md](session_handover_2026-11-08.md).
 
 ## What it is
 Dukaan Dost is a phone-order voice agent for a neighbourhood kirana store. A customer rings the shop's phone, and the agent takes the order in Telugu, Hindi, English or code-mixed Hinglish. It checks each item against the shop's stock list, confirms quantities and prices, reads back the total in words, and writes an order summary for the shopkeeper. It also keeps the shop's **udhaar (credit) book** by phone (DEC-026), and gives would-be shopkeepers **loan guidance** (project cost, loan, scheme, instalment), computed by code from SIH 2026 PS 26091 (DEC-027).
@@ -21,7 +21,7 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Area | State |
 |---|---|
 | Base codebase | ✅ In place: the root folder is the latest upstream code (Aug 19, 2026) with client names removed. See [origin.md](origin.md) |
-| Git and versioning | ✅ `main`: builds 1000 to 1008 and InBul01 to InBul16; GitHub has everything up to Build 1006. See [project_docs_guide.md](project_docs_guide.md) |
+| Git and versioning | ✅ Builds 1000 to 1016 and InBul01 to InBul28. Branches: `main`, `ui-ux-upgrade` (all page work), `backend-fixes-and-evaluation` (agent, evaluation, docs). One build per batch of about ten fixes. See [project_docs_guide.md](project_docs_guide.md) and [version_control.md](version_control.md) |
 | Upstream clone out of the folder | ⚠️ The move failed (permission denied); excluded locally meanwhile (DEC-021) |
 | CLAUDE.md in git | ✅ Rewritten without the customer's name and tracked (DEC-022, InBul10) |
 | Repository layout | ✅ Renamed and restructured for Dukaan Dost, ready for a first push (DEC-030). Only a licence choice is left |
@@ -34,17 +34,17 @@ It is our entry for Gnani.ai's **Great Indian AI Internship Challenge**. Speech-
 | Shopkeeper dashboard | ✅ Built (Build 1003), rebuilt from components in the new look with a hideable menu and a fair comparison with yesterday (Build 1007); shows real orders now that the agent writes them (Build 1008), loan summaries and credit balances still not written. Not tried on a real phone. Admin dashboard next (DEC-034) |
 | Web pages (call page and dashboard) | ✅ Built from components that the server stitches together (DEC-040), in a mix of bento grid, glass, hard-edged accents and minimalism (DEC-041), with a theme switch (Auto, Light, Dark) and a hideable menu (Build 1007). Not tried on a real phone or in a real call (B-08) |
 | Many shops, one agent | ✅ The call link `/s/<shop>/` picks the shop (Build 1003) |
-| Software-only transport | ✅ Browser call page and WebSocket server done and tested offline (Build 1002); Raspberry Pi support removed (DEC-032). Not yet tried in a real browser |
-| Evaluation and bug hunt (2026-11-05) | 🟡 A bug hunt fixed about 40 defects (Build 1013, InBul21; `bugfixed.md`). The first run with every fix was INVALID (the model's daily limit), the credit/loan run INCOMPLETE (the laptop slept) and the noisy run understood nothing (B-85), so **no valid score exists after the fixes yet**; a search-mode run on gpt-oss-120b is going and a default-mode run on gpt-oss-20b is due on Nov 6 evening. Plan: [poa_nov5_to_9.md](poa_nov5_to_9.md) |
-| Phone transport | 🟡 Built for Twilio and Exotel streams (DEC-046, 31 tests against a stand-in provider). Never run on a real provider: both gate streaming behind KYC (B-39). Decision point Nov 5; otherwise the demo is the browser call |
-| Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 61-item `stock.json`, all knowledge files (DEC-036). Hindi/Telugu names unchecked (B-16) |
+| Software-only transport | ✅ Browser call page and WebSocket server (Build 1002); exercised by automated browser tests, **not yet by a person with a microphone** (B-08) |
+| Evaluation and bug hunt | 🟡 About 40 defects fixed on Nov 5 (Build 1013, InBul21), the first two real phone calls on Nov 7 led to Build 1016 (B-87 to B-94). **Valid so far:** Prisma alone, 65 synthetic turns, four ways (`stt_accuracy_prisma`); 8 scripted credit and loan calls, 8 of 8 (`credit_loans_clean_120b`, old stock). **Missing:** a valid score for the 20-call order script: two full runs were INVALID because the model's daily token limit ran out (B-33). Planned for about 20:40 on Nov 8. See [bugfixed.md](bugfixed.md) |
+| Phone transport | 🟡 Takes real calls: an Exotel trial number, a Voicebot applet and a temporary Cloudflare tunnel; two real calls on Nov 7, one saved an order. No KYC-approved production number, one call at a time, the tunnel address changes on every restart. Set-up in [phone_setup.md](phone_setup.md) (B-39 partly answered) |
+| Shop data (`shops/dukaan_dost/`) | 🟡 Done: config, 63-item `stock.json` (loose atta by the kilo and 5 and 10 kg bags added on Nov 7, B-92), all knowledge files. Hindi/Telugu names unchecked by a native speaker (B-16) |
 | Research | ✅ [research_papers.md](research_papers.md) (papers and methods M1 to M11) and [pipeline_expectations.md](pipeline_expectations.md) (evidence, targets, experiments E1 to E7) |
 | Fixes from the research | ✅ Price splitting, history after an interruption, Hindi/Telugu retrieval (B-17 to B-19) |
 | Order flow and order files | ✅ Built, tested (a full test suite) and tried with the real model in Hinglish, Telugu and English (DEC-039): the model reads the order, the code checks the stock list, does every sum and says every amount, and writes `orders/<shop>/`. Model: Groq gpt-oss-20b. accuracy measured once, 45% before the fixes (B-34) |
 | Udhaar credit book | ✅ Built (DEC-045): 15 synthetic customers, name matching, limits, balance enquiries, ledger settled at hang-up; 79 tests. Only the first step seen on the live model; scored run waits for model tokens (B-33) |
-| Evaluation | ❌ Not started |
-| README and SETUP | 🟡 Front page and setup written; results table waits for the eval |
-| Videos, posts | ❌ Not started |
+| Evaluation harness | ✅ Replay caller, runner, scorer, Prisma-alone script (`evaluation/stt_accuracy.py`), retrieval benchmark; results in [evaluation/results/](../evaluation/results/README.md) |
+| README and SETUP | 🟡 README rewritten with the measured results block (Nov 8); the 20-call row waits for a valid run |
+| Videos, posts | 🟡 Drafts, demo script (browser and phone versions) and form answers are in [submission_drafts.md](submission_drafts.md); recording and publishing are Surya's (the posts were due about Nov 5) |
 
 The live checklist is in [tasks.md](tasks.md).
 
