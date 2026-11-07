@@ -115,6 +115,14 @@ def write_loan(shop: str, loan: dict, root: Path | None = None) -> Path:
     return path
 
 
+def write_call(shop: str, call: dict, root: Path | None = None) -> Path:
+    """One line about a call that has ended (call_stats.py): that it happened, how long, and what came of it. Counts
+    only, so a call where nothing was ordered still shows on the dashboard."""
+    path = _record_path(shop, "call", call["call_id"], root)
+    _atomic_write(path, {**call, "type": "call", "shop": shop})
+    return path
+
+
 def read_ledger(shop: str, root: Path | None = None) -> dict:
     """The ledger for display (the dashboards): anything unreadable shows as empty. The credit book uses read_ledger_strict."""
     try:
@@ -196,6 +204,15 @@ def _public_order(r: dict) -> dict:
     }
 
 
+def _public_call(r: dict) -> dict:
+    return {"id": r["_id"], "time": r["_when"].isoformat(), "channel": r.get("channel") or "browser",
+            "seconds": _int(r.get("seconds")), "language": r.get("language"), "turns": _int(r.get("turns")),
+            "barge_ins": _int(r.get("barge_ins")), "no_speech": _int(r.get("no_speech")),
+            "model_failures": _int(r.get("model_failures")), "outcome": r.get("outcome") or "nothing",
+            "order_id": r.get("order_id"), "total": r.get("total"), "status": r.get("status"),
+            "synthetic": bool(r.get("synthetic"))}
+
+
 def _public_loan(r: dict) -> dict:
     keys = ("margin_money", "project_cost", "covered", "scheme", "annual_rate_pct", "loan_amount",
             "own_contribution", "monthly_instalment", "repayment_months", "moratorium_months",
@@ -209,6 +226,7 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
     now = (now or datetime.now(IST)).astimezone(IST)
     orders, bad_orders = read_records(shop, "order", root)
     loans, bad_loans = read_records(shop, "loan", root)
+    calls, bad_calls = read_records(shop, "call", root)
     ledger = read_ledger(shop, root)["customers"]
 
     today = now.date()
@@ -255,11 +273,14 @@ def snapshot(shop: str, now: datetime | None = None, root: Path | None = None, l
             "customers_owing": len(owing),
             "loans_today": sum(1 for l in loans if l["_when"].astimezone(IST).date() == today),
             "loans_total": len(loans),
+            "calls_today": sum(1 for c in calls if c["_when"].astimezone(IST).date() == today),
+            "calls_total": len(calls),
             "needs_attention": sum(1 for o in orders if o.get("status") in ATTENTION),
         },
         "trend": trend,
         "orders": [_public_order(o) for o in orders[:limit]],
         "loans": [_public_loan(l) for l in loans[:limit]],
+        "calls": [_public_call(c) for c in calls[:limit]],
         "ledger": customers,
-        "problems": [f"{n}: could not be read" for n in bad_orders + bad_loans],
+        "problems": [f"{n}: could not be read" for n in bad_orders + bad_loans + bad_calls],
     }
