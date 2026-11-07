@@ -69,13 +69,15 @@ Record one real call in Chrome, headphones on, the shopkeeper dashboard open in 
 
 Before recording: restart the server (`python -m dukaan_dost`), do one practice call, and check the order panel shows the lines. If the Telugu turn fails on the day, cut it; do not hide it.
 
+**Phone version (the stronger video if the line holds on the day).** A real phone call to the agent works since 2026-11-07 (an Exotel trial number behind a temporary tunnel; the set-up is in [phone_setup.md](phone_setup.md)). Film the phone's screen: dial the trial number, hold the phone to your ear with headphones off the mic path, say the same Hinglish order, then show the dashboard on the laptop. Keep your own number off the screen (the dashboard and the video show only the dialled number). Say aloud that it is a trial line. Before recording: start the agent with `AUDIO_TRANSPORT=telephony`, start the tunnel, copy its new address into the Exotel Voicebot applet and save, and make one practice call. If the line fails on the day, record the browser version above instead and say so in the walkthrough.
+
 ## 2 to 3 minute walkthrough: outline
 1. **The problem (20 s):** a shop owner on the phone all day; orders missed, credit kept in a notebook.
 2. **The call path (40 s):** the diagram in the README: browser audio, voice detection, Prisma, the model's order note, the order code, Timbre. Say which parts are Gnani's.
 3. **Why the model never does the money (30 s):** show one order where the spoken total equals the dashboard total.
 4. **Udhaar and loans (30 s):** the limit check; a loan quote with "indicative".
 5. **How it was tested (40 s):** the scripted callers, clean and noisy; the results table from the README, read as measured, with the limits (synthetic voices, one shop, small counts).
-6. **What is not done (20 s):** no real phone number yet, one call at a time, wording to be checked by native speakers. Say it plainly.
+6. **What is not done (20 s):** the phone line is a trial number behind a temporary tunnel, one call at a time, no valid score yet for the whole order script, wording to be checked by native speakers. Say it plainly.
 
 ## Submission form: answers to fill in
 | Field | Draft |
