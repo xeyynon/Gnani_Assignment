@@ -91,11 +91,11 @@ def main() -> int:
     L += ["## Adding the next release", "",
           "After a build that changes how a page looks:", "",
           "```",
-          "python scripts/ui_check/snapshot_release.py build-1015 12-build-1015     # the new build, from git",
-          "# add an entry for \"12-build-1015\" to snapshots/history/changes.json: title, summary, visible, not_looked_at",
+          "python scripts/ui_check/snapshot_release.py build-1018 13-build-1018     # the new build, from git",
+          "# add an entry for \"13-build-1018\" to snapshots/history/changes.json: title, summary, visible, not_looked_at",
           "python scripts/ui_check/history_index.py                                  # rebuild this page",
           "```", "",
-          "For a change that is not committed yet, use `--working-tree` and a label like `12-next-<what>`; when it is committed, delete that folder and take the real build.",
+          "For a change that is not committed yet, use `--working-tree` and a label like `13-next-<what>`; when it is committed, delete that folder and take the real build.",
           "Then retake `latest/` (see `scripts/ui_check/snapshots.mjs`) so the full current set matches.", ""]
     (SNAPSHOTS / "CHANGES.md").write_text("\n".join(L), encoding="utf-8")
     print(f"wrote snapshots/CHANGES.md for {len(rels)} releases")
