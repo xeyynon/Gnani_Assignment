@@ -107,6 +107,20 @@ def _retry_after(response: httpx.Response) -> float:
         return 1.0
 
 
+_FALLBACKS = {"openai/gpt-oss-20b": "openai/gpt-oss-120b", "openai/gpt-oss-120b": "openai/gpt-oss-20b"}
+
+
+def fallback_model(model: str) -> str | None:
+    """The model to try when `model` is rate limited for longer than a phone call can wait. Each Groq model has its
+    own token counters, so the other gpt-oss model is usually free. LLM_FALLBACK_MODEL names another one; "off"
+    (the evaluation runs set it, so a run measures one model) turns it off. None when there is nothing to try."""
+    chosen = os.environ.get("LLM_FALLBACK_MODEL", "").strip()
+    if chosen.lower() in ("off", "none", "0", "false", "no"):
+        return None
+    fb = chosen or _FALLBACKS.get(model)
+    return fb if fb and fb != model else None
+
+
 def _mentions_schema(response: httpx.Response) -> bool:
     """Whether a 400 is about the structured-output request itself rather than something else."""
     text = response.text.lower()
@@ -142,7 +156,7 @@ def _failed_generation(response: httpx.Response):
 
 
 def ask(model: str, messages: list, max_tokens: int, temperature: float, json_mode: bool = False,
-        json_schema: dict | None = None) -> str:
+        json_schema: dict | None = None, _fallback: bool = True) -> str:
     """
     Blocking call: the full reply text, or "" on failure. Retries once. json_mode asks for one JSON
     object; json_schema (strict) forces that shape, and falls back to json_mode for a model that
@@ -155,6 +169,10 @@ def ask(model: str, messages: list, max_tokens: int, temperature: float, json_mo
                                                  json_schema))
             if r.status_code == 429 and attempt == 1:
                 if _retry_after(r) > MAX_RETRY_WAIT_SEC:
+                    fb = fallback_model(model) if _fallback else None
+                    if fb:
+                        log.warning(f"[GROQ] {model} is rate limited for {_retry_after(r):g}s: asking {fb} instead")
+                        return ask(fb, messages, max_tokens, temperature, json_mode, json_schema, _fallback=False)
                     log.error(f"[GROQ] rate limited, asked to wait {_retry_after(r):g}s (more than "
                               f"{MAX_RETRY_WAIT_SEC:g}s): giving up without a second attempt")
                     return ""
@@ -175,7 +193,7 @@ def ask(model: str, messages: list, max_tokens: int, temperature: float, json_mo
                         # some other 400 (too long a prompt, ...): the model may well take schemas next time
                         log.warning(f"[GROQ] 400 on a json_schema request ({e.response.text[:160]}); "
                                     f"plain JSON mode for this call only")
-                    return ask(model, messages, max_tokens, temperature, json_mode=True)
+                    return ask(model, messages, max_tokens, temperature, json_mode=True, _fallback=_fallback)
                 if (json_mode or json_schema is not None) and e.response.status_code == 400:
                     attempted = _failed_generation(e.response)
                     if attempted is not None:
@@ -194,7 +212,7 @@ def ask_json(model: str, messages: list, max_tokens: int, temperature: float, sc
     return ask(model, messages, max_tokens, temperature, json_mode=True, json_schema=schema)
 
 
-def stream(model: str, messages: list, max_tokens: int, temperature: float):
+def stream(model: str, messages: list, max_tokens: int, temperature: float, _fallback: bool = True):
     """
     Yields the reply as text pieces as Groq produces them. Retries once, but only if the
     failure comes before any text has been yielded: once a piece is out, the caller may
@@ -207,6 +225,12 @@ def stream(model: str, messages: list, max_tokens: int, temperature: float):
                                       json=_payload(model, messages, max_tokens, temperature, True)) as r:
                 if r.status_code == 429 and attempt == 1:
                     if _retry_after(r) > MAX_RETRY_WAIT_SEC:
+                        fb = fallback_model(model) if _fallback else None
+                        if fb:
+                            log.warning(f"[GROQ-STREAM] {model} is rate limited for {_retry_after(r):g}s: "
+                                        f"asking {fb} instead")
+                            yield from stream(fb, messages, max_tokens, temperature, _fallback=False)
+                            return
                         log.error(f"[GROQ-STREAM] rate limited, asked to wait {_retry_after(r):g}s (more than "
                                   f"{MAX_RETRY_WAIT_SEC:g}s): giving up without a second attempt")
                         return
