@@ -38,3 +38,7 @@ function attention(orders, ledger) {         // what needs the shopkeeper, most 
   });
   return out;
 }
+function callPageUrl(pathname) {                          // /s/<shop>/dashboard -> /s/<shop>/ : the shop's own call page ("/" when the address is not a shop's)
+  const m = /^(\/s\/[^/]+\/)dashboard\/?$/.exec(String(pathname || ''));
+  return m ? m[1] : '/';
+}

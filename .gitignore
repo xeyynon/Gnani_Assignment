@@ -26,3 +26,6 @@ __pycache__/
 venv/
 .pytest_cache/
 node_modules/
+
+# Browser-automation output (screenshots and logs from the Playwright tool)
+.playwright-mcp/
