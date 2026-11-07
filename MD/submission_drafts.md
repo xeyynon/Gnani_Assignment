@@ -34,7 +34,7 @@ These are facts about what was built, checkable in the repo:
 > - gives small-business loan guidance from computed figures
 > - gives the shopkeeper a dashboard of orders and balances
 >
-> How I tested it: [RESULT: one sentence from `orders_clean_fixes_20b` and `orders_noisy10db_120b`, e.g. how many scripted calls and the share of orders exactly right, with the date]. All voices, shops and customers are synthetic.
+> How I tested it: I sent 65 scripted turns of Telugu, Hindi and English speech to Gnani Prisma on its own, clean and through a simulated phone line. When the call's language is named to Prisma, Telugu turns were heard exactly right 10 times out of 16, against 5 out of 16 when Prisma chooses the language itself. A scripted run of 8 credit and loan calls was exactly right 8 times out of 8. All voices, shops and customers are synthetic, and I have not yet got a valid score for the full order script.
 >
 > Built for the @Gnani.ai Great Indian AI Internship Challenge.
 > Demo video below. Code: [GitHub link]
@@ -46,7 +46,7 @@ These are facts about what was built, checkable in the repo:
 >
 > The model never does the money. Code checks stock, adds up, and speaks every amount.
 >
-> [RESULT: one measured number with what it counts]
+> Measured on 65 synthetic turns: naming the language to Prisma made Telugu answers exactly right 10 of 16 times, up from 5 of 16.
 >
 > Demo + code: [link]
 > #GreatIndianAIInternshipChallenge #GnaniAI
@@ -69,13 +69,15 @@ Record one real call in Chrome, headphones on, the shopkeeper dashboard open in 
 
 Before recording: restart the server (`python -m dukaan_dost`), do one practice call, and check the order panel shows the lines. If the Telugu turn fails on the day, cut it; do not hide it.
 
+**Phone version (the stronger video if the line holds on the day).** A real phone call to the agent works since 2026-11-07 (an Exotel trial number behind a temporary tunnel; the set-up is in [phone_setup.md](phone_setup.md)). Film the phone's screen: dial the trial number, hold the phone to your ear with headphones off the mic path, say the same Hinglish order, then show the dashboard on the laptop. Keep your own number off the screen (the dashboard and the video show only the dialled number). Say aloud that it is a trial line. Before recording: start the agent with `AUDIO_TRANSPORT=telephony`, start the tunnel, copy its new address into the Exotel Voicebot applet and save, and make one practice call. If the line fails on the day, record the browser version above instead and say so in the walkthrough.
+
 ## 2 to 3 minute walkthrough: outline
 1. **The problem (20 s):** a shop owner on the phone all day; orders missed, credit kept in a notebook.
 2. **The call path (40 s):** the diagram in the README: browser audio, voice detection, Prisma, the model's order note, the order code, Timbre. Say which parts are Gnani's.
 3. **Why the model never does the money (30 s):** show one order where the spoken total equals the dashboard total.
 4. **Udhaar and loans (30 s):** the limit check; a loan quote with "indicative".
 5. **How it was tested (40 s):** the scripted callers, clean and noisy; the results table from the README, read as measured, with the limits (synthetic voices, one shop, small counts).
-6. **What is not done (20 s):** no real phone number yet, one call at a time, wording to be checked by native speakers. Say it plainly.
+6. **What is not done (20 s):** the phone line is a trial number behind a temporary tunnel, one call at a time, no valid score yet for the whole order script, wording to be checked by native speakers. Say it plainly.
 
 ## Submission form: answers to fill in
 | Field | Draft |
@@ -86,7 +88,7 @@ Before recording: restart the server (`python -m dukaan_dost`), do one practice 
 | Gnani models used | Prisma v3.0 (streaming speech to text, language detected per call), Timbre v3.0 (streaming text to speech, one voice for all four languages) |
 | Other models | Groq gpt-oss for the order note (Gnani has none public); Gemini is wired in as an option |
 | What is novel | Money and quantities are decided by code, not by the model; the model only extracts; every spoken amount is generated from templates |
-| Results | [RESULT: the table from the README, same numbers] |
+| Results | The Results section of the README: Prisma on its own, 65 synthetic turns, four ways (25, 31, 16 and 19 turns exactly right); 8 of 8 scripted credit and loan calls; a valid score for the 20-call order script is not yet available |
 | Links | GitHub repo; LinkedIn post; X post; demo video; walkthrough |
-| Honest limits | Synthetic voices and data; one call at a time; no live phone number; native-speaker check of Hindi and Telugu wording [status on the day] |
+| Honest limits | Synthetic voices and data; one call at a time; the phone line is an Exotel trial number behind a temporary tunnel, tried by two real calls; the phone-line accuracy figures use a simulated line; no valid score yet for the full order script; native-speaker check of Hindi and Telugu wording [status on the day] |
 | Tier 2/3 question | Open (tasks.md): Surya checks whether the college or town counts |

@@ -467,3 +467,113 @@ def test_repeat_right_after_the_greeting_replays_the_greeting(app, rig, monkeypa
     rig.settle()
     gen, wav, _rid, _cont = app.reply_q.get_nowait()
     assert wav == b"wav:" + greeting.encode("utf-8")
+
+
+# ---- a call where nothing was ordered still shows up (the dashboard was empty after the first phone call) ----------
+
+def test_a_call_with_no_order_still_leaves_a_call_record(app, rig, tmp_path):
+    rig.start()
+    app._clear_history("new node phone-ab12cd34")
+    rig.say("What is this service called?")
+    rig.settle()
+    app._finish_order("call ended")
+    snap = store.snapshot("dukaan_dost", root=tmp_path)
+    assert snap["orders"] == []
+    assert snap["summary"]["calls_total"] == 1
+    call = snap["calls"][0]
+    assert call["outcome"] == "nothing" and call["channel"] == "phone" and call["turns"] >= 1
+
+
+def test_ending_the_same_call_twice_saves_one_record(app, rig, tmp_path):
+    app._finish_order("call ended")
+    app._finish_order("call ended")
+    assert store.snapshot("dukaan_dost", root=tmp_path)["summary"]["calls_total"] == 1
+
+
+def test_a_failed_call_record_never_breaks_the_hang_up(app, rig, monkeypatch):
+    monkeypatch.setattr(app._store, "write_call", lambda *a, **k: (_ for _ in ()).throw(OSError("disk full")))
+    app._finish_order("call ended")                               # must not raise
+
+
+# ---- a turn that came back empty is heard again with the language named ------------------------------------------
+
+class FakeSession:
+    def __init__(self, language, answers, log):
+        self.language, self.answers, self.log, self.fed = language, answers, log, 0
+        log.append(language)
+
+    def feed(self, chunk):
+        self.fed += len(chunk)
+
+    def finish(self):
+        return self.answers.get(self.language, ("", ""))
+
+
+def _empty_turn(app, seconds=2.0, tentative=False):
+    pcm = b"\x01\x02" * int(16000 * seconds)
+    app.audio_q.put((app._call_gen, pcm, seconds, {}, tentative, "", "", 0))
+
+
+def test_an_empty_turn_is_heard_again_in_the_calls_language(app, rig, monkeypatch):
+    tried = []
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", True)
+    monkeypatch.setattr(app, "_locked_language_code", "te-IN")
+    monkeypatch.setattr(app, "_start_streaming_session",
+                        lambda lang, stale=None: FakeSession(lang, {"te-IN": ("అంతే.", "te-IN")}, tried))
+    rig.start()
+    _empty_turn(app)
+    rig.settle()
+    assert tried == ["te-IN"]                              # the call's language first, and it was enough
+    assert rig.model_calls == ["అంతే."]
+
+
+def test_with_no_language_known_yet_hindi_is_tried_and_then_telugu(app, rig, monkeypatch):
+    tried = []
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", True)
+    monkeypatch.setattr(app, "_locked_language_code", None)
+    monkeypatch.setattr(app, "_start_streaming_session",
+                        lambda lang, stale=None: FakeSession(lang, {"te-IN": ("క్యాష్", "te-IN")}, tried))
+    rig.start()
+    _empty_turn(app)
+    rig.settle()
+    assert tried == ["hi-IN", "te-IN"] and rig.model_calls == ["క్యాష్"]
+
+
+def test_the_retry_does_not_run_for_a_clip_that_is_too_short_or_not_confirmed_speech(app, rig, monkeypatch):
+    tried = []
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", True)
+    monkeypatch.setattr(app, "_start_streaming_session",
+                        lambda lang, stale=None: FakeSession(lang, {"hi-IN": ("बस", "hi-IN")}, tried))
+    rig.start()
+    _empty_turn(app, seconds=0.2)
+    _empty_turn(app, seconds=2.0, tentative=True)
+    rig.settle()
+    assert tried == [] and rig.model_calls == []
+
+
+def test_the_retry_can_be_switched_off_and_a_failing_retry_does_not_break_the_turn(app, rig, monkeypatch):
+    tried = []
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", False)
+    monkeypatch.setattr(app, "_start_streaming_session", lambda lang, stale=None: FakeSession(lang, {}, tried))
+    rig.start()
+    _empty_turn(app)
+    rig.settle()
+    assert tried == []
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", True)
+
+    def boom(lang, stale=None):
+        raise OSError("no network")
+    monkeypatch.setattr(app, "_start_streaming_session", boom)
+    _empty_turn(app)
+    rig.settle()                                           # the turn ends with the usual apology, nothing raised
+    assert rig.model_calls == []
+
+
+def test_hindi_and_telugu_calls_name_their_language_to_the_recogniser_but_english_ones_do_not(app, monkeypatch):
+    monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", True)
+    for locked, expected in (("te-IN", "te-IN"), ("hi-IN", "hi-IN"), ("en-IN", None), (None, None), ("", None)):
+        monkeypatch.setattr(app, "_locked_language_code", locked)
+        assert app._stt_language_for_call() == expected
+    monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", False)
+    monkeypatch.setattr(app, "_locked_language_code", "te-IN")
+    assert app._stt_language_for_call() is None

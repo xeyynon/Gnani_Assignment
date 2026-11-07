@@ -127,6 +127,20 @@ def test_the_models_narration_and_its_own_totals_are_not_spoken(session):
     assert text == "Added 1 kilo Sugar 44 rupees, 1 litre Sunflower oil 165 rupees. Total so far 209 rupees. Anything else?"
 
 
+def test_a_turn_where_the_model_said_nothing_and_nothing_changed_asks_what_comes_next(session):
+    """The first phone call heard "Sorry, I did not catch that" three times after the caller said their own name."""
+    assert reply(session, note([], "")) == "What would you like to order?"
+    assert reply(session, note([], ""), "hi-IN") == "आपको क्या चाहिए?"
+    assert reply(session, note([], ""), "te-IN") == "మీకు ఏమి కావాలి?"
+    reply(session, note([add("SUGAR-1KG", 1)], "x"))
+    assert reply(session, note([], "")) == "Anything else?"
+    assert reply(session, note([], ""), "hi-IN") == "और कुछ चाहिए?"
+
+
+def test_a_turn_where_the_model_did_speak_still_uses_its_words(session):
+    assert reply(session, note([], "We are open until nine in the evening.")) == "We are open until nine in the evening."
+
+
 def test_the_follow_up_question_is_in_the_callers_language(session):
     assert reply(session, note([add("SUGAR-1KG", 2)], "x"), "hi-IN") == \
         "2 किलो चीनी 88 रुपये जोड़ दिया। अभी तक कुल 88 रुपये। और कुछ चाहिए?"
@@ -321,8 +335,14 @@ def test_an_unusable_model_answer_gives_the_fallback_and_changes_nothing(manager
     assert session.is_empty
 
 
-def test_a_note_that_says_nothing_and_changes_nothing_gives_the_fallback(manager, session, monkeypatch):
+def test_a_note_that_says_nothing_and_changes_nothing_asks_what_comes_next(manager, session, monkeypatch):
+    # It used to be "Sorry, I did not catch that", which a caller heard three times after saying their own name.
     monkeypatch.setattr(cm, "gemini_ask_json", ScriptedModel(note([], "")))
+    assert talk(manager, session, "hmm", "en-IN") == "What would you like to order?"
+
+
+def test_a_note_that_cannot_be_read_at_all_still_gives_the_fallback(manager, session, monkeypatch):
+    monkeypatch.setattr(cm, "gemini_ask_json", ScriptedModel("not json at all", "still not json"))
     assert talk(manager, session, "hmm", "en-IN") == manager.fallback_messages["en-in"]
 
 

@@ -272,7 +272,7 @@
    ],
    "expected": {
     "items": {
-     "ATTA-5KG": 2,
+     "ATTA-1KG": 2,
      "OIL-1L": 1
     },
     "payment": "cash",

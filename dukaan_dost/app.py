@@ -86,6 +86,8 @@ from dukaan_dost import stock as _stock
 from dukaan_dost.stt_provider import set_keyterms as _set_stt_keyterms
 from dukaan_dost.llm_provider import LLM_PROVIDER as _LLM_PROVIDER, warmup as _llm_warmup
 from dukaan_dost import llm_groq as _llm_groq
+from dukaan_dost import store as _store
+from dukaan_dost.call_stats import CURRENT as _call_stats
 
 # ─────────────────────────────────────────────────────
 # CONFIG — only edit this section
@@ -207,8 +209,9 @@ def _greeting() -> str:
     shop = _active_shop
     override = os.getenv("SHOP_DISPLAY_NAME") if shop == SHOP_NAME else None
     name = override or _shops.display_name(shop)
-    return (f"Hello! Welcome to {name}. I might take a few seconds "
-            "to answer, so please bear with me. How can I help you today?")
+    # Short: on the first phone call (2026-11-07) the 9-second greeting with "please bear with me" was talked over
+    # and cut off by the caller; replies now start in about 2.5 seconds, so the apology for slowness is not needed.
+    return f"Hello! Welcome to {name}. How can I help you today?"
 
 # Spoken only when Google Speech-to-Text itself fails (network/auth
 # error, distinct from normal silence/noise) — English only, since the
@@ -728,7 +731,12 @@ TTS_CONTINUATION_WAIT_SEC = float(os.getenv("TTS_CONTINUATION_WAIT_SEC", "0.15")
 # echo currently coming back", which is what the adaptive floor below
 # measures live instead of guessing at build time.
 BARGE_IN_ENERGY_THRESHOLD = float(os.getenv("BARGE_IN_ENERGY_THRESHOLD", "800"))
-BARGE_IN_MIN_FRAMES = int(os.getenv("BARGE_IN_MIN_FRAMES", "4"))  # ~120ms sustained
+# On a phone line a cough, a click or someone else in the room is as loud as the caller's voice, and the carrier
+# already removes echo; so a barge-in must last longer there (8 frames, about 240 ms) than in a browser, where the
+# browser removes echo itself (4 frames, about 120 ms). Seen on the first phone call, 2026-11-07: seven short
+# bursts cut the agent's reply off within a minute. Not yet measured on another call: BARGE_IN_MIN_FRAMES overrides.
+_ON_A_PHONE = os.getenv("AUDIO_TRANSPORT", "").strip().lower() == "telephony"
+BARGE_IN_MIN_FRAMES = int(os.getenv("BARGE_IN_MIN_FRAMES", "8" if _ON_A_PHONE else "4"))
 
 # ── ADAPTIVE ECHO FLOOR ──
 # While the bot speaks, the mic hears mostly the bot's own echo through
@@ -786,6 +794,13 @@ READ_TIMEOUT_SEC     = 5   # bounds each capture read so a stalled stream
 _LOG_FORMAT = logging.Formatter(
     "%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
 )
+# The Windows console defaults to a legacy code page that cannot print Hindi or Telugu: every log line with the
+# caller's words then raised a "Logging error" traceback (seen on the first phone call, 2026-11-07).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError, OSError):
+        pass
 _console_handler = logging.StreamHandler()
 _console_handler.setFormatter(_LOG_FORMAT)
 
@@ -1002,6 +1017,7 @@ def _set_active_shop() -> None:
         _start_order(shop)
     except Exception as e:
         log.warning(f"[ORDER] could not start an order for {shop!r}: {e}")
+    _call_stats.begin(shop)           # after _start_order: that closes a previous call whose end was missed
 
 
 def _start_order(shop: str) -> None:
@@ -1026,31 +1042,52 @@ def _start_order(shop: str) -> None:
 
 
 def _finish_order(reason: str) -> None:
-    """The call is over: write the order to orders/<shop>/ (if anything was ordered) and drop it."""
+    """The call is over: write the order to orders/<shop>/ (if anything was ordered) and drop it. A one-line record
+    of the call itself is written too, so the dashboard shows calls where nothing was ordered."""
     global _order, _loan
     with _order_lock:
         session, _order = _order, None
         loan, _loan = _loan, None
+    outcome, order_id, total, status = "nothing", None, None, None
+    shop = None
     if loan is not None:
+        shop = loan.shop
         try:
             saved = loan.close()
             if saved is not None:
+                outcome = "loan"
                 log.info(f"[LOAN] {reason}: saved loan enquiry {saved['call_id']} for {loan.shop!r} "
                          f"(project cost {saved['project_cost']}, covered {saved['covered']}).")
         except Exception as e:
             log.error(f"[LOAN] could not save the loan enquiry for call {loan.call_id}: {e}", exc_info=True)
-    if session is None:
-        return
+    if session is not None:
+        shop = shop or session.shop
+        try:
+            record = session.close()
+        except Exception as e:
+            log.error(f"[ORDER] could not save the order for call {session.call_id}: {e}", exc_info=True)
+        else:
+            if record is None:
+                log.info(f"[ORDER] {reason}: nothing was ordered, no order file written.")
+            else:
+                outcome, order_id, total, status = "ordered", record["call_id"], record["total"], record["status"]
+                log.info(f"[ORDER] {reason}: saved order {record['call_id']} for {session.shop!r} "
+                         f"({len(record['items'])} item(s), total {record['total']}, status {record['status']}).")
+    _save_call_record(shop, outcome, order_id, total, status)
+
+
+def _save_call_record(shop, outcome, order_id, total, status) -> None:
+    """Close this call's tally and save it. Never raises: a failed note about the call must not affect the call."""
     try:
-        record = session.close()
+        record = _call_stats.finish(outcome, order_id=order_id, total=total, status=status)
+        if record is None:
+            return
+        shop = shop or record.get("shop") or _active_shop
+        if os.environ.get("ORDER_SYNTHETIC") == "1":
+            record["synthetic"] = True
+        _store.write_call(shop, record)
     except Exception as e:
-        log.error(f"[ORDER] could not save the order for call {session.call_id}: {e}", exc_info=True)
-        return
-    if record is None:
-        log.info(f"[ORDER] {reason}: nothing was ordered, no order file written.")
-    else:
-        log.info(f"[ORDER] {reason}: saved order {record['call_id']} for {session.shop!r} "
-                 f"({len(record['items'])} item(s), total {record['total']}, status {record['status']}).")
+        log.warning(f"[CALL] could not save the call record: {e}")
 
 
 def _boost_product_names(shop: str) -> None:
@@ -1111,6 +1148,8 @@ def _clear_history(reason=""):
         _last_reply_wav = None
         _last_reply_lang = None
     _reset_caller_pitch_profile()
+    if (reason or "").startswith("new node "):
+        _call_stats.set_channel(reason[len("new node "):])
     log.info(f"History cleared{': ' + reason if reason else '.'}")
 
 
@@ -1761,6 +1800,63 @@ def _filter_transcript(transcript: str, language_code: str, duration: float) -> 
     return transcript, language_code
 
 
+# Prisma's automatic language choice is unreliable on short phrases ("Bas itna hi" came back tagged Marathi, Telugu
+# "అంతే" and "క్యాష్" as other languages or as nothing), and the client throws away text tagged with a language the shop
+# does not serve. Told the language, the same audio is heard correctly: on the eight clips that failed this way, auto
+# detection got 1 right and a hinted session got 8 (2026-11-07, synthetic clips through a simulated phone line).
+# Re-sending the same audio in auto mode gives the same answer every time (0 of 28 tries), so the retry names a
+# language: the call's own when it is known, otherwise Hindi and then Telugu. It costs a few seconds, and only on
+# a turn that came back empty although speech was detected.
+STT_LANGUAGE_RETRY = os.getenv("STT_LANGUAGE_RETRY", "1") == "1" and _STT_PROVIDER == "gnani"
+STT_RETRY_MIN_SEC = 0.4
+STT_RETRY_MAX_SEC = 6.0
+
+
+# Once a call is known to be in Hindi or Telugu, Prisma is told so from the next turn on. Measured on the 65 turns of the
+# order script (evaluation/results/stt_accuracy_prisma): with the language named, Telugu calls were exactly right on
+# 10 of 16 turns against 5 of 16 with Prisma choosing, short turns 19 of 31 against 14 of 31, and no turn came back
+# empty (3 did on automatic). English calls stay on automatic detection: told "English", Prisma would garble a caller
+# who slips into Hindi. The first turn of a call is always automatic, because nothing is known yet.
+STT_USE_CALL_LANGUAGE = os.getenv("STT_USE_CALL_LANGUAGE", "1") == "1" and _STT_PROVIDER == "gnani"
+
+
+def _stt_language_for_call():
+    """The language to name to the recogniser for the next utterance, or None for automatic detection."""
+    if not STT_USE_CALL_LANGUAGE:
+        return None
+    locked = (_locked_language_code or "").strip()
+    return locked if locked.lower() in ("hi-in", "te-in") else None
+
+
+def _retry_languages() -> list:
+    locked = (_locked_language_code or "").strip()
+    order = [locked] if locked.lower() in ("hi-in", "te-in") else []
+    order += [c for c in ("hi-IN", "te-IN") if c not in order]
+    return order[:2]
+
+
+def _retry_with_language(pcm: bytes, duration: float, gen: int) -> tuple[str, str]:
+    """Hear the same audio again with a language named. ("", "") when nothing comes of it."""
+    if not STT_LANGUAGE_RETRY or not pcm or not (STT_RETRY_MIN_SEC <= duration <= STT_RETRY_MAX_SEC):
+        return "", ""
+    for lang in _retry_languages():
+        if gen != _call_gen:
+            return "", ""
+        try:
+            session = _start_streaming_session(lang, lambda g=gen: g != _call_gen)
+            for i in range(0, len(pcm), FRAME_BYTES):
+                session.feed(pcm[i:i + FRAME_BYTES])
+            heard, language = session.finish()
+        except Exception as e:
+            log.warning(f"[STT] retry in {lang} failed: {e}")
+            return "", ""
+        heard, language = _filter_transcript(heard, language, duration)
+        if heard:
+            log.info(f"[STT] heard again with the language named ({lang}): '{heard}'")
+            return heard, language
+    return "", ""
+
+
 # ─────────────────────────────────────────────────────
 # LLM — routed through the Conversation Manager (Gemini backend)
 # (knowledge lookup -> Gemini -> validator)
@@ -2405,7 +2501,7 @@ def recorder_thread():
                                 # language_code still controls reply
                                 # language/TTS voice below, just not STT
                                 # decoding.
-                                None,
+                                _stt_language_for_call(),
                                 # 2026-07-31: lets a Sarvam session
                                 # abandon a slow concurrency-semaphore
                                 # wait the instant ITS OWN call ends,
@@ -2771,6 +2867,8 @@ def processor_thread():
             # from ever showing up in [SPAN] at all (2026-07-30).
             t_filter0 = time.time()
             transcript, language_code = _filter_transcript(raw_transcript, raw_language_code, duration)
+            if not transcript and language_code != "ERROR" and not tentative:
+                transcript, language_code = _retry_with_language(pcm, duration, gen)
             filter_ms = (time.time() - t_filter0) * 1000
 
             # Phase B instrumentation: one CSV row per utterance that
@@ -2800,6 +2898,7 @@ def processor_thread():
                 continue
 
             if not transcript:
+                _call_stats.no_speech()
                 if language_code == "ERROR":
                     # 2026-07-31: was hardcoded "Google STT failed" even
                     # when STT_PROVIDER=sarvam (the default) — a real
@@ -2991,6 +3090,7 @@ def processor_thread():
                 continue
 
             log.info(f"Caller ({language_code}): '{transcript}'")
+            _call_stats.turn(language_code)
 
             is_first_turn = not bool(_history)
             try:
@@ -3279,6 +3379,7 @@ def playback_thread():
                     _abandoned_reply_id = reply_id
                     _trim_history_for_interrupt(reply_id)
                     barged_in = True
+                    _call_stats.barge_in()
                     log.info(
                         f"[BARGE-IN] Mid-sentence interruption on reply {reply_id} "
                         f"after {chunks} chunk(s) — recorder stays live."
@@ -3367,6 +3468,7 @@ def playback_thread():
                     # (see the defensive clear where this reply's own
                     # playback loop started, for the full explanation).
                     _mid_play_interrupt.clear()
+                    _call_stats.barge_in()
                     log.info(
                         f"[BARGE-IN] Caller interrupted reply {reply_id} "
                         f"after {chunks} chunk(s) — recorder stays live."
@@ -3437,6 +3539,7 @@ def playback_thread():
                 _abandoned_reply_id = reply_id
                 _trim_history_for_interrupt(reply_id)
                 barged_in = True
+                _call_stats.barge_in()
                 log.info(
                     f"[BARGE-IN] Mid-sentence interruption on reply {reply_id} "
                     f"(via exception path) — recorder stays live."
