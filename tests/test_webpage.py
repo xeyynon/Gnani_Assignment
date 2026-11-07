@@ -77,11 +77,12 @@ def _pages():
 
 
 def test_both_real_pages_compose_completely():
-    assert set(_pages()) == {"index.html", "dashboard.html", "admin.html"}
+    assert set(_pages()) == {"index.html", "dashboard.html", "admin.html", "login.html"}
     for name, path in _pages().items():
         text = webpage.load(path)
         assert "{{include:" not in text, f"{name} has an include that did not resolve"
-        assert "{{SHOP}}" in text, f"{name} lost its shop-name placeholder"
+        placeholder = "{{TITLE}}" if name == "login.html" else "{{SHOP}}"          # the sign-in page is filled by login.py, the others by their handlers
+        assert placeholder in text, f"{name} lost its {placeholder} placeholder"
         assert len(text) > 1000
 
 

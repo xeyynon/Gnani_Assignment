@@ -105,7 +105,7 @@ def main() -> None:
     transport, tmp = build(args.host, args.port)
     url = f"{transport.url}/s/{SHOP}/dashboard"
     print(f"Dashboard preview: {url}")
-    print(f"  password (PIN): {PIN}     (the browser asks for it; any user name works)")
+    print(f"  password (PIN): {PIN}     (the sign-in page asks for it)")
     print(f"  admin page: {transport.url}/admin   (user admin, password {ADMIN_PASSWORD})")
     print("  All data is made up. Press Ctrl+C to stop.")
     if not args.no_browser:
