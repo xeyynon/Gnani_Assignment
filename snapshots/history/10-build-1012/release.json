@@ -1,0 +1,13 @@
+{
+ "label": "10-build-1012",
+ "rev": "build-1012",
+ "commit": "965f4cf",
+ "date": "2026-11-05",
+ "title": "One neutral charcoal palette on every page, and bigger touch targets",
+ "ran_code_of": "build-1012",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin"
+ ]
+}

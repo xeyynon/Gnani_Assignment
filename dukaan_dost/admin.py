@@ -42,13 +42,13 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from . import admin_actions, auth, shop_health, shops, store, webpage
+from . import admin_actions, auth, login, shop_health, shops, store, webpage
 from .dashboard import SECURITY_HEADERS, Reply, _text
 
 log = logging.getLogger("admin")
 
 PAGE_PATH = Path(__file__).parent / "web" / "admin.html"
-ROUTE = re.compile(r"^/admin(?P<sub>/data|/token)?/?$")
+ROUTE = re.compile(r"^/admin(?P<sub>/data|/token|/session/keep|/session|/signout)?/?$")
 WS_PATH = "/admin/ws"
 THROTTLE = auth.Throttle(max_failures=5, lock_sec=60.0)
 ADMIN_USER = "admin"
@@ -148,7 +148,8 @@ TOKENS = TokenStore()
 
 def handle(path: str, headers, remote: str, shops_root: Path | None = None, orders_root: Path | None = None,
            throttle: auth.Throttle | None = None, live_calls=None, auth_path: Path | None = None,
-           state_path: Path | None = None, tokens: TokenStore | None = None, log_path: Path | None = None) -> Reply | None:
+           state_path: Path | None = None, tokens: TokenStore | None = None, log_path: Path | None = None,
+           sessions: auth.SessionStore | None = None) -> Reply | None:
     """A Reply for the admin paths, or None for anything else (so other handlers can try)."""
     m = ROUTE.match(path.split("?", 1)[0])
     if m is None:
@@ -158,21 +159,33 @@ def handle(path: str, headers, remote: str, shops_root: Path | None = None, orde
         return _text(503, "The admin dashboard is off. Set ADMIN_PASSWORD (in .env or local_config.py) and restart the agent.")
 
     throttle = throttle or THROTTLE
+    sessions = sessions or login.SESSIONS
     key = (remote, "admin")
     challenge = {"WWW-Authenticate": 'Basic realm="Dukaan Dost admin", charset="UTF-8"'}
-    if not throttle.allowed(key):
-        return _text(429, "Too many wrong attempts. Wait a minute and try again.", {"Retry-After": "60"})
-    creds = auth.parse_basic(headers.get("Authorization"))
-    if creds is None:
-        return _text(401, "Sign in as admin.", challenge)
-    user, secret = creds
-    if user == ADMIN_USER and auth.check_admin(secret):
-        throttle.ok(key)
-    else:
-        throttle.fail(key)
-        return _text(401, "That is not the admin password.", challenge)
-
     sub = m.group("sub")
+
+    def scope_for(user, secret):
+        return "admin" if user == ADMIN_USER and auth.check_admin(secret) else None
+
+    if sub in ("/session", "/session/keep"):
+        return login.sign_in(headers, remote, throttle=throttle, key=key, scope_for=scope_for, sessions=sessions, keep=sub == "/session/keep")
+    if sub == "/signout":
+        return login.sign_out(headers, sessions)
+
+    def sign_in_page():
+        return login.render_page("admin", "Admin", "/admin/session")
+
+    creds = auth.parse_basic(headers.get("Authorization"))
+    if creds is not None:                                          # a script: the header on every request, as before
+        if not throttle.allowed(key):
+            return _text(429, "Too many wrong attempts. Wait a minute and try again.", {"Retry-After": "60"})
+        if scope_for(*creds) is None:
+            throttle.fail(key)
+            return login.unauthorized(headers, "That is not the admin password.", challenge, sign_in_page)
+        throttle.ok(key)
+    elif not auth.scope_allows(login.current_scope(headers, sessions), None):
+        return login.unauthorized(headers, "Sign in as admin.", challenge, sign_in_page)
+
     if sub == "/token":
         body = json.dumps({"token": (tokens or TOKENS).issue()}).encode("utf-8")
         return Reply(200, "application/json; charset=utf-8", body, dict(SECURITY_HEADERS))

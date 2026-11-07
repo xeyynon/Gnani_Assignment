@@ -63,7 +63,7 @@ Each shop's owner gets a dashboard at `/s/<shop>/dashboard`, protected by a PIN:
 python -m dukaan_dost.auth set-pin <shop>             # asks for a PIN twice; stored hashed in data/auth.json
 python -m dukaan_dost.demo_data <shop>                # optional: made-up orders, loans and credit balances to look at
 ```
-Open `http://127.0.0.1:8765/s/<shop>/dashboard`; the browser asks for a password, which is the PIN (the user name is ignored). To oversee any shop, set `ADMIN_PASSWORD` in `local_config.py` and sign in as user `admin`. Wrong guesses lock a shop for a minute after five. Sign-in is HTTP Basic auth, so use `localhost` or `https`.
+Open `http://127.0.0.1:8765/s/<shop>/dashboard`; a sign-in page asks for the shop's PIN (tick "Keep me signed in on this device" for 30 days; otherwise the sign-in ends after 12 hours or when you press Sign out). To oversee any shop, set `ADMIN_PASSWORD` in `local_config.py` and sign in at `/admin` (the same password also opens any shop's dashboard from the sign-in page of `/admin`, or by a script with user `admin`). Wrong guesses lock a shop for a minute after five, and the page counts the tries left and the seconds to wait. Sign-ins are kept in memory, so restarting the agent signs everyone out. A script can still send an `Authorization: Basic` header on every request. The PIN travels in a header, so use `localhost` or `https` (behind a proxy that sends `X-Forwarded-Proto: https` the cookie is also marked Secure).
 
 The agent does not write real orders yet, so until it does the dashboard shows only the demo data, marked as made up.
 

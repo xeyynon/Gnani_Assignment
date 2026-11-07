@@ -43,7 +43,12 @@ await sleep(3000);
 
 let failed = 0;
 for (const step of steps) {
-  const r = await send('Runtime.evaluate', { expression: `(async () => { ${step.js} })()`, awaitPromise: true, returnByValue: true });
+  let r;                                       // a step that is cut off by the page navigating (a sign-in reloads it) is tried again on the new page
+  for (let attempt = 0; attempt < 3; attempt++) {
+    r = await send('Runtime.evaluate', { expression: `(async () => { ${step.js} })()`, awaitPromise: true, returnByValue: true });
+    if (r && (r.result || r.exceptionDetails)) break;
+    await sleep(1800);
+  }
   const out = r.exceptionDetails ? 'EXCEPTION ' + (r.exceptionDetails.exception && r.exceptionDetails.exception.description) : JSON.stringify(r.result.value);
   let ok = true;
   if (step.expect !== undefined) { ok = r.result && JSON.stringify(r.result.value) === JSON.stringify(step.expect); if (!ok) failed++; }

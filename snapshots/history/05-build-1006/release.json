@@ -1,0 +1,12 @@
+{
+ "label": "05-build-1006",
+ "rev": "build-1006",
+ "commit": "6a712a3",
+ "date": "2026-11-02",
+ "title": "One shared colour palette for the call page and the dashboard",
+ "ran_code_of": "build-1006",
+ "pages": [
+  "call-page",
+  "dashboard"
+ ]
+}

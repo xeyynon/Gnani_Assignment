@@ -25,7 +25,7 @@ SKIP_PREFIXES = ("http://", "https://", "mailto:", "tel:", "#", "data:")
 
 def markdown_files():
     out = subprocess.run(["git", "ls-files", "*.md"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
-    return [ROOT / f for f in out.splitlines() if f]
+    return [ROOT / f for f in out.splitlines() if f and (ROOT / f).exists()]       # a file deleted or moved but not yet committed is not a link target to check
 
 
 def broken_links(md: Path):

@@ -1,0 +1,15 @@
+{
+ "label": "11-build-1015",
+ "rev": "build-1015",
+ "commit": "e6c7390",
+ "date": "2026-11-06",
+ "title": "A sign-in page and a sign-out button instead of the browser's own box",
+ "ran_code_of": "build-1015",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}
