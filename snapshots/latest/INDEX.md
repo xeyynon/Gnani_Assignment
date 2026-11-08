@@ -2,7 +2,7 @@
 
 Full-page screenshots of every page in every state, in light and dark, at phone, tablet and desktop widths. All data is made up (the preview's demo shop).
 
-Taken 2026-11-05 from commit `1365942` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
+Taken 2026-11-08 from commit `e472459` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
 
 Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tablet 768 px, desktop 1280 px.
 
@@ -151,6 +151,14 @@ Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tab
 | phone 390 | [dashboard/04-loan-enquiries/light-phone-390.png](dashboard/04-loan-enquiries/light-phone-390.png) | [dashboard/04-loan-enquiries/dark-phone-390.png](dashboard/04-loan-enquiries/dark-phone-390.png) |
 | tablet 768 | [dashboard/04-loan-enquiries/light-tablet-768.png](dashboard/04-loan-enquiries/light-tablet-768.png) | [dashboard/04-loan-enquiries/dark-tablet-768.png](dashboard/04-loan-enquiries/dark-tablet-768.png) |
 | desktop 1280 | [dashboard/04-loan-enquiries/light-desktop-1280.png](dashboard/04-loan-enquiries/light-desktop-1280.png) | [dashboard/04-loan-enquiries/dark-desktop-1280.png](dashboard/04-loan-enquiries/dark-desktop-1280.png) |
+
+### 05 calls
+
+| Device | Light | Dark |
+|---|---|---|
+| phone 390 | [dashboard/05-calls/light-phone-390.png](dashboard/05-calls/light-phone-390.png) | [dashboard/05-calls/dark-phone-390.png](dashboard/05-calls/dark-phone-390.png) |
+| tablet 768 | [dashboard/05-calls/light-tablet-768.png](dashboard/05-calls/light-tablet-768.png) | [dashboard/05-calls/dark-tablet-768.png](dashboard/05-calls/dark-tablet-768.png) |
+| desktop 1280 | [dashboard/05-calls/light-desktop-1280.png](dashboard/05-calls/light-desktop-1280.png) | [dashboard/05-calls/dark-desktop-1280.png](dashboard/05-calls/dark-desktop-1280.png) |
 
 ## admin
 

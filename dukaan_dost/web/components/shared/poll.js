@@ -16,7 +16,7 @@ async function poll(url, draw, everyMs) {
       signedOut = true;
       $('updated').textContent = r.status === 401 ? 'Signed out.' : 'Too many wrong attempts. Try again in a minute.';
       $('dot').className = 'dot off';
-      $('notices').replaceChildren(h('div', { class: 'banner bad' }, 'Sign in again to see this shop. ', h('button', { type: 'button', id: 'reload', text: 'Sign in' })));
+      $('notices').replaceChildren(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Signed out' }), 'Sign in again to see this shop. ', h('button', { type: 'button', id: 'reload', text: 'Sign in' })));
       $('reload').addEventListener('click', () => location.reload());
       return;
     }
@@ -28,7 +28,7 @@ async function poll(url, draw, everyMs) {
       failed = false;
     } catch (e) {                                   // a bug in drawing the data: say so, don't sit on "Loading..."
       console.error(e);
-      $('notices').replaceChildren(h('div', { class: 'banner bad', text: 'The page could not show this data (' + e.message + ').' }));
+      $('notices').replaceChildren(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Problem' }), 'The page could not show this data (' + e.message + ').'));
     }
   } catch (e) { failed = true; /* a network problem: keep the last data; tick() shows the connection warning */ }
   tick();

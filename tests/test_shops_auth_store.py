@@ -270,10 +270,29 @@ def test_demo_ledger_agrees_with_the_demo_orders():
         assert 0 <= c["balance"] <= c["credit_limit"]
 
 
+def test_demo_calls_match_the_demo_orders_and_show_every_kind_of_call():
+    orders, loans, _ = demo_data.build(NOW)
+    calls = demo_data.build_calls(NOW, orders, loans)
+    by_id = {o["call_id"]: o for o in orders}
+    assert all(c["synthetic"] is True for c in calls)
+    assert len({c["call_id"] for c in calls}) == len(calls)
+    for c in calls:
+        assert set(c) >= {"call_id", "time", "channel", "seconds", "language", "turns", "barge_ins", "no_speech",
+                          "model_failures", "outcome"}               # the shape call_stats.finish() saves
+        assert "number" not in c and "caller" not in c                   # counts only: never who called
+        if c["outcome"] == "ordered":
+            o = by_id[c["order_id"]]
+            assert (c["total"], c["status"], c["time"]) == (o["total"], o["status"], o["time"])
+    assert {c["outcome"] for c in calls} == {"ordered", "loan", "nothing"}
+    assert {c["channel"] for c in calls} == {"phone", "browser"}
+    assert any(c["model_failures"] for c in calls) and any(c["no_speech"] for c in calls) and any(c["barge_ins"] for c in calls)
+
+
 def test_seeding_fills_the_dashboard_and_reset_wipes_first(tmp_path):
     n = demo_data.seed("alpha", tmp_path, now=NOW)
     snap = store.snapshot("alpha", NOW, tmp_path)
-    assert n == len(snap["orders"]) + len(snap["loans"])
+    assert n == len(snap["orders"]) + len(snap["loans"]) + len(snap["calls"])
+    assert snap["summary"]["calls_today"] > 0
     assert snap["summary"]["orders_today"] > 0 and snap["summary"]["udhaar_outstanding"] > 0
     stray = tmp_path / "alpha" / "order_stray.json"
     stray.write_text("{}", encoding="utf-8")

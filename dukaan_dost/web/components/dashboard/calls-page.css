@@ -1,0 +1,8 @@
+  /* The Calls view: what came of each call is a status tab; what got in the way is an italic margin note with a rule on
+     its left, red when the agent could not answer (the khata look, DEC-051). */
+  .callsnote{margin:0 0 12px}
+  .pill.loan{background:var(--credit)}
+  .pill.none{background:var(--muted)}
+  .notes{display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin:6px 0 4px}
+  .pill.note{font-size:13px;font-weight:500;font-style:italic;text-transform:none;letter-spacing:0;line-height:1.35;border:0;border-left:2px solid currentColor;border-radius:0;padding:0 0 0 8px;background:transparent;box-shadow:none;color:var(--muted);white-space:normal}
+  .pill.note.warn{color:var(--warn)}

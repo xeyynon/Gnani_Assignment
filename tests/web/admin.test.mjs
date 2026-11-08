@@ -276,7 +276,12 @@ test("the admin starts dark and a choice made on any page is kept, including 'fo
 test("the admin uses the shared neutral palette: no palette of its own, no glow, no blur", () => {
   const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
   assert.doesNotMatch(style, /#C6F135/i);                                          // the old lime accent
-  assert.doesNotMatch(style, /--blob|--glass|backdrop-filter|radial-gradient/);
+  assert.doesNotMatch(style, /--blob|--glass|backdrop-filter|blur\(/);
+  // radial-gradient only for the hard-edged shapes of DEC-051 (the open menu tab's corners, a note slip's punched
+  // holes), never for a soft glow behind the cards
+  const radial = style.split('\n').filter(l => l.includes('radial-gradient'));
+  assert.ok(radial.length > 0);
+  for (const line of radial) assert.match(line, /\.nav\[aria-current=page\]::(before|after)|\.banner\{|^\s*background:radial-gradient\(circle at 11px 8px/, line);
   assert.match(style, /:root\[data-theme="dark"\]\{[^}]*--bg:#141415/);
 });
 
