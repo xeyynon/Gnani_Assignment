@@ -1,3 +1,4 @@
+const openOrders = new Set();                  // the orders the shopkeeper opened: the list is redrawn every poll, and an open order must not snap shut
 function orderCard(o) {
   const detail = h('div', null,
     h('table', null, h('tbody', null, ...o.items.map(i => h('tr', null,
@@ -9,5 +10,8 @@ function orderCard(o) {
     h('div', { text: itemsSummary(o.items) }),
     h('div', { class: 'row' }, h('span', { class: 'muted', text: relTime(o.time) }),
       h('span', null, h('span', { class: 'pill pay' + (o.payment === 'udhaar' ? ' credit' : ''), text: paymentLabel(o.payment) }), ' ', h('span', { class: 'total', text: rupees(o.total) }))));
-  return h('div', { class: 'card' + ((freshUntil[o.id] || 0) > Date.now() ? ' fresh' : '') }, h('details', null, summary, detail));
+  const details = h('details', null, summary, detail);
+  details.open = openOrders.has(o.id);
+  details.addEventListener('toggle', () => { if (details.open) openOrders.add(o.id); else openOrders.delete(o.id); });
+  return h('div', { class: 'card' + ((freshUntil[o.id] || 0) > Date.now() ? ' fresh' : ''), 'data-oid': o.id }, details);
 }

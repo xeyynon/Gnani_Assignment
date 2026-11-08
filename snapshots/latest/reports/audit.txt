@@ -1,96 +1,118 @@
 Browser audit (scripts/ui_check/audit_all.py) of the made-up-data preview. error = must fix, warn = look at.
 
+call page: ok    page @300px light touch
 call page: ok    page @360px light touch
 call page: ok    page @390px light touch
 call page: ok    page @768px light
 call page: ok    page @1280px light
+call page: ok    page @300px dark touch
 call page: ok    page @360px dark touch
 call page: ok    page @390px dark touch
 call page: ok    page @768px dark
 call page: ok    page @1280px dark
+dashboard: ok    page @300px light touch
 dashboard: ok    page @360px light touch
 dashboard: ok    page @390px light touch
 dashboard: ok    page @768px light
 dashboard: ok    page @1280px light
+dashboard: ok    page @300px dark touch
 dashboard: ok    page @360px dark touch
 dashboard: ok    page @390px dark touch
 dashboard: ok    page @768px dark
 dashboard: ok    page @1280px dark
+dashboard (calls): ok    page @300px light touch
 dashboard (calls): ok    page @360px light touch
 dashboard (calls): ok    page @390px light touch
 dashboard (calls): ok    page @768px light
 dashboard (calls): ok    page @1280px light
+dashboard (calls): ok    page @300px dark touch
+dashboard (calls): ok    page @360px dark touch
+dashboard (calls): ok    page @390px dark touch
+dashboard (calls): ok    page @768px dark
+dashboard (calls): (Chrome did not start for one run; all 10 runs of this page were then re-run by hand, below. The tool now retries once.)
+dashboard (calls): ok    page @300px light touch
+dashboard (calls): ok    page @360px light touch
+dashboard (calls): ok    page @390px light touch
+dashboard (calls): ok    page @768px light
+dashboard (calls): ok    page @1280px light
+dashboard (calls): ok    page @300px dark touch
 dashboard (calls): ok    page @360px dark touch
 dashboard (calls): ok    page @390px dark touch
 dashboard (calls): ok    page @768px dark
 dashboard (calls): ok    page @1280px dark
-admin: ok    page @360px light touch
-admin: ok    page @390px light touch
-admin: ok    page @768px light
-admin: ok    page @1280px light
-admin: ok    page @360px dark touch
-admin: ok    page @390px dark touch
-admin: ok    page @768px dark
-admin: ok    page @1280px dark
-sign-in (shop): ok    page @360px light touch
-sign-in (shop): ok    page @390px light touch
-sign-in (shop): ok    page @768px light
-sign-in (shop): ok    page @1280px light
-sign-in (shop): ok    page @360px dark touch
-sign-in (shop): ok    page @390px dark touch
-sign-in (shop): ok    page @768px dark
-sign-in (shop): ok    page @1280px dark
-sign-in (shop, wrong PIN): ok    page @360px light touch
-sign-in (shop, wrong PIN): ok    page @390px light touch
-sign-in (shop, wrong PIN): ok    page @768px light
-sign-in (shop, wrong PIN): ok    page @1280px light
-sign-in (shop, wrong PIN): ok    page @360px dark touch
-sign-in (shop, wrong PIN): ok    page @390px dark touch
-sign-in (shop, wrong PIN): ok    page @768px dark
-sign-in (shop, wrong PIN): ok    page @1280px dark
-sign-in (shop, locked): ok    page @360px light touch
-sign-in (shop, locked): ok    page @390px light touch
-sign-in (shop, locked): ok    page @768px light
-sign-in (shop, locked): ok    page @1280px light
-sign-in (shop, locked): ok    page @360px dark touch
-sign-in (shop, locked): ok    page @390px dark touch
-sign-in (shop, locked): ok    page @768px dark
-sign-in (shop, locked): ok    page @1280px dark
-sign-in (shop with no PIN): ok    page @360px light touch
-sign-in (shop with no PIN): ok    page @390px light touch
-sign-in (shop with no PIN): ok    page @768px light
-sign-in (shop with no PIN): ok    page @1280px light
-sign-in (shop with no PIN): ok    page @360px dark touch
-sign-in (shop with no PIN): ok    page @390px dark touch
-sign-in (shop with no PIN): ok    page @768px dark
-sign-in (shop with no PIN): ok    page @1280px dark
-sign-in (admin): ok    page @360px light touch
-sign-in (admin): ok    page @390px light touch
-sign-in (admin): ok    page @768px light
-sign-in (admin): ok    page @1280px light
-sign-in (admin): ok    page @360px dark touch
-sign-in (admin): ok    page @390px dark touch
-sign-in (admin): ok    page @768px dark
-sign-in (admin): ok    page @1280px dark
-sign-in (admin, wrong password): ok    page @360px light touch
-sign-in (admin, wrong password): ok    page @390px light touch
-sign-in (admin, wrong password): ok    page @768px light
-sign-in (admin, wrong password): ok    page @1280px light
-sign-in (admin, wrong password): ok    page @360px dark touch
-sign-in (admin, wrong password): ok    page @390px dark touch
-sign-in (admin, wrong password): ok    page @768px dark
-sign-in (admin, wrong password): (re-run: Chrome did not start in time on the first try; the tool now waits 30 s)
-sign-in (admin, wrong password): ok    page @360px light touch
-sign-in (admin, wrong password): ok    page @390px light touch
-sign-in (admin, wrong password): ok    page @768px light
-sign-in (admin, wrong password): ok    page @1280px light
-sign-in (admin, wrong password): ok    page @360px dark touch
-sign-in (admin, wrong password): ok    page @390px dark touch
-sign-in (admin, wrong password): ok    page @768px dark
-sign-in (admin, wrong password): ok    page @1280px dark
 const ws = new WebSocket(target.webSocketDebuggerUrl);
                                 ^
 
 TypeError: Cannot read properties of undefined (readi
+admin: ok    page @300px light touch
+admin: ok    page @360px light touch
+admin: ok    page @390px light touch
+admin: ok    page @768px light
+admin: ok    page @1280px light
+admin: ok    page @300px dark touch
+admin: ok    page @360px dark touch
+admin: ok    page @390px dark touch
+admin: ok    page @768px dark
+admin: ok    page @1280px dark
+sign-in (shop): ok    page @300px light touch
+sign-in (shop): ok    page @360px light touch
+sign-in (shop): ok    page @390px light touch
+sign-in (shop): ok    page @768px light
+sign-in (shop): ok    page @1280px light
+sign-in (shop): ok    page @300px dark touch
+sign-in (shop): ok    page @360px dark touch
+sign-in (shop): ok    page @390px dark touch
+sign-in (shop): ok    page @768px dark
+sign-in (shop): ok    page @1280px dark
+sign-in (shop, wrong PIN): ok    page @300px light touch
+sign-in (shop, wrong PIN): ok    page @360px light touch
+sign-in (shop, wrong PIN): ok    page @390px light touch
+sign-in (shop, wrong PIN): ok    page @768px light
+sign-in (shop, wrong PIN): ok    page @1280px light
+sign-in (shop, wrong PIN): ok    page @300px dark touch
+sign-in (shop, wrong PIN): ok    page @360px dark touch
+sign-in (shop, wrong PIN): ok    page @390px dark touch
+sign-in (shop, wrong PIN): ok    page @768px dark
+sign-in (shop, wrong PIN): ok    page @1280px dark
+sign-in (shop, locked): ok    page @300px light touch
+sign-in (shop, locked): ok    page @360px light touch
+sign-in (shop, locked): ok    page @390px light touch
+sign-in (shop, locked): ok    page @768px light
+sign-in (shop, locked): ok    page @1280px light
+sign-in (shop, locked): ok    page @300px dark touch
+sign-in (shop, locked): ok    page @360px dark touch
+sign-in (shop, locked): ok    page @390px dark touch
+sign-in (shop, locked): ok    page @768px dark
+sign-in (shop, locked): ok    page @1280px dark
+sign-in (shop with no PIN): ok    page @300px light touch
+sign-in (shop with no PIN): ok    page @360px light touch
+sign-in (shop with no PIN): ok    page @390px light touch
+sign-in (shop with no PIN): ok    page @768px light
+sign-in (shop with no PIN): ok    page @1280px light
+sign-in (shop with no PIN): ok    page @300px dark touch
+sign-in (shop with no PIN): ok    page @360px dark touch
+sign-in (shop with no PIN): ok    page @390px dark touch
+sign-in (shop with no PIN): ok    page @768px dark
+sign-in (shop with no PIN): ok    page @1280px dark
+sign-in (admin): ok    page @300px light touch
+sign-in (admin): ok    page @360px light touch
+sign-in (admin): ok    page @390px light touch
+sign-in (admin): ok    page @768px light
+sign-in (admin): ok    page @1280px light
+sign-in (admin): ok    page @300px dark touch
+sign-in (admin): ok    page @360px dark touch
+sign-in (admin): ok    page @390px dark touch
+sign-in (admin): ok    page @768px dark
+sign-in (admin): ok    page @1280px dark
+sign-in (admin, wrong password): ok    page @300px light touch
+sign-in (admin, wrong password): ok    page @360px light touch
+sign-in (admin, wrong password): ok    page @390px light touch
+sign-in (admin, wrong password): ok    page @768px light
+sign-in (admin, wrong password): ok    page @1280px light
+sign-in (admin, wrong password): ok    page @300px dark touch
+sign-in (admin, wrong password): ok    page @360px dark touch
+sign-in (admin, wrong password): ok    page @390px dark touch
+sign-in (admin, wrong password): ok    page @768px dark
+sign-in (admin, wrong password): ok    page @1280px dark
 
-80 runs: no errors in any run (8 of them re-run, see above).
+100 runs: no errors in any run (10 of them re-run, see above).

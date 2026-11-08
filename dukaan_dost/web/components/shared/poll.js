@@ -3,11 +3,12 @@ let lastOk = 0, signedOut = false, failed = false;
 function tick() {
   const el = $('updated'), dot = $('dot');
   if (signedOut) return;
-  if (!lastOk) { el.textContent = failed ? 'Could not load the data yet. Retrying...' : 'Loading...'; dot.className = 'dot' + (failed ? ' off' : ''); return; }
+  if (!lastOk) { el.textContent = failed ? 'Could not load the data yet. Retrying...' : 'Loading...'; dot.className = 'dot' + (failed ? ' off' : ''); dot.textContent = failed ? 'Offline' : ''; return; }
   const s = Math.round((Date.now() - lastOk) / 1000);
   const stale = s > 10;
   dot.className = 'dot' + (stale ? ' off' : '');
-  el.textContent = stale ? 'Connection lost. Showing data from ' + s + ' s ago.' : 'Live, updated ' + (s < 2 ? 'just now' : s + ' s ago');
+  dot.textContent = stale ? 'Offline' : 'Live';                       // the word, not a colour alone (WCAG 1.4.1)
+  el.textContent = stale ? 'Connection lost. Showing data from ' + s + ' s ago.' : 'Updated ' + (s < 2 ? 'just now' : s + ' s ago');
 }
 async function poll(url, draw, everyMs) {
   try {
@@ -16,6 +17,7 @@ async function poll(url, draw, everyMs) {
       signedOut = true;
       $('updated').textContent = r.status === 401 ? 'Signed out.' : 'Too many wrong attempts. Try again in a minute.';
       $('dot').className = 'dot off';
+      $('dot').textContent = 'Signed out';
       $('notices').replaceChildren(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Signed out' }), 'Sign in again to see this shop. ', h('button', { type: 'button', id: 'reload', text: 'Sign in' })));
       $('reload').addEventListener('click', () => location.reload());
       return;
