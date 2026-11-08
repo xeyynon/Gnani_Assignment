@@ -93,10 +93,16 @@ Adding a component: write `components/<page or shared>/<name>.{html,css,js}`, ad
 
 ## The shopkeeper dashboard
 `dukaan_dost/web/dashboard.html` (a template; components under `components/dashboard/`), data from `/s/<shop>/dashboard/data`. Redesigned 2026-11-02 to match the call page (same palette, light and dark).
-- **Side menu** (a wrapped row on a phone): Dashboard, Orders, Credit book (udhaar), Loan enquiries. **Stock & prices** and **Reports** are shown as "soon". The sections are views of one page, switched by the address fragment (`#orders`), so the data keeps polling.
+- **Side menu** (a wrapped row on a phone): Dashboard, Orders, Credit book (udhaar), Loan enquiries, Calls, and a Call page link. **Stock & prices** and **Reports** are shown as "soon". The sections are views of one page, switched by the address fragment (`#orders`), so the data keeps polling.
 - **Dashboard view:** a greeting, then three tiles with icons: sales today (the hero) and orders today (each against yesterday up to the same time; no percentage from a zero), and owed on credit. What needs the shopkeeper is the count in the heading of the "Needs your attention" panel, not a tile of its own, because a tile repeated what that panel lists (one home per fact). Below: the five latest orders, the needs-attention list, a 7-day sales chart, and **Quick actions** (add stock, add customer or credit, today's report), which are disabled and marked "soon" because the server cannot take writes yet (DEC-034).
 - **Needs attention** is worked out in the page: incomplete orders, credit-pending orders, and customers at 90% or more of their credit limit. Stock levels are not included: the stock list only says in stock or out, with no counts.
 - **Orders / Credit book / Loan enquiries views:** the full lists; an order opens to its items, delivery and credit balance before and after.
+- **Calls view** (2026-11-08, the hand-over's item 3): one card for every call that ended, from the counts-only record the agent saves (`call_stats.py`, `calls` in the data feed). It includes the calls where nothing was ordered.
+  - *Each card:* phone or browser, the language, the length, how many times the caller was understood, what came of it (Ordered, Ordered with credit pending, Order incomplete, Loan guidance, No order) and the total. Anything that got in the way is a plain-word note: "The agent could not answer twice", "Speech not caught 3 times", "Caller cut in once".
+  - *Above the list:* "9 calls today, 9 in all", and a line saying only counts are kept: no words, no recording, no phone numbers.
+  - *Menu:* the item shows today's count.
+  - *Edge cases:* an older server without `calls` still draws (an empty list). While loading, the list shows skeletons, not "no calls".
+  - *Helpers and demo data:* the helpers (`callOutcome`, `callNotes`, `callMeta`, `callLength`, `languageName`, `callsLine`) are tested in Node. The demo data (`demo_data.build_calls`) gives one call per demo order and loan today, plus three where nothing came of it, so every state has an example.
 - **Live:** it polls every 3 seconds; the top bar says whether a call is up (neutral grey when none) and "Connection lost" if the server stops answering.
 - **Safe by construction:** the page builds everything from text nodes, never HTML strings, and loads nothing from outside; Node tests fail on `innerHTML` and friends and on any address in the script. The server sends a strict content security policy.
 - **New data from the server:** `summary.orders_yesterday`, `summary.sales_yesterday` and `trend` (seven days, oldest first; incomplete orders excluded from sales).
@@ -152,3 +158,104 @@ Surya noticed there was no way from the shopkeeper's dashboard to the call page.
 - **Call page to dashboard:** the **Shopkeeper dashboard** link in the call page's header (since build-1007). It shows only on a shop's own address (`/s/<shop>/`), not on the plain `/`, which is why the plain-address snapshots do not show it. A caller who opens it meets the sign-in page.
 - **Admin:** every shop row has Shop dashboard and Call page buttons (since build-1009).
 - Checked in a real browser: the link points to `/s/dukaan_dost/` and landed on that shop's call page with its Start call button; the audit has 0 errors and 0 warnings at 360, 390, 768 and 1280 px in both themes. Not changed: the call page still has no link from the sign-in page for the admin (it has Back to the call page).
+
+## Two candidate looks for highlights: Khata ledger and Index tabs (2026-11-08; merged, see the next section and DEC-051)
+Surya found the way the pages highlight things too generic, "so much AI generated": soft tinted pill badges for a status, a tinted rounded background on the open menu item, a tinted boxed banner, and a dot in front of a live state. He agreed the difference must still be shown, but wanted something of its own. Of three directions offered (khata ledger, receipt print, index tabs) he liked two and asked to see both before deciding. Both were built as **prototypes only**: one stylesheet each, laid over the real pages while the pictures were taken. No product file uses them yet.
+
+Both looks, their pictures and the capture script are kept in [`snapshots/prototypes/`](../snapshots/prototypes/):
+- `khata/look.css` and `tabs/look.css` hold the whole look (81 and 101 lines); each is injected as a `<style>` after the page's own CSS.
+- [`shots.sh`](../snapshots/prototypes/shots.sh) takes the same 8 pictures for any look file: dashboard overview (light and dark, 1280), Calls (light 1280, dark 390), Orders (light 390), call page (light 1280, dark 390), admin (dark 1280). `bash snapshots/prototypes/shots.sh snapshots/prototypes/khata/look.css <out>` with the preview on port 8882.
+- Every picture was checked: none scrolls sideways.
+
+| Element | Khata ledger (the shop's account book) | Index tabs (a register's index tabs) |
+|---|---|---|
+| Status (Ordered, Credit pending, Incomplete, Loan guidance, No order, payment; the admin's Ready, Broken) | A rubber **ink stamp**: small uppercase monospace, letter-spaced, double outline in the status's ink, no fill, tilted −3.5° to +2°, faint uneven-ink streaks | A **solid tab** standing up from the card's top-right edge, uppercase, white text on the status colour (near-black in dark); inline in tables, where there is no card edge |
+| Open menu item | No fill: bold ink with the accountant's **double underline** (also under every ₹ total and the open admin filter); hover is a single faint rule | A **tab cut through the menu's right edge**, in the page's background colour, joined to the page with curved corners; bold label |
+| Counts (Orders 4, Calls 9, attention) | A monospace figure in an "amount column" behind a thin vertical rule | A small squared solid tab |
+| Notices (demo data, problems) | A **parchi slip**: warm paper, punched holes, a dashed tear line, a small NOTE / PROBLEM label | A divider card with a **tab label** (DEMO DATA, PROBLEM, NEEDS A LOOK) sticking up from its top-left edge |
+| Live call | A blinking ink **caret** like a pen writing (still with reduced motion); a short dash when idle | A solid green chip with a **notch** cut into its left end; "Live, updated" gets a thin green edge |
+| Lists | A faint red **margin line** down each card's left side; the Calls view's problems are italic pencilled margin notes, red when the agent could not answer | Squared outlines for the Calls view's problem notes; round buttons and chips squared everywhere |
+| Feel | Quiet and crafted, plainly a kirana; the stamps are small, so they read as texture more than as a signal | Bolder; a status reads at a glance from across the room |
+
+**Side by side** (left Khata, right Index tabs):
+
+| Khata ledger | Index tabs |
+|---|---|
+| ![Calls, khata, light](../snapshots/prototypes/khata/dash-calls-light-1280.png) | ![Calls, tabs, light](../snapshots/prototypes/tabs/dash-calls-light-1280.png) |
+| ![Overview, khata, dark](../snapshots/prototypes/khata/dash-overview-dark-1280.png) | ![Overview, tabs, dark](../snapshots/prototypes/tabs/dash-overview-dark-1280.png) |
+| ![Calls on a phone, khata, dark](../snapshots/prototypes/khata/dash-calls-dark-390.png) | ![Calls on a phone, tabs, dark](../snapshots/prototypes/tabs/dash-calls-dark-390.png) |
+
+The other five pictures of each look (overview light, Orders on a phone, call page light and dark, admin) are in the same folders under the same names.
+
+**What each costs, said plainly:**
+- *Khata:*
+  - The ink streaks lower contrast a little. Contrast was not measured for either look, because `contrast.py` reads the real tokens only; the weakest pair is amber stamps in light mode, about 5:1 before the streaks.
+  - The punched holes are faint in light mode.
+  - Keeping the count out of the double underline needs `:has()`.
+  - `soon` stays lowercase, because uppercase pushed "Stock & prices" onto two lines.
+  - Left tinted on purpose: the icon tiles, the call page's transcript bubbles, its order-total band and loan box, and the blue sales tile.
+- *Index tabs:*
+  - The card gap grows from 10 to 22 px to make room for the tabs, so pages are longer (Calls on a desktop: 1,367 to 1,509 px).
+  - On a phone the menu wraps to three rows, so the open tab cannot reach into the page; each row sits on a ruled line instead.
+  - The DEMO DATA and PROBLEM labels are written in the CSS; a real build should put them in the markup.
+  - Not changed: the sales tile's hard shadow and the call page's round pulse.
+- *Both:* only the browser shots were taken. Not done for either: the 80-run audit, `contrast.py` and a real phone.
+
+**What happened next:** Surya chose element by element and the two were merged; the next section says how.
+
+## How the two looks became one (2026-11-08, DEC-051)
+This is the record of how the highlight problem was solved, step by step, as it happened. The reusable method is in [frontendgnani.md](frontendgnani.md) section A7.
+
+**1. The complaint.** While the Calls view was being built, Surya wrote that "the highlighting one feels so much AI generated", that the difference is necessary, but that he wanted "something unique", "not a dot in front or behind it". With his message came small crops of what he meant: the round back button, the tinted demo-data banner, the tinted "Ordered" pill, and the tinted active "Calls" menu row with its count bubble.
+
+**2. Three directions, as sketches, before any code.** One question with three options, each with a text sketch of the menu, a card and a notice:
+- *Khata ledger:* the shop's own account book. Ink stamps, the accountant's double underline, a paper slip.
+- *Receipt / thermal print:* monospace, black and white, inverted blocks.
+- *Index tabs:* a register's index tabs. The open item a tab, a status a tab on the card's corner.
+
+He answered that he liked both khata and index tabs and wanted to see how both would look before deciding.
+
+**3. Both built at once, without touching the product.**
+- Each look was written as one stylesheet and laid over the real, running pages only while pictures were taken. It went in as a `<style>` added through the browser's debugging protocol, which the pages' policy allows (`style-src 'unsafe-inline'`).
+- Two agents worked in parallel, one per look, both with the same capture script ([`snapshots/prototypes/shots.sh`](../snapshots/prototypes/shots.sh)). That script takes 8 pictures: dashboard overview, Calls, Orders, call page and admin, in light and dark, at 1280 and 390 px.
+- Each agent looked at its own pictures and fixed what was off in two rounds. Index tabs removed a green bar and a fold triangle. Khata kept the count out of the double underline and made "soon" small.
+- No product file was changed. The previous section has both looks and their costs.
+
+**4. Saved before choosing.** Surya asked for both to be kept: the stylesheets and pictures went into [`snapshots/prototypes/`](../snapshots/prototypes/) and the comparison into this file.
+
+**5. Chosen element by element, not look by look.**
+- Surya told me to understand only, and to change nothing until he said so. He then sent 22 crops of the pictures, each with a one-line verdict ("this is better", "this is better but without the line", "is this becomes straight and professional this would look good").
+- After each one, the running list of choices was read back to him. Where two picks disagreed, the difference was named and a rule proposed:
+  - *Live-call chip.* He picked khata's outlined box on the admin page and index tabs' solid notched chip on the shop dashboard. The rule: decide by page. The dashboard is where a shopkeeper must see a call from across the counter.
+  - *Menu.* He picked index tabs on a desktop and khata's double underline on a phone, where the tab cannot reach the page. The rule: decide by width.
+  - *Notes on a call card.* He first liked the squared outlines in a whole-page picture, then picked khata's italic note with a left rule. The later, closer pick won.
+- One question stayed open: khata's red margin line down each card. He said "now proceed" without answering, so the line was left out, because his "overall better" pictures did not have it. It is said here so it can be added if wanted.
+
+**6. The final mapping.**
+
+| Element | Taken from | As built |
+|---|---|---|
+| Status on a card (Calls, Orders, Loans, admin shops) | Index tabs | Solid tab on the card's top-right edge, small capitals, white text (near-black in dark) |
+| Status in a table or plain list | Index tabs | The same tab, inline, with a darker bottom edge |
+| Payment (Cash, UPI, On credit) | Index tabs | Squared outline, no fill |
+| Desktop menu, open item | Index tabs | A tab cut through the menu's right edge, in the page's colour, joined to it with curved corners |
+| Menu counts, attention count and amounts | Index tabs | Small solid squared tabs |
+| Phone menu | Khata | Double underline under the open item; counts are figures behind a thin rule |
+| Admin filter tabs | Khata | The open one ruled off twice |
+| Demo-data notice | Khata | Paper slip: punched holes, dashed tear line, NOTE label |
+| Problem notices (admin NEEDS A LOOK, dashboard PROBLEM, SIGNED OUT) | Index tabs, without the top line | Plain card with a red tab label at its top-left |
+| Live call on the shop dashboard | Index tabs | Solid green tab with a notch, no dot |
+| Live call on the admin page and the call page | Khata | Outlined green box with a blinking pen caret; a dash when idle |
+| "Live, updated" | Index tabs | A thin green edge in front (red when the data is stale), no dot |
+| Problems on a call card | Khata | Italic margin note with a rule on the left, red when the agent could not answer |
+| Call page chips, shop name, IDLE / COMING SOON / INDICATIVE | Khata, made straight and clean | Squared boxes; labels in the page's font with a 1 px line, no tilt, no ink texture |
+
+**7. Built into the product, not layered on.**
+- The rules were written into the components they belong to: `status-pill.css`, `side-menu.css`, `atoms.css`, `topbar.css`, `notices.css`, `attention.css`, `calls-page.css`, `call-card.css`, `header.css`, `admin/layout.css`, and `dashboard/layout.css` for the dashboard's own chip.
+- Five tokens were added to `tokens.css`: `--on-ink`, `--tab-fold`, `--tab-r`, `--paper` and `--paper-ink`.
+- The prototypes wrote notice labels with CSS `content`. As built, they are a real `<span class="nlabel">` in the markup, so a screen reader reads "Note", "Problem" or "Needs a look" with the text.
+
+**8. Checked.**
+- *Pictures.* The same 8 pictures were retaken from the real pages. The first round showed a bug: the lists stylesheet loads after the status stylesheet and set the gap between cards back to 10 px, so each tab touched the card above it. Fixed with a rule that applies only to lists whose cards carry a tab (`.stackl:has(>.card .pill…){gap:22px}`). The admin's BROKEN tab, clipped in the prototype, now has room above the first card.
+- *Contrast.* `contrast.py` passes 62 of 62 pairs, including 9 new pairs a theme for the tabs, the slip and the notes.
+- *Page test.* One test changed: the admin's "no glow" test banned every `radial-gradient`. It now allows only the two hard-edged uses (the open tab's corners and the slip's holes) and still bans blur.

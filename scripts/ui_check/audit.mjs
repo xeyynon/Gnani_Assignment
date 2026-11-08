@@ -109,7 +109,8 @@ const chrome = spawn(chromePath(), ['--headless=new', '--disable-gpu', `--remote
   `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp'))}`, 'about:blank'], { stdio: 'ignore' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let target;
-for (let i = 0; i < 50 && !target; i++) { await sleep(200); try { target = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(t => t.type === 'page'); } catch {} }
+for (let i = 0; i < 150 && !target; i++) { await sleep(200);                                 // up to 30 s: Chrome starts slowly on a busy machine
+ try { target = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find(t => t.type === 'page'); } catch {} }
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let id = 0; const waits = {};

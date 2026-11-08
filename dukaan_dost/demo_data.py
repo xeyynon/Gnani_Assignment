@@ -1,7 +1,7 @@
 """
 demo_data.py
 
-Writes clearly synthetic orders, loan enquiries and a credit book for one shop, so a
+Writes clearly synthetic orders, loan enquiries, call records and a credit book for one shop, so a
 dashboard has something to show before the agent writes real ones:
 
     python -m dukaan_dost.demo_data dukaan_dost            # add the demo data
@@ -97,19 +97,52 @@ def build(now: datetime):
     return orders, loans, ledger
 
 
+def build_calls(now: datetime, orders: list, loans: list) -> list:
+    """One counts-only call record (the shape call_stats.finish() returns) for each of today's demo orders and loan
+    enquiries, and three calls where nothing came of it, so every state of the dashboard's Calls view has an example."""
+    def call(call_id, when, channel, seconds, language, turns, outcome, barge_ins=0, no_speech=0, model_failures=0,
+             order=None):
+        record = {"call_id": call_id, "time": when, "channel": channel, "seconds": seconds, "language": language,
+                  "turns": turns, "barge_ins": barge_ins, "no_speech": no_speech, "model_failures": model_failures,
+                  "outcome": outcome, "synthetic": True}
+        if order:
+            record.update(order_id=order["call_id"], total=order["total"], status=order["status"])
+        return record
+
+    today = now.date()
+    todays = [o for o in orders if datetime.fromisoformat(o["time"]).date() == today]
+    calls = []
+    for n, o in enumerate(todays):
+        calls.append(call(f"c{n + 1:02d}", o["time"], "phone" if n % 2 else "browser", 70 + 23 * n, o["language"],
+                          3 + n % 4, "ordered", barge_ins=1 if n == 2 else 0, no_speech=2 if n == 3 else 0, order=o))
+    for n, l in enumerate(l for l in loans if datetime.fromisoformat(l["time"]).date() == today):
+        calls.append(call(f"c{20 + n}", l["time"], "browser", 150 + 40 * n, l["language"], 5, "loan"))
+    at = lambda minutes: (now - timedelta(minutes=minutes)).isoformat()
+    calls += [
+        call("c30", at(52), "phone", 41, "hi-IN", 2, "nothing", model_failures=2),
+        call("c31", at(95), "phone", 18, None, 0, "nothing", no_speech=3),
+        call("c32", at(150), "browser", 64, "en-IN", 3, "nothing", barge_ins=1),
+    ]
+    return calls
+
+
 def seed(shop: str, root=None, reset: bool = False, now: datetime | None = None) -> int:
     if not valid_name(shop):
         raise ValueError(f"{shop!r} is not a valid shop name")
     folder = store.shop_orders_dir(shop, root)
     if reset and folder.is_dir():
         shutil.rmtree(folder)
-    orders, loans, ledger = build(now or datetime.now(store.IST))
+    now = now or datetime.now(store.IST)
+    orders, loans, ledger = build(now)
+    calls = build_calls(now, orders, loans)
     for o in orders:
         store.write_order(shop, o, root)
     for l in loans:
         store.write_loan(shop, l, root)
+    for c in calls:
+        store.write_call(shop, c, root)
     store.write_ledger(shop, ledger, root)
-    return len(orders) + len(loans)
+    return len(orders) + len(loans) + len(calls)
 
 
 if __name__ == "__main__":
