@@ -125,6 +125,50 @@ Anti-patterns removed on the way: a tile repeating a panel; seven zero bars for 
 8. Validate on the page to help the typist and on the server because the page is not trusted.
 9. **Never weaken security to make a demo work.** When a password was needed to drive the sign-in in a test browser, the password stayed out of the transcript: the server-side sign-in ran in-process and only the session cookie went to the browser (2026-11-07).
 
+## A7. When the look "feels AI generated": build two, choose per element, merge (DEC-051)
+This happened once here, on 2026-11-08, and worked. The full record with the picture-by-picture choices is in [frontend.md](frontend.md), "How the two looks became one".
+
+**The symptom.** The person cannot say what is wrong, only that it looks generic. Here it was the way things were *highlighted*. Four defaults gave it away:
+- a status as a soft tinted pill;
+- the open menu item as a tinted rounded row with a round count bubble;
+- a notice as a tinted box with a border;
+- a live state as a coloured dot.
+
+Colours and layout were not the problem; those had been settled (DEC-049).
+
+**The method, in order:**
+1. **Name the pattern, not the colours.** Restate the complaint as the list of devices (pill, tinted row, bubble, dot, boxed banner) and confirm that the *difference* they show must stay. Only how it is shown changes.
+2. **Offer three directions as text sketches before any code.** Take each from the product's own world, not from a style name. Here: the shop's account book (khata), a till receipt, a register's index tabs. Each sketch showed the same three things (a menu item, a card's status, a notice) so they could be compared.
+3. **Build the ones the person likes as override stylesheets, in parallel.**
+   - One file per look, injected over the real running pages only while pictures are taken (a `<style>` added through the browser's debugging protocol). The product is untouched, so nothing has to be undone.
+   - The same capture script for every look: same pages, same states, both themes, phone and desktop. That way the pictures differ only by the look.
+   - Two looks were built at once by two agents. Each looked at its own pictures and fixed what was off before handing back.
+4. **Save both before choosing.** Keep the stylesheets, the pictures and a side-by-side table of what each element becomes and what each look costs (here [`snapshots/prototypes/`](../snapshots/prototypes/)). The rejected half is the record of what was tried.
+5. **Let the person choose per element, and only listen while they do.** Here Surya sent 22 crops, each with a one-line verdict, and asked for nothing to be built until he said so. After every crop, read back the running list. The result was a mix: of 14 elements, 8 came from index tabs and 6 from khata (frontend.md has the table).
+6. **When two picks disagree, find the rule behind them, say it, and let them correct it.** Two rules came out:
+   - *By page:* the shop dashboard's live call is a solid tab, the admin's is an outlined box. The dashboard is read from across the counter.
+   - *By width:* the menu's open item is a tab on a desktop and a double underline on a phone, where a tab cannot reach the page.
+
+   A later, closer pick overrides an earlier whole-page one. A question left unanswered is decided toward the pictures they called best, and said so.
+7. **Apply the person's adjustments literally.** "Straight and professional" became: no tilt, no ink texture, the page's own font, a 1 px line. "Without the line" became: the notice's top rule removed. Neither was reinterpreted.
+8. **Merge into the components, not as a layer.**
+   - Each rule goes into the stylesheet of the component it styles.
+   - The new colours get tokens (here `--on-ink` for text on a solid tab, and `--paper` and `--paper-ink` for the slip).
+   - Anything that was text in CSS `content` becomes markup, so assistive technology reads it. The prototype's "DEMO DATA" became a real `<span class="nlabel">`.
+9. **Check it like any other change.**
+   - Retake the same pictures from the real pages. Here the first retake caught a cascade bug: a later stylesheet reset the card gap, so the tabs touched the card above.
+   - Add a contrast pair for every new ink (62 of 62 pass).
+   - Update any test that banned a technique the new look uses on purpose. The "no glow" test now allows only the hard-edged `radial-gradient` shapes.
+
+**What to copy into another project:**
+- The trigger words: "AI generated", "generic", "template".
+- The four tell-tale devices.
+- Directions taken from the product's own world.
+- Override stylesheets with one shared capture script.
+- Per-element choice, rules for conflicts, and merging into tokens and components.
+
+**What not to copy:** this project's particular mix. It was right for a kirana shop's screens and for Surya's eye; another product should run the method, not reuse the result.
+
 ---
 
 # Part B: This stack (plain web pages served by a Python app)
@@ -179,8 +223,9 @@ dukaan_dost/
 | 1007 | Bento grid, glass over coloured glows, hard-edged accents, a drawer menu, Auto / Light / Dark | Surya asked for bento, glass, brutalism and minimalism together; each was given one job (DEC-041) |
 | 1010 | The admin alone: near-black and lime, from a reference dashboard | Surya asked for that reference's dark look |
 | 1012 | **One neutral palette on every page**: charcoal and off-white, one calm green, no glass, no glows | "Too much"; and flat colours can be measured exactly (DEC-049) |
+| 1018 | **Highlights from the product's own world**: statuses as index tabs on the cards' edges, the open menu item as a tab into the page, notes as paper slips, a pen caret for a live call | The tinted pills, rows, bubbles and dots "felt AI generated"; two prototypes were built and Surya chose per element (DEC-051, section A7) |
 
-The lesson: mixing named styles works only when each has one job; and the plainest version that keeps one strong accent is the one that survived.
+The lesson: mixing named styles works only when each has one job; and the plainest version that keeps one strong accent is the one that survived. The second lesson (1018): when the plain version then looks generic, the fix was not more colour but marks taken from the product's own world.
 
 ### B3.2 Tokens (copy these as a starting point)
 
