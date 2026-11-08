@@ -49,6 +49,9 @@ TELEPHONY_TOKEN=<a secret of at least 16 characters>     # already generated on 
 ```
 With `AUDIO_TRANSPORT=telephony` the browser call page still works on the same server. With no token, every phone call is refused and a warning is logged at start.
 
+## 2b. The short way
+`python scripts/phone_demo.py` does steps 3 and 4 in one command: it starts the agent in phone mode (port 8766), starts `cloudflared` and reads the tunnel address it gets, prints the URL for the Voicebot applet (add your `TELEPHONY_TOKEN` after `token=`: the secret is never printed) and shows the call's `[PHONE]` and order lines. Ctrl+C stops both. The address changes at every start, so edit and save the applet's URL each time. `--no-tunnel` starts only the agent.
+
 ## 3. Start the agent
 ```
 python -m dukaan_dost
