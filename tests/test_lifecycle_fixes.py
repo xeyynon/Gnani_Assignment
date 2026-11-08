@@ -569,9 +569,10 @@ def test_the_retry_can_be_switched_off_and_a_failing_retry_does_not_break_the_tu
     assert rig.model_calls == []
 
 
-def test_hindi_and_telugu_calls_name_their_language_to_the_recogniser_but_english_ones_do_not(app, monkeypatch):
+def test_only_telugu_calls_name_their_language_to_the_recogniser(app, monkeypatch):
+    """Hindi is not named: a Telugu call whose first turn is heard as Hindi would be decoded as Hindi from then on."""
     monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", True)
-    for locked, expected in (("te-IN", "te-IN"), ("hi-IN", "hi-IN"), ("en-IN", None), (None, None), ("", None)):
+    for locked, expected in (("te-IN", "te-IN"), ("hi-IN", None), ("en-IN", None), (None, None), ("", None)):
         monkeypatch.setattr(app, "_locked_language_code", locked)
         assert app._stt_language_for_call() == expected
     monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", False)
