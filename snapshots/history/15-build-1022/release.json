@@ -1,0 +1,15 @@
+{
+ "label": "15-build-1022",
+ "rev": "build-1022",
+ "commit": "64bd5e4",
+ "date": "2026-11-09",
+ "title": "A short first-visit tour, and empty lists that say what will appear",
+ "ran_code_of": "build-1022",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}

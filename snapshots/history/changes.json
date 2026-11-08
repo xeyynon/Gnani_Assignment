@@ -127,5 +127,14 @@
       "Everything else looks the same as the release before: the fixes (long text wrapping, the admin search at 130% zoom, hidden icons, announced notices) are not visible in a picture."
     ],
     "not_looked_at": "the Calls view and the offline state, which are not landing views (see snapshots/latest/dashboard/05-calls/); a real phone."
+  },
+  "15-build-1022": {
+    "title": "A first-visit tour, and empty lists that say what will appear",
+    "summary": "The shop dashboard gets a menu item, Take the tour, and a four-step tour on a first visit; empty lists carry a title, a sentence on what will appear and a way to start.",
+    "visible": [
+      "Dashboard: a new 'Take the tour' item at the bottom of the menu (a question-mark icon).",
+      "Everything else in the landing pictures looks the same as the release before: the tour only shows on a first visit, which these pictures are not, and the empty lists only show for a shop with nothing in it (see snapshots/latest/dashboard/06-tour-step-1, 07-tour-step-3, 08-empty-orders, 09-empty-calls)."
+    ],
+    "not_looked_at": "the tour and the empty lists, because they are not landing views; a real phone."
   }
 }
