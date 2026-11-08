@@ -4,6 +4,9 @@ A dated log of every fix, newest first. [bugs.md](bugs.md) is the register (what
 
 | Date | Bug | Fix | Proof (test or run) | Commit | Build or InBul |
 |---|---|---|---|---|---|
+| 2026-11-09 | B-100 | A bare English payment word keeps a Hindi or Telugu call in its language | `tests/test_lifecycle_fixes.py` | cdbcbef | Build 1023 |
+| 2026-11-09 | B-99 | A that-is-all at the end of a sentence with an item closes the list even if the model misses it | `tests/test_order_turn.py` | cdbcbef | Build 1023 |
+| 2026-11-09 | B-98 | After the payment a thank-you gets a short thanks, not the order read again | `tests/test_order_turn.py` | cdbcbef | Build 1023 |
 | 2026-11-09 | B-97 | A missed word at the payment step is asked for by name, in the caller's language | `tests/test_lifecycle_fixes.py`, three tests | d2c527c | Build 1021 |
 | 2026-11-08 | B-96 | Only Telugu is named to Prisma; naming Hindi kept a Telugu call decoded as Hindi (loan call L02 lost) | `tests/test_lifecycle_fixes.py`; rerun `credit_loans_clean_120b` (4 of 4 loans) | 10efdf8 | Build 1019 |
 | 2026-11-08 | B-95 | The replay transport's close() waits for the final results file, so a caller no longer reads it mid-write (a flaky Windows test) | `tests/test_transport_replay.py`, repeated runs in a clean environment | InBul36 | InBul36 |

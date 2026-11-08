@@ -10,7 +10,7 @@ Read [DukaanDost_MASTER.md](DukaanDost_MASTER.md) for the status, [poa_nov5_to_9
 ## What is proven, and how
 - 1,225 offline tests pass.
 - Prisma alone, 65 synthetic turns, four ways ([results](../evaluation/results/stt_accuracy_prisma.md)): on a simulated phone line 16 turns were exactly right against 25 clean and 10 were empty against 3; with the language named, Telugu calls were exactly right on 10 of 16 turns against 5 of 16.
-- `credit_loans_clean_120b`: 8 of 8, rerun on 2026-11-08 against the new stock and Build 1019 (first audio 2.2 s median, 3.6 s at the 90th percentile). An intermediate run with Hindi also named to Prisma lost one Telugu loan call (3 of 4 loans, `credit_loans_hindi_named_120b`, B-96): Build 1019 names only Telugu.
+- `credit_loans_clean_120b`: 8 of 8, rerun on 2026-11-09 against the new stock, Build 1019 and the first two changes of Build 1023 (first audio 2.2 s median, 2.5 s at the 90th percentile). An intermediate run with Hindi also named to Prisma lost one Telugu loan call (3 of 4 loans, `credit_loans_hindi_named_120b`, B-96): Build 1019 names only Telugu.
 
 ## What is not proven
 - **(Updated 2026-11-09: a valid full-call score now exists: 18 of 20 orders exactly right, `orders_clean_search_20b`.)** Earlier today there was none: Both Groq models' daily budgets are used by the evaluation runs of Nov 6 and 7 (`INVALID_orders_clean_20b`, `INVALID_orders_clean_search_120b`: a full 20-call run needs about a whole day of a model's 200,000 tokens). The 20b model's window clears about 20:40 on Nov 8, the 120b model's depends on tonight's use.

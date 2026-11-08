@@ -37,6 +37,8 @@ RUNS = {
                  "orders_clean_20b", {}),
     "search120b": ("clean, search mode, gpt-oss-120b", "openai/gpt-oss-120b", "orders.json", None, "run_search_120b",
                    "orders_clean_search_120b", {"ORDER_CATALOGUE": "search"}),
+    "e2e": ("end-to-end conversations, gpt-oss-20b, search mode", "openai/gpt-oss-20b", "e2e_phone.json", None, "run_e2e",
+            "e2e_phone_20b", {"ORDER_CATALOGUE": "search"}),
     "credit": ("credit and loans, gpt-oss-120b", "openai/gpt-oss-120b", "credit_loans.json", None, "run_credit_loans",
                "credit_loans_clean_120b", {}),
     "noise20": ("noisy 20 dB, gpt-oss-120b", "openai/gpt-oss-120b", "orders.json", 20, "run_noisy20", "orders_noisy20db_120b", {}),
