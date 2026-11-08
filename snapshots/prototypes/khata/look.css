@@ -1,0 +1,81 @@
+/* KHATA LEDGER look (prototype). Ink stamps for status, the accountant's double rule for "this one", parchi slips for notices. */
+:root{--paper:#FBF5E3;--paper-ink:#5B4A1E;--margin-red:rgba(185,28,28,.28);--stamp-font:var(--mono)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#24211A;--paper-ink:#E9D9A8;--margin-red:rgba(242,139,130,.30)}}
+:root[data-theme="dark"]{--paper:#24211A;--paper-ink:#E9D9A8;--margin-red:rgba(242,139,130,.30)}
+
+/* ---- status: a rubber ink stamp ---- */
+.pill{font-family:var(--stamp-font);text-transform:uppercase;letter-spacing:.09em;font-size:10.5px;font-weight:700;line-height:1.25;
+  padding:2px 7px;border-radius:3px;border:3px double currentColor;background:transparent!important;color:var(--muted);
+  transform:rotate(-2.5deg);transform-origin:center;
+  -webkit-mask-image:repeating-linear-gradient(118deg,#000 0 2.5px,rgba(0,0,0,.9) 2.5px 3.5px);
+          mask-image:repeating-linear-gradient(118deg,#000 0 2.5px,rgba(0,0,0,.9) 2.5px 3.5px)}
+.pill.confirmed{color:var(--green-ink);border-color:var(--green-ink)}
+.pill.credit_pending{color:var(--amber);border-color:var(--amber);transform:rotate(-1.5deg)}
+.pill.incomplete{color:var(--warn);border-color:var(--warn);transform:rotate(2deg)}
+.pill.loan{color:var(--credit);border-color:var(--credit);transform:rotate(-3.5deg)}
+.pill.none{color:var(--muted);border-color:var(--muted);transform:rotate(1.5deg)}
+.pill.pay{color:var(--muted);border:1.5px solid currentColor;transform:rotate(-1deg)}
+.pill.pay.credit{color:var(--credit)}
+/* the Calls view's notes are not statuses: a pencilled margin note, not a stamp */
+.pill.note{font-family:inherit;text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:500;font-style:italic;
+  border:0;border-left:2px solid currentColor;border-radius:0;padding:0 0 0 8px;transform:none;-webkit-mask-image:none;mask-image:none;color:var(--muted)}
+.pill.note.warn{color:var(--warn)}
+.tag,.soon{font-family:var(--stamp-font);text-transform:uppercase;letter-spacing:.08em;font-size:10px;border:1.5px dashed currentColor;border-radius:3px;transform:rotate(-2deg);display:inline-block}
+
+/* ---- menu: the current page is ruled off twice, as a ledger total is ---- */
+.nav{border-radius:0}
+.nav:hover{background:none;text-decoration:underline 1px var(--line);text-underline-offset:6px}
+.nav[aria-disabled=true]:hover{text-decoration:none}
+.nav[aria-current=page]{background:none;color:var(--ink);font-weight:700;
+  text-decoration-line:underline;text-decoration-style:double;text-decoration-color:var(--green);text-decoration-thickness:1.5px;text-underline-offset:6px}
+.nav[aria-current=page] svg{color:var(--green-ink)}
+/* counts sit in the amount column, behind a ruled line */
+.nav .n{background:none;color:var(--ink);border-radius:0;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px;
+  padding:0 0 0 10px;border-left:1px solid var(--line)}
+.menu-btn{border-radius:4px;border:1.5px solid var(--line)}
+
+/* ---- totals get the double rule too ---- */
+.total{text-decoration:underline double var(--ink);text-decoration-thickness:1px;text-underline-offset:4px}
+
+/* ---- lists: a red margin line, as on ledger paper ---- */
+.stackl .card{background-image:linear-gradient(to right,transparent 7px,var(--margin-red) 7px 8px,transparent 8px);border-radius:6px}
+
+/* ---- notices: a parchi torn from a slip book: punched holes, a tear line, a small label ---- */
+.banner,.notice{position:relative;border:0;border-radius:2px;color:var(--paper-ink);padding:9px 14px 9px 40px;
+  background:
+    radial-gradient(circle at 11px 8px,var(--bg) 2.6px,transparent 3.2px) 0 0/22px 16px repeat-y,
+    repeating-linear-gradient(to bottom,var(--amber) 0 4px,transparent 4px 8px) 24px 0/1px 100% no-repeat,
+    var(--paper);
+  box-shadow:0 1px 0 var(--line)}
+.banner::before{content:"Note";display:block;font-family:var(--stamp-font);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:1px}
+.banner.bad{color:var(--warn);background:
+    radial-gradient(circle at 11px 8px,var(--bg) 2.6px,transparent 3.2px) 0 0/22px 16px repeat-y,
+    repeating-linear-gradient(to bottom,var(--warn) 0 4px,transparent 4px 8px) 24px 0/1px 100% no-repeat,
+    var(--paper)}
+.banner.bad::before{content:"Problem";color:var(--warn)}
+.banner button{border-radius:3px}
+
+/* ---- live: the pen is writing (a caret), not a dot ---- */
+.dot{width:2px;height:13px;border-radius:0;background:var(--green)}
+.dot.idle,.chip:not(.on) .dot{width:9px;height:2px;background:var(--muted)}
+.chip{border-radius:4px}
+.chip.on{background:transparent;border:1px solid var(--green-ink);color:var(--green-ink)}
+@media (prefers-reduced-motion:no-preference){.chip.on .dot,.live .dot:not(.idle):not(.off){animation:khata-caret 1.05s steps(1) infinite}}
+@keyframes khata-caret{50%{opacity:0}}
+
+/* ---- admin filter tabs: the same double rule ---- */
+.tab[aria-pressed=true]{border-bottom:3px double var(--green)}
+
+/* ---- round 2 ---- */
+/* the count stays out of the double rule (an absolutely placed box does not inherit the underline) */
+.nav{position:relative}
+.nav .n{position:absolute;right:12px;top:50%;transform:translateY(-50%);line-height:1.3}
+.nav:has(> .n:not([hidden])){padding-right:46px}
+/* "soon" is a small pencilled mark, not a stamp that pushes the label onto two lines */
+.soon{text-transform:none;letter-spacing:0;font-size:10.5px;padding:0 5px;transform:rotate(-2deg)}
+/* amounts in the attention list: a ledger figure, ruled once, no bubble */
+.tag2{background:none!important;border-radius:0;padding:0 1px 1px;font-family:var(--mono);font-variant-numeric:tabular-nums;border-bottom:1px solid currentColor}
+/* the call page: chips are ruled boxes, the call state is a stamp */
+.chip{background:transparent}
+#speaking{background:transparent!important;border-radius:3px;border:3px double currentColor;font-family:var(--stamp-font);text-transform:uppercase;letter-spacing:.1em;font-size:12px;padding:3px 12px;transform:rotate(-2deg)}
+.shop-chip{border-radius:4px}

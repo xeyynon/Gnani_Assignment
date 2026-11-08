@@ -31,6 +31,7 @@
 {{include:shared/quick-actions.css}}
 {{include:dashboard/sales-trend.css}}
 {{include:shared/lists.css}}
+{{include:dashboard/calls-page.css}}
 {{include:shared/skeleton.css}}
 {{include:shared/brutal.css}}
 </style>
@@ -62,6 +63,7 @@
 {{include:dashboard/orders-page.html}}
 {{include:dashboard/credit-page.html}}
 {{include:dashboard/loans-page.html}}
+{{include:dashboard/calls-page.html}}
   </main>
 </div>
 
@@ -90,6 +92,7 @@ const seen = new Set(), freshUntil = {}; let firstLoad = true, lastData = null;
 {{include:dashboard/orders-page.js}}
 {{include:dashboard/credit-page.js}}
 {{include:dashboard/loans-page.js}}
+{{include:dashboard/calls-page.js}}
 {{include:shared/lists.js}}
 {{include:shared/skeleton.js}}
 {{include:dashboard/loading.js}}
@@ -116,9 +119,10 @@ function render(d) {
   fill('orders', d.orders, orderCard, 'No orders yet. They appear here within seconds of a call ending.');
   fill('ledger', d.ledger, ledgerRow, 'Nobody owes anything yet.');
   fill('loans', d.loans, loanCard, 'No loan enquiries yet.');
+  renderCalls(d.calls || [], d.summary);
   const notes = [];
-  if ([...d.orders, ...d.loans].some(r => r.synthetic)) notes.push(h('div', { class: 'banner', text: 'This shows made-up demo data.' }));
-  d.problems.forEach(p => notes.push(h('div', { class: 'banner bad', text: p })));
+  if ([...d.orders, ...d.loans, ...(d.calls || [])].some(r => r.synthetic)) notes.push(h('div', { class: 'banner' }, h('span', { class: 'nlabel', text: 'Note' }), 'This shows made-up demo data.'));
+  d.problems.forEach(p => notes.push(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Problem' }), p)));
   $('notices').replaceChildren(...notes);
   firstLoad = false;
 }

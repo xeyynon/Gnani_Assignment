@@ -32,6 +32,7 @@ def pages(pin: str, admin_password: str) -> list:
     return [
         ("call page", "/", "", ""),
         ("dashboard", f"/s/{SHOP}/dashboard", basic("shop", pin), ""),
+        ("dashboard (calls)", f"/s/{SHOP}/dashboard#calls", basic("shop", pin), ""),
         ("admin", "/admin", basic("admin", admin_password), ""),
         ("sign-in (shop)", f"/s/{SHOP}/dashboard", "", ""),
         ("sign-in (shop, wrong PIN)", f"/s/{SHOP}/dashboard", "", WRONG),

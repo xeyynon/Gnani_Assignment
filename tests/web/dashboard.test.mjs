@@ -231,3 +231,45 @@ test("the menu has a Call page link, and it goes to this shop's own call page", 
   assert.equal(callPageUrl("/s/x/dashboard/data"), "/");
   assert.equal(callPageUrl(undefined), "/");
 });
+
+test("the Calls view lists every ended call, and the menu leads to it with today's count", () => {
+  assert.match(html, /<a class="nav" href="#calls" data-view="calls">[\s\S]*?Calls<span class="n" id="navcalls" hidden><\/span><\/a>/);
+  assert.match(html, /<div data-page="calls" hidden>[\s\S]*?<h2 tabindex="-1">Calls<\/h2>[\s\S]*?id="callslist"/);
+  assert.match(html, /no words, no recording, no phone numbers/);       // says what is not kept
+  assert.match(script, /renderCalls\(d\.calls \|\| \[\], d\.summary\)/);   // an older server without calls still draws
+  assert.match(script, /\.\.\.\(d\.calls \|\| \[\]\)\]\.some\(r => r\.synthetic\)/);
+  assert.match(script, /'loans', 'callslist'\]/);                       // a skeleton while loading, not "no calls"
+});
+
+test("a call's length, language and what came of it read in plain words", () => {
+  const { callLength, languageName, callOutcome, callMeta, callNotes, callsLine } = new Function(
+    `${helperSource}; return { callLength, languageName, callOutcome, callMeta, callNotes, callsLine };`)();
+  assert.equal(callLength(192), "3:12");
+  assert.equal(callLength(5), "0:05");
+  assert.equal(callLength(-3), "0:00");
+  assert.equal(callLength(null), "0:00");
+  assert.equal(languageName("te-IN"), "Telugu");
+  assert.equal(languageName("hi-en"), "Hinglish");
+  assert.equal(languageName(null), "");
+  assert.equal(languageName("xx"), "");
+  assert.deepEqual(callOutcome({ outcome: "ordered", status: "confirmed" }), { text: "Ordered", cls: "confirmed" });
+  assert.deepEqual(callOutcome({ outcome: "ordered", status: "credit_pending" }), { text: "Ordered, credit pending", cls: "credit_pending" });
+  assert.deepEqual(callOutcome({ outcome: "ordered", status: "incomplete" }), { text: "Order incomplete", cls: "incomplete" });
+  assert.deepEqual(callOutcome({ outcome: "loan" }), { text: "Loan guidance", cls: "loan" });
+  assert.deepEqual(callOutcome({ outcome: "nothing" }), { text: "No order", cls: "none" });
+  assert.deepEqual(callOutcome({}), { text: "No order", cls: "none" });
+  assert.equal(callMeta({ language: "hi-IN", seconds: 192, turns: 7 }), "Hindi · 3:12 · spoke 7 times");
+  assert.equal(callMeta({ language: "en-IN", seconds: 40, turns: 1 }), "English · 0:40 · spoke once");
+  assert.equal(callMeta({ language: null, seconds: 18, turns: 0 }), "0:18 · nothing understood");
+  assert.deepEqual(callNotes({ barge_ins: 0, no_speech: 0, model_failures: 0 }), []);
+  assert.deepEqual(callNotes({}), []);
+  assert.deepEqual(callNotes({ model_failures: 2, no_speech: 1, barge_ins: 3 }), [
+    { kind: "warn", text: "The agent could not answer twice" },
+    { kind: "", text: "Speech not caught once" },
+    { kind: "", text: "Caller cut in 3 times" },
+  ]);
+  assert.equal(callsLine({ calls_today: 1, calls_total: 1 }), "1 call today, 1 in all.");
+  assert.equal(callsLine({ calls_today: 0, calls_total: 12 }), "No calls yet today, 12 in all.");
+  assert.equal(callsLine({}), "No calls yet today.");
+  assert.equal(callsLine(undefined), "No calls yet today.");
+});
