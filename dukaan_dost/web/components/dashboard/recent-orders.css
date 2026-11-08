@@ -9,3 +9,7 @@
     .orow .c-who{grid-area:who}.orow .c-status{grid-area:status;text-align:right}.orow .c-items{grid-area:items}
     .orow .c-time{grid-area:time}.orow .c-total{grid-area:total}
   }
+  @media (max-width:360px){
+    .orow{grid-template-columns:minmax(0,1fr);grid-template-areas:"who" "status" "items" "time" "total"}
+    .orow .c-status,.orow .c-total{text-align:left}
+  }

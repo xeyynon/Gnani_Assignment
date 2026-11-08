@@ -178,6 +178,21 @@ Colours and layout were not the problem; those had been settled (DEC-049).
 
 **What not to copy:** this project's particular mix. It was right for a kirana shop's screens and for Surya's eye; another product should run the method, not reuse the result.
 
+## A8. Onboarding: say what is empty, then a short tour that can always be left (DEC-052)
+Done once here, on 2026-11-09, from a small pasted example (an empty state with an explanation and one button, and a coach mark on one button). The build is in [frontend.md](frontend.md), "Onboarding: empty states and a first-visit tour".
+
+**Research, with its limits said.** Two web searches, read as examples of practice and not as evidence:
+- *Empty states.* Nielsen Norman Group frames an empty state as doing three jobs at once: it says the system status (nothing here yet), teaches what belongs there, and gives a way into the key task ([NN/g video summary](https://www.nngroup.com/videos/empty-states-in-application-design-guidelines/); the search did not return the full article, so the rest comes from guides that cite it). The guides agree on a short title, one description, an optional picture and **one** action, with the headline starting with a verb ([Setproduct](https://setproduct.com/blog/empty-state-ui-design), [UX Planet](https://uxplanet.org/empty-state-design-a-practical-guide-94ad0adbda45)).
+- *Tours.* Most sources say to keep a tour to 3 to 5 steps (one says up to 7), make it skippable at any point, and let it be replayed from a help menu. The step counts and the claim that skippable tours finish more often come from vendor blogs, with no independent study, so the build follows the direction (short, skippable, replayable) and not the numbers. For keyboards: move focus into the tip when a step opens, treat it as a non-modal dialog, let Tab stay in it, let Escape end it, and give focus back when it ends; where focus should go at the end differs between libraries, so it goes back to the button that replays the tour. One guide calls spotlight tours the hardest pattern to make accessible and warns they break first at 200% zoom ([EZUD](https://ezud.com/accessible-onboarding-tutorials/), [Adobe Spectrum coach mark](https://spectrum.adobe.com/page/coach-mark), [Elastic EUI tour guidelines](https://eui.elastic.co/pr_8515/new-docs/docs/display/tour/guidelines)).
+
+**What to copy.**
+1. An empty list gets a title, one sentence on what will appear and, if something on the page can start it, one action. If nothing can start it, leave the action out.
+2. A tour is short (here 4 steps), points at things the person will use first, says "Step N of M" in words, and always has Skip. Ending it any way counts as seen.
+3. It starts by itself only once, and never when the browser cannot remember that it did (a private window): it would come back every visit. A menu item replays it.
+4. Test it with a fresh browser profile every time, or the "first visit" is never really first; and make the screenshot and audit tools mark it seen, or they photograph the tour on every page.
+5. Re-place the ring after a resize, a scroll and the end of any transition, because the thing it points at may still be moving.
+6. Leave out what the person has rejected: the example's row of progress dots stayed out, because dots had been rejected.
+
 ---
 
 # Part B: This stack (plain web pages served by a Python app)
@@ -325,6 +340,7 @@ Links between them: the dashboard's menu has **Call page**; the call page's head
 | The admin page ignores the device theme (it starts dark) | An audit run "in light" was really dark | Set the theme the way a person does, through the saved choice, before the page loads |
 | A brutalist shadow the same colour as its button | The button looked notched | A near-white edge in dark, near-black in light (DEC-049) |
 | Pixel font sizes | A browser's text-size setting does not scale the pages | **Open**: not fixed; known gap (B11) |
+| Zoom: 130%, 150% and 200% on a phone are windows 300, 260 and 195 px wide | A search box, a panel's tag, quick-action buttons, a notice's dismiss button each pushed the page sideways; Recent orders passed the sideways test but broke every word one letter to a line | Test at those widths (the audit does now); let heading rows and buttons wrap; stack a table row into one column; keep a figure whole. **"No sideways scroll" is not "readable": look at the pictures** (frontend.md, "Zoom") |
 
 Also done: every field has a visible label; every button a name (tested); state is exposed (`aria-pressed`, `aria-expanded`, `aria-current`, `aria-busy`); reduced motion stops pulses and slides; colour is never the only signal; zoom is never blocked.
 

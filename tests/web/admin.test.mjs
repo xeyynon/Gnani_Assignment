@@ -333,3 +333,11 @@ test("on a touch screen the search box drops its Ctrl K hint, and may shrink, so
   assert.match(style, /@media \(max-width:900px\)\{\.search\{[^}]*min-width:0\}\}/);
   assert.match(html, /<kbd id="searchkey">Ctrl K<\/kbd>/);          // still there for a keyboard
 });
+
+test("at 200% zoom the admin notice wraps, and the stock checkboxes are at least 24 px (44 px on a touch screen)", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(style, /\.notice\{position:relative;display:flex;flex-wrap:wrap;/);
+  assert.match(style, /\.notice \.nt\{flex:1 1 140px;/);
+  assert.match(style, /\.stocktable input\[type=checkbox\]\{width:24px;height:24px;/);
+  assert.match(style, /@media \(pointer:coarse\)\{\.stocktable input\[type=checkbox\]\{width:44px;height:44px\}\}/);
+});

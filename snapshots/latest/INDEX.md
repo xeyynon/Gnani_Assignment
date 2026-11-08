@@ -2,7 +2,7 @@
 
 Full-page screenshots of every page in every state, in light and dark, at phone, tablet and desktop widths. All data is made up (the preview's demo shop).
 
-Taken 2026-11-08 from commit `321ce74` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
+Taken 2026-11-08 from commit `c6c070e` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
 
 Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tablet 768 px, desktop 1280 px.
 
@@ -159,6 +159,38 @@ Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tab
 | phone 390 | [dashboard/05-calls/light-phone-390.png](dashboard/05-calls/light-phone-390.png) | [dashboard/05-calls/dark-phone-390.png](dashboard/05-calls/dark-phone-390.png) |
 | tablet 768 | [dashboard/05-calls/light-tablet-768.png](dashboard/05-calls/light-tablet-768.png) | [dashboard/05-calls/dark-tablet-768.png](dashboard/05-calls/dark-tablet-768.png) |
 | desktop 1280 | [dashboard/05-calls/light-desktop-1280.png](dashboard/05-calls/light-desktop-1280.png) | [dashboard/05-calls/dark-desktop-1280.png](dashboard/05-calls/dark-desktop-1280.png) |
+
+### 06 tour step 1
+
+| Device | Light | Dark |
+|---|---|---|
+| phone 390 | [dashboard/06-tour-step-1/light-phone-390.png](dashboard/06-tour-step-1/light-phone-390.png) | [dashboard/06-tour-step-1/dark-phone-390.png](dashboard/06-tour-step-1/dark-phone-390.png) |
+| tablet 768 | [dashboard/06-tour-step-1/light-tablet-768.png](dashboard/06-tour-step-1/light-tablet-768.png) | [dashboard/06-tour-step-1/dark-tablet-768.png](dashboard/06-tour-step-1/dark-tablet-768.png) |
+| desktop 1280 | [dashboard/06-tour-step-1/light-desktop-1280.png](dashboard/06-tour-step-1/light-desktop-1280.png) | [dashboard/06-tour-step-1/dark-desktop-1280.png](dashboard/06-tour-step-1/dark-desktop-1280.png) |
+
+### 07 tour step 3
+
+| Device | Light | Dark |
+|---|---|---|
+| phone 390 | [dashboard/07-tour-step-3/light-phone-390.png](dashboard/07-tour-step-3/light-phone-390.png) | [dashboard/07-tour-step-3/dark-phone-390.png](dashboard/07-tour-step-3/dark-phone-390.png) |
+| tablet 768 | [dashboard/07-tour-step-3/light-tablet-768.png](dashboard/07-tour-step-3/light-tablet-768.png) | [dashboard/07-tour-step-3/dark-tablet-768.png](dashboard/07-tour-step-3/dark-tablet-768.png) |
+| desktop 1280 | [dashboard/07-tour-step-3/light-desktop-1280.png](dashboard/07-tour-step-3/light-desktop-1280.png) | [dashboard/07-tour-step-3/dark-desktop-1280.png](dashboard/07-tour-step-3/dark-desktop-1280.png) |
+
+### 08 empty orders
+
+| Device | Light | Dark |
+|---|---|---|
+| phone 390 | [dashboard/08-empty-orders/light-phone-390.png](dashboard/08-empty-orders/light-phone-390.png) | [dashboard/08-empty-orders/dark-phone-390.png](dashboard/08-empty-orders/dark-phone-390.png) |
+| tablet 768 | [dashboard/08-empty-orders/light-tablet-768.png](dashboard/08-empty-orders/light-tablet-768.png) | [dashboard/08-empty-orders/dark-tablet-768.png](dashboard/08-empty-orders/dark-tablet-768.png) |
+| desktop 1280 | [dashboard/08-empty-orders/light-desktop-1280.png](dashboard/08-empty-orders/light-desktop-1280.png) | [dashboard/08-empty-orders/dark-desktop-1280.png](dashboard/08-empty-orders/dark-desktop-1280.png) |
+
+### 09 empty calls
+
+| Device | Light | Dark |
+|---|---|---|
+| phone 390 | [dashboard/09-empty-calls/light-phone-390.png](dashboard/09-empty-calls/light-phone-390.png) | [dashboard/09-empty-calls/dark-phone-390.png](dashboard/09-empty-calls/dark-phone-390.png) |
+| tablet 768 | [dashboard/09-empty-calls/light-tablet-768.png](dashboard/09-empty-calls/light-tablet-768.png) | [dashboard/09-empty-calls/dark-tablet-768.png](dashboard/09-empty-calls/dark-tablet-768.png) |
+| desktop 1280 | [dashboard/09-empty-calls/light-desktop-1280.png](dashboard/09-empty-calls/light-desktop-1280.png) | [dashboard/09-empty-calls/dark-desktop-1280.png](dashboard/09-empty-calls/dark-desktop-1280.png) |
 
 ## admin
 

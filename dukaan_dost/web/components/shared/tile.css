@@ -7,3 +7,4 @@
   .tile.hero{background:var(--blue-soft)}
   .tile.hero .ico{background:var(--surface);color:var(--blue)}
   .tile.hero .v{font-size:clamp(26px,2.8vw,40px);color:var(--blue)}
+  @media (max-width:260px){.tile{padding:14px}.tile .ico{display:none}.tile .v,.tile.hero .v{font-size:22px;overflow-wrap:normal}}      /* 150% zoom and more on a phone: the figure fits whole */
