@@ -16,6 +16,14 @@ dashboard: ok    page @360px dark touch
 dashboard: ok    page @390px dark touch
 dashboard: ok    page @768px dark
 dashboard: ok    page @1280px dark
+dashboard (calls): ok    page @360px light touch
+dashboard (calls): ok    page @390px light touch
+dashboard (calls): ok    page @768px light
+dashboard (calls): ok    page @1280px light
+dashboard (calls): ok    page @360px dark touch
+dashboard (calls): ok    page @390px dark touch
+dashboard (calls): ok    page @768px dark
+dashboard (calls): ok    page @1280px dark
 admin: ok    page @360px light touch
 admin: ok    page @390px light touch
 admin: ok    page @768px light
@@ -71,6 +79,18 @@ sign-in (admin, wrong password): ok    page @1280px light
 sign-in (admin, wrong password): ok    page @360px dark touch
 sign-in (admin, wrong password): ok    page @390px dark touch
 sign-in (admin, wrong password): ok    page @768px dark
+sign-in (admin, wrong password): (re-run: Chrome did not start in time on the first try; the tool now waits 30 s)
+sign-in (admin, wrong password): ok    page @360px light touch
+sign-in (admin, wrong password): ok    page @390px light touch
+sign-in (admin, wrong password): ok    page @768px light
+sign-in (admin, wrong password): ok    page @1280px light
+sign-in (admin, wrong password): ok    page @360px dark touch
+sign-in (admin, wrong password): ok    page @390px dark touch
+sign-in (admin, wrong password): ok    page @768px dark
 sign-in (admin, wrong password): ok    page @1280px dark
+const ws = new WebSocket(target.webSocketDebuggerUrl);
+                                ^
 
-72 runs: no errors in any run.
+TypeError: Cannot read properties of undefined (readi
+
+80 runs: no errors in any run (8 of them re-run, see above).

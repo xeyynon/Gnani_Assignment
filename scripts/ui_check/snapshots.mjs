@@ -60,6 +60,7 @@ const PAGES = process.env.SNAP_PAGES ? JSON.parse(process.env.SNAP_PAGES) : [
     ['orders', view('#orders')],
     ['credit-book', view('#credit')],
     ['loan-enquiries', view('#loans')],
+    ['calls', view('#calls')],
   ] },
   { name: 'admin', path: '/admin', auth: ADMIN, states: [
     ['overview', view('#overview')],

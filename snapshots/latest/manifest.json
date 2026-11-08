@@ -1,0 +1,1442 @@
+[
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/01-idle/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/02-order-in-progress/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/03-order-and-loan-quote/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/01-idle/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/02-order-in-progress/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/03-order-and-loan-quote/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/01-idle/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/02-order-in-progress/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/03-order-and-loan-quote/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/01-idle/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/02-order-in-progress/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "call-page/03-order-and-loan-quote/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/01-idle/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/02-order-in-progress/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "call-page/03-order-and-loan-quote/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/01-idle/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 2,
+  "state": "order-in-progress",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/02-order-in-progress/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "call-page",
+  "n": 3,
+  "state": "order-and-loan-quote",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "call-page/03-order-and-loan-quote/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/01-idle/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/02-pin-typed/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/03-pin-shown/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/04-empty-submit/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/05-wrong-pin/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/06-locked/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/01-idle/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/02-pin-typed/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/03-pin-shown/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/04-empty-submit/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/05-wrong-pin/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/06-locked/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/01-idle/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/02-pin-typed/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/03-pin-shown/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/04-empty-submit/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/05-wrong-pin/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/06-locked/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/01-idle/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/02-pin-typed/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/03-pin-shown/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/04-empty-submit/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/05-wrong-pin/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop/06-locked/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/01-idle/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/02-pin-typed/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/03-pin-shown/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/04-empty-submit/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/05-wrong-pin/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop/06-locked/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/01-idle/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 2,
+  "state": "pin-typed",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/02-pin-typed/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 3,
+  "state": "pin-shown",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/03-pin-shown/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 4,
+  "state": "empty-submit",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/04-empty-submit/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 5,
+  "state": "wrong-pin",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/05-wrong-pin/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop",
+  "n": 6,
+  "state": "locked",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop/06-locked/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop-without-a-pin/01-idle/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop-without-a-pin/01-idle/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop-without-a-pin/01-idle/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-shop-without-a-pin/01-idle/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-shop-without-a-pin/01-idle/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-shop-without-a-pin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-shop-without-a-pin/01-idle/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/01-idle/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/02-wrong-password/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/03-locked/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/01-idle/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/02-wrong-password/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/03-locked/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/01-idle/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/02-wrong-password/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/03-locked/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/01-idle/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/02-wrong-password/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "sign-in-admin/03-locked/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/01-idle/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/02-wrong-password/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "sign-in-admin/03-locked/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 1,
+  "state": "idle",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/01-idle/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 2,
+  "state": "wrong-password",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/02-wrong-password/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "sign-in-admin",
+  "n": 3,
+  "state": "locked",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "sign-in-admin/03-locked/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/01-overview/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/02-orders/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/03-credit-book/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/04-loan-enquiries/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/05-calls/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/01-overview/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/02-orders/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/03-credit-book/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/04-loan-enquiries/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/05-calls/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/01-overview/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/02-orders/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/03-credit-book/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/04-loan-enquiries/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/05-calls/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/01-overview/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/02-orders/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/03-credit-book/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/04-loan-enquiries/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/05-calls/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/01-overview/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/02-orders/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/03-credit-book/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/04-loan-enquiries/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/05-calls/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/01-overview/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 2,
+  "state": "orders",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/02-orders/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 3,
+  "state": "credit-book",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/03-credit-book/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 4,
+  "state": "loan-enquiries",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/04-loan-enquiries/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 5,
+  "state": "calls",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/05-calls/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/01-overview/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/02-problems/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/03-activity/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/04-add-a-shop/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/05-edit-a-working-shop/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/06-edit-a-broken-shop/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/01-overview/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/02-problems/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/03-activity/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/04-add-a-shop/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/05-edit-a-working-shop/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/06-edit-a-broken-shop/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/01-overview/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/02-problems/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/03-activity/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/04-add-a-shop/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/05-edit-a-working-shop/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/06-edit-a-broken-shop/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/01-overview/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/02-problems/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/03-activity/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/04-add-a-shop/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/05-edit-a-working-shop/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "admin/06-edit-a-broken-shop/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/01-overview/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/02-problems/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/03-activity/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/04-add-a-shop/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/05-edit-a-working-shop/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "admin/06-edit-a-broken-shop/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 1,
+  "state": "overview",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/01-overview/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 2,
+  "state": "problems",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/02-problems/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 3,
+  "state": "activity",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/03-activity/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 4,
+  "state": "add-a-shop",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/04-add-a-shop/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 5,
+  "state": "edit-a-working-shop",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/05-edit-a-working-shop/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "admin",
+  "n": 6,
+  "state": "edit-a-broken-shop",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "admin/06-edit-a-broken-shop/dark-desktop-1280.png",
+  "overflow": false
+ }
+]
