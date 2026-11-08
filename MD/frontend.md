@@ -284,3 +284,34 @@ Surya asked for "proper testing of the UI with every aspect". It was run in four
 4. Opening a page directly at `#calls`, `#orders` or `#problems` can start the keyboard in the middle of the page, because the hash matches an element's id (`#calls` is the live-call chip). Menu clicks are fine.
 5. The top bars sit inside `<main>`, so the page has no banner landmark. A count in the menu reads "Orders 1" with no word saying it is a count. The top chip says "No call right now" while data is still loading. An 8-digit menu count overlaps its label, and a ₹9,99,99,99,999 total wraps over three lines (both beyond any realistic data).
 6. Not tested by anyone: Start call (no microphone), a form that saves, more than 30 calls, a real phone, a real screen reader.
+
+## Onboarding: empty states and a first-visit tour (2026-11-09, DEC-052)
+Surya pasted a small example from a pattern library (an empty screen with an explanation and one button, and a coach mark that highlights a button during a first-time tour) and asked for research and a version in this product. It is on the shop dashboard only.
+
+**What was built.**
+- **Empty lists** (Orders, Credit book, Loan enquiries, Calls) show a title, one sentence on what will appear, and where it helps a link **Try a call yourself** to the shop's call page. Before, they showed one grey sentence. The data is `EMPTY` in `dashboard/helpers.js`; `fill()` in `shared/lists.js` takes either a plain sentence (the admin) or that object.
+- **A four-step tour** (`dashboard/tour.html`, `tour.css`, `tour.js`; the steps and the placing rule are pure functions in `helpers.js`, tested in Node): the Call page link, Orders, Calls, and the live-call bar. A ring round the target, a tip beside it with "Step 1 of 4", **Skip tour** and **Next** (**Done** on the last).
+- **Take the tour** is a menu item (a new help icon) that replays it.
+- **The example's dots were left out.** Its row of progress dots is the kind of mark Surya had rejected; the label says the same in words.
+
+**How it behaves.**
+- It starts by itself once, on a first visit. "Seen" is `dd:tour` in local storage and is set whichever way it ends. It does not start by itself if the page was opened at `#orders/<id>`, or if the browser will not store (a private window), because it would return on every visit.
+- Skip, a click outside the tip and Escape all end it. Focus goes into the tip when a step opens, Tab cycles tip, Skip, Next, and focus returns to Take the tour. It opens a hidden desktop menu first, because three steps point at the menu.
+- The tip is placed below its target, above it if there is no room, and always inside the window (`tourPlace`). The ring is put again after a resize, a scroll and the end of any transition, because the menu may still be sliding in.
+
+**Checked.**
+- Page tests: 133 pass (3 new here). A real browser with a fresh profile each time, 56 checks at 1280, 390 and 300 px, all passing:
+  - a first visit starts it, with focus in the tip;
+  - every step's ring surrounds its target and the tip stays inside the window, clear of the target, with no sideways scroll;
+  - Done closes it and it does not start again;
+  - Take the tour replays it;
+  - Tab cycles within the tip;
+  - Escape, Skip and a click outside each end it;
+  - a hidden menu is opened;
+  - blocked storage means no automatic start, but the replay still works;
+  - opening at an order shows the order;
+  - the four empty states and their links;
+  - no console error.
+- The browser audit also covers the tour open and an empty Orders list, and the pictures are in `snapshots/latest/dashboard/` (the tour steps and the empty Orders and Calls lists).
+
+**Not done:** a real phone; a real screen reader; 200% zoom; Hindi and Telugu wording (needs a native reader); a tour on the admin page and the call page.
