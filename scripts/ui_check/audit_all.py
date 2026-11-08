@@ -19,6 +19,10 @@ HERE = Path(__file__).resolve().parent
 WIDTHS = (300, 360, 390, 768, 1280)       # 300 is a 390 px phone at 130% browser zoom
 THEMES = ("light", "dark")
 SHOP = "demo_kirana"
+TOUR = "startTour($('tourbtn'))"
+EMPTY = ("window.fetch=()=>new Promise(()=>{});render({title:'New Shop',shop:'new',summary:{orders_today:0,sales_today:0,orders_total:0,orders_yesterday:0,sales_yesterday:0,"
+         "orders_yesterday_same_time:0,sales_yesterday_same_time:0,udhaar_outstanding:0,customers_owing:0,loans_today:0,loans_total:0,calls_today:0,calls_total:0,needs_attention:0},"
+         "trend:[],orders:[],loans:[],calls:[],ledger:[],live:[],problems:[]})")
 WRONG = "showResult(401, {wrong: true, remaining: 3})"
 LOCKED = "showResult(429, {locked: true, retry_after: 42})"
 
@@ -33,6 +37,8 @@ def pages(pin: str, admin_password: str) -> list:
         ("call page", "/", "", ""),
         ("dashboard", f"/s/{SHOP}/dashboard", basic("shop", pin), ""),
         ("dashboard (calls)", f"/s/{SHOP}/dashboard#calls", basic("shop", pin), ""),
+        ("dashboard (tour)", f"/s/{SHOP}/dashboard", basic("shop", pin), TOUR),
+        ("dashboard (empty orders)", f"/s/{SHOP}/dashboard#orders", basic("shop", pin), EMPTY),
         ("admin", "/admin", basic("admin", admin_password), ""),
         ("sign-in (shop)", f"/s/{SHOP}/dashboard", "", ""),
         ("sign-in (shop, wrong PIN)", f"/s/{SHOP}/dashboard", "", WRONG),
