@@ -241,3 +241,7 @@ test("the Auto-scroll switch only animates when motion is allowed, and the page'
   assert.match(html, /@media \(prefers-reduced-motion:no-preference\)\{\.sw\{transition/);
   for (const s of [...html.matchAll(/<svg class="i"[^>]*>/g)].map(m => m[0])) assert.match(s, /aria-hidden="true"/, s);
 });
+
+test("at 200% zoom a panel's tag and the Auto-scroll switch drop under the title instead of leaving the screen", () => {
+  assert.match(html, /\.ph\{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;/);
+});

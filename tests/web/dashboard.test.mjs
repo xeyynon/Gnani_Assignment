@@ -383,3 +383,16 @@ test("the tour can always be skipped, ended with Escape, replayed, and never sta
   assert.doesNotMatch(html, /#tour[^{]*\{[^}]*animation|#tour[^{]*\{[^}]*transition/);          // nothing slides or blinks
   assert.match(html, /#tour-ring\{[^}]*pointer-events:none/);
 });
+
+test("at 200% zoom on a phone (195 px) rows stack, tiles keep their figure whole, and chart labels do not run together", () => {
+  assert.match(html, /@media \(max-width:360px\)\{\s*\.orow\{grid-template-columns:minmax\(0,1fr\);grid-template-areas:"who" "status" "items" "time" "total"\}/);   // an order row is one column
+  assert.match(html, /@media \(max-width:260px\)\{\.tile\{padding:14px\}\.tile \.ico\{display:none\}\.tile \.v,\.tile\.hero \.v\{font-size:22px;overflow-wrap:normal\}\}/);
+  assert.match(html, /\.alert \.t\{flex:1 1 100px;/);                                         // the amount drops under the text instead of squeezing it to one letter a line
+  assert.match(html, /@media \(max-width:260px\)\{\.alert \.ico\{display:none\}\}/);
+  assert.match(html, /\.col:nth-child\(even\) \.val,\.col:nth-child\(even\) \.day\{visibility:hidden\}/);   // every other day is labelled; the chart's aria-label lists all seven
+  assert.match(script, /\$\('trend'\)\.setAttribute\('aria-label', 'Sales for each of the last seven days: '/);
+  assert.match(html, /\.ph\{display:flex;flex-wrap:wrap;/);                                   // a panel's tag may drop under its title
+  assert.match(html, /\.act\{display:flex;flex-wrap:wrap;/);
+  assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(min\(210px,100%\),1fr\)\)/);   // a quick action may be narrower than 210 px
+  assert.match(script, /\$\('recent'\)\.replaceChildren\(emptyCard\(EMPTY\.orders\)\)/);
+});

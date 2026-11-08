@@ -2,7 +2,7 @@
 
 Full-page screenshots of every page in every state, in light and dark, at phone, tablet and desktop widths. All data is made up (the preview's demo shop).
 
-Taken 2026-11-08 from commit `f6b5a91` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
+Taken 2026-11-08 from commit `c6c070e` by `scripts/ui_check/snapshots.mjs`. Retake with the command in that file's header; same-named files are overwritten.
 
 Naming: `<page>/<NN>-<state>/<theme>-<device>-<width>.png`. Phone is 390 px, tablet 768 px, desktop 1280 px.
 
