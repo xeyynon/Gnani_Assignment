@@ -1,7 +1,8 @@
   .sw-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
   .sw-row input{position:absolute;opacity:0;width:1px;height:1px}
-  .sw{width:34px;height:20px;border-radius:10px;background:var(--line);position:relative;transition:background .15s}
-  .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:transform .15s}
+  .sw{width:34px;height:20px;border-radius:10px;background:var(--line);position:relative}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface)}
+  @media (prefers-reduced-motion:no-preference){.sw{transition:background .15s}.sw::after{transition:transform .15s}}
   input:checked+.sw{background:var(--green)}
   input:checked+.sw::after{transform:translateX(14px)}
   #transcript{display:flex;flex-direction:column;gap:10px;max-height:340px;min-height:120px;overflow-y:auto;padding-right:2px}

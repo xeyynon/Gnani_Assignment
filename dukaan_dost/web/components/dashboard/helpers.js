@@ -75,3 +75,11 @@ function callsLine(summary) {                // the line under the Calls heading
   const today = Number((summary || {}).calls_today) || 0, all = Number((summary || {}).calls_total) || 0;
   return (today ? today + (today === 1 ? ' call' : ' calls') + ' today' : 'No calls yet today') + (all ? ', ' + all + ' in all' : '') + '.';
 }
+function orderLink(call, orders) {           // an ordered call -> '#orders/<id>' when that order is in the list the page has; otherwise null (no dead link)
+  if (!call || call.outcome !== 'ordered' || !call.order_id) return null;
+  return (orders || []).some(o => o.id === call.order_id) ? '#orders/' + call.order_id : null;
+}
+function orderIdFromHash(hash) {             // '#orders/20261107-215910-717' -> the id; anything else -> null
+  const m = /^#orders\/([A-Za-z0-9_-]+)$/.exec(String(hash || ''));
+  return m ? m[1] : null;
+}

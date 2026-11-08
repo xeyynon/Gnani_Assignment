@@ -1,0 +1,15 @@
+{
+ "label": "14-build-1020",
+ "rev": "build-1020",
+ "commit": "e332cb8",
+ "date": "2026-11-09",
+ "title": "From a call to its order, a clearer live label, and fixes from a full UI test pass",
+ "ran_code_of": "build-1020",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}
