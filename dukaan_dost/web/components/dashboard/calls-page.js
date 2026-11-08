@@ -11,5 +11,5 @@ function renderCalls(calls, summary) {
   $('callsline').textContent = callsLine(summary);
   const nav = $('navcalls'), today = Number((summary || {}).calls_today) || 0;
   nav.textContent = String(today); nav.hidden = !today;
-  fill('callslist', calls, callCard, 'No calls yet. Each call shows here when it ends, even if nothing was ordered.');
+  fill('callslist', calls, callCard, EMPTY.calls);
 }

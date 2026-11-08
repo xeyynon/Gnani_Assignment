@@ -5,3 +5,5 @@
   .col.today .bar{background:var(--blue)}
   .col.today .val{color:var(--blue);font-weight:700}
   .col .day{font-size:12px;color:var(--muted);white-space:nowrap}
+  /* a narrow window (a phone at 150% or 200% zoom): label every other day, so the labels do not run into each other; the chart's own aria-label still lists all seven */
+  @media (max-width:360px){.col:nth-child(even) .val,.col:nth-child(even) .day{visibility:hidden}.trend{gap:4px}}

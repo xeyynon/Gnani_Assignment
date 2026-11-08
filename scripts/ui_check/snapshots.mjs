@@ -32,6 +32,8 @@ const LOAN = { type: 'loan', heard_amount: 150000, kind: 'working capital', busi
   project_cost: 200000, covered: true, scheme: 'Mudra Shishu', annual_rate_pct: 11, loan_amount: 150000, own_contribution: 50000,
   monthly_instalment: 4900, repayment_months: 36, moratorium_months: 6, total_repayment: 176400, total_interest: 26400, indicative: true };
 const view = hash => `location.hash=${JSON.stringify(hash)}`;
+// A shop with nothing in it yet: what the empty lists say (made up, like everything else here).
+const EMPTY_SHOP = { title: 'New Shop', shop: 'new', summary: { orders_today: 0, sales_today: 0, orders_total: 0, orders_yesterday: 0, sales_yesterday: 0, orders_yesterday_same_time: 0, sales_yesterday_same_time: 0, udhaar_outstanding: 0, customers_owing: 0, loans_today: 0, loans_total: 0, calls_today: 0, calls_total: 0, needs_attention: 0 }, trend: [], orders: [], loans: [], calls: [], ledger: [], live: [], problems: [] };
 
 // A page is a URL, the credentials it needs, and the states to put it in. A state is a snippet run in the page, then a short wait.
 const PAGES = process.env.SNAP_PAGES ? JSON.parse(process.env.SNAP_PAGES) : [
@@ -61,6 +63,10 @@ const PAGES = process.env.SNAP_PAGES ? JSON.parse(process.env.SNAP_PAGES) : [
     ['credit-book', view('#credit')],
     ['loan-enquiries', view('#loans')],
     ['calls', view('#calls')],
+    ['tour-step-1', `${view('#overview')};startTour($('tourbtn'))`],
+    ['tour-step-3', `${view('#overview')};startTour($('tourbtn'));showTourStep(2)`],
+    ['empty-orders', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify(EMPTY_SHOP)});${view('#orders')}`],
+    ['empty-calls', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify(EMPTY_SHOP)});${view('#calls')}`],
   ] },
   { name: 'admin', path: '/admin', auth: ADMIN, states: [
     ['overview', view('#overview')],
@@ -99,7 +105,7 @@ async function session(page, theme, [device, width, height], taken) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: phone });
     if (phone) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
     await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] });
-    await send('Page.addScriptToEvaluateOnNewDocument', { source: `try{localStorage.setItem('dd:theme',${JSON.stringify(theme)})}catch(e){}` });
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: `try{localStorage.setItem('dd:theme',${JSON.stringify(theme)});localStorage.setItem('dd:tour','1')}catch(e){}` });
     await send('Page.navigate', { url: base + page.path });
     await sleep(3200);
     for (const [i, [state, js]] of page.states.entries()) {

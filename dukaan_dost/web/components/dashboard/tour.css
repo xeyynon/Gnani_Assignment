@@ -1,0 +1,16 @@
+  /* The first-visit tour: a ring round one thing, a tip beside it, "Step 1 of 4", Skip always there (DEC-052). Nothing blinks or slides. */
+  #tour{position:fixed;inset:0;z-index:50}
+  #tour[hidden]{display:none}
+  #tour-catch{position:absolute;inset:0}
+  #tour-ring{position:fixed;border-radius:8px;box-shadow:0 0 0 3px var(--amber),0 0 0 9999px var(--scrim);pointer-events:none}
+  #tour-tip{position:fixed;width:min(320px,calc(100vw - 16px));padding:14px 16px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 24px var(--lift);outline:none}
+  #tour-tip::before{content:"";position:absolute;left:calc(var(--arrow,24px) - 7px);width:12px;height:12px;background:var(--surface);transform:rotate(45deg)}
+  #tour-tip[data-side=below]::before{top:-7px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+  #tour-tip[data-side=above]::before{bottom:-7px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+  #tour-step{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green-ink);margin-bottom:4px}
+  #tour-title{font-size:16px;margin-bottom:4px}
+  #tour-text{font-size:14px;color:var(--muted)}
+  .tour-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px}
+  #tour-skip{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:6px 0;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+  #tour-next{border:1px solid var(--green);background:var(--green);color:var(--on-green);font-weight:600;font-size:14px;padding:8px 18px;border-radius:var(--radius-button);min-height:36px}
+  @media (pointer:coarse){#tour-skip,#tour-next{min-height:44px}#tour-skip{min-width:44px}}

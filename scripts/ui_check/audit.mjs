@@ -124,7 +124,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: +w, height: 900, devic
 if (touch) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
 await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
 // The admin page defaults to dark whatever the system says, so state the theme the way a person would, by choosing it.
-await send('Page.addScriptToEvaluateOnNewDocument', { source: `try{localStorage.setItem('dd:theme',${JSON.stringify(scheme)})}catch(e){}` });
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `try{localStorage.setItem('dd:theme',${JSON.stringify(scheme)});localStorage.setItem('dd:tour','1')}catch(e){}` });
 await send('Page.navigate', { url });
 await sleep(3000);
 if (process.env.SETUP) { await run(`(async () => { ${process.env.SETUP} })()`); await sleep(1500); }
