@@ -1,5 +1,5 @@
   .shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
-  @media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr)}}
+  @media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);align-content:start}}
   main{padding:0 24px 56px;min-width:0}
   @media (max-width:600px){main{padding:0 14px 48px}}
   .pagehead{margin:22px 0 12px}

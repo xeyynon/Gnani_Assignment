@@ -2,7 +2,7 @@
         <p class="muted"><a href="#overview">All shops</a> <span id="edit-links"></span></p></div>
 
       <section class="panel" aria-labelledby="h-instr">
-        <div class="ph"><h3 id="h-instr"><svg class="i"><use href="#i-chat"/></svg>Name and instructions</h3></div>
+        <div class="ph"><h3 id="h-instr"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg>Name and instructions</h3></div>
         <div class="field"><label for="ed-title">Shop name</label><input type="text" id="ed-title" maxlength="60" autocomplete="off"></div>
         <div class="field"><label for="ed-prompt">Instructions for the agent</label>
           <textarea id="ed-prompt" rows="16" spellcheck="false" aria-describedby="ed-prompt-hint"></textarea>
@@ -12,7 +12,7 @@
       </section>
 
       <section class="panel" aria-labelledby="h-pin">
-        <div class="ph"><h3 id="h-pin"><svg class="i"><use href="#i-key"/></svg>Shopkeeper's PIN</h3></div>
+        <div class="ph"><h3 id="h-pin"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-key"/></svg>Shopkeeper's PIN</h3></div>
         <div class="field"><label for="ed-pin">New PIN</label>
           <input type="text" id="ed-pin" autocomplete="off" inputmode="numeric" aria-describedby="ed-pin-hint">
           <span class="hint" id="ed-pin-hint">Type one (at least 4 characters), or leave empty and press the button for a made-up 6 digit PIN. The old PIN stops working.</span></div>
@@ -22,7 +22,7 @@
       </section>
 
       <section class="panel" aria-labelledby="h-stock">
-        <div class="ph"><h3 id="h-stock"><svg class="i"><use href="#i-box"/></svg>Stock list</h3></div>
+        <div class="ph"><h3 id="h-stock"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-box"/></svg>Stock list</h3></div>
         <div class="tablewrap"><table class="stocktable">
           <thead><tr><th scope="col">Item</th><th scope="col">Price (rupees)</th><th scope="col">In stock</th><th scope="col">Remove</th></tr></thead>
           <tbody id="ed-stock"></tbody></table></div>

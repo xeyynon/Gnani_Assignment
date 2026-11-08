@@ -273,3 +273,64 @@ test("a call's length, language and what came of it read in plain words", () => 
   assert.equal(callsLine({}), "No calls yet today.");
   assert.equal(callsLine(undefined), "No calls yet today.");
 });
+
+test("a call that ended in an order links to that order, and only when the page has that order", () => {
+  const { orderLink, orderIdFromHash } = new Function(`${helperSource}; return { orderLink, orderIdFromHash };`)();
+  const orders = [{ id: "d01" }, { id: "20261107-215910-717" }];
+  assert.equal(orderLink({ outcome: "ordered", order_id: "d01" }, orders), "#orders/d01");
+  assert.equal(orderLink({ outcome: "ordered", order_id: "20261107-215910-717" }, orders), "#orders/20261107-215910-717");
+  assert.equal(orderLink({ outcome: "ordered", order_id: "gone" }, orders), null);          // older than the list: no dead link
+  assert.equal(orderLink({ outcome: "ordered", order_id: "d01" }, []), null);
+  assert.equal(orderLink({ outcome: "ordered", order_id: "d01" }, undefined), null);
+  assert.equal(orderLink({ outcome: "loan", order_id: "d01" }, orders), null);              // only an ordered call links
+  assert.equal(orderLink({ outcome: "ordered" }, orders), null);
+  assert.equal(orderLink(null, orders), null);
+  assert.equal(orderIdFromHash("#orders/d01"), "d01");
+  assert.equal(orderIdFromHash("#orders/20261107-215910-717"), "20261107-215910-717");
+  assert.equal(orderIdFromHash("#orders"), null);
+  assert.equal(orderIdFromHash("#calls/d01"), null);
+  assert.equal(orderIdFromHash('#orders/"><img src=x>'), null);                              // never an id with markup in it
+  assert.equal(orderIdFromHash(undefined), null);
+});
+
+test("an opened order stays open when the list is redrawn, and the link opens and shows it", () => {
+  assert.match(script, /const openOrders = new Set\(\)/);
+  assert.match(script, /details\.open = openOrders\.has\(o\.id\)/);
+  assert.match(script, /details\.addEventListener\('toggle'/);
+  assert.match(script, /'data-oid': o\.id/);
+  assert.match(script, /h\('a', \{ class: 'link', href: link, text: 'View order' \}\)/);
+  assert.match(script, /window\.addEventListener\('hashchange', jumpToOrder\)/);
+  assert.match(script, /if \(firstLoad\) jumpToOrder\(\)/);                                  // a page opened at #orders/<id>
+  assert.match(script, /scrollIntoView\(\{ block: 'center' \}\)/);
+});
+
+test("the freshness of the data is said in a word in a tab (Live or Offline) and the time in plain text, with no dot, bar or blinking", () => {
+  assert.match(script, /dot\.textContent = stale \? 'Offline' : 'Live'/);
+  assert.match(script, /'Updated ' \+ \(s < 2 \? 'just now' : s \+ ' s ago'\)/);
+  assert.match(script, /\$\('dot'\)\.textContent = 'Signed out'/);
+  assert.match(html, /\.live \.dot\{display:inline-block;[^}]*text-transform:uppercase/);
+  assert.match(html, /\.dot\{display:none\}/);                                          // no dot anywhere else
+  assert.doesNotMatch(html, /@keyframes caret|animation:caret/);                         // nothing blinks
+  assert.doesNotMatch(html, /\.live\{[^}]*border-left/);                                 // and no bar in front of the time
+});
+
+test("long unbroken text wraps inside its card, notice and admin problem, and a short phone page does not stretch the menu", () => {
+  assert.match(html, /\.card\{[^}]*overflow-wrap:anywhere\}/);
+  assert.match(html, /\.banner\{overflow-wrap:anywhere;/);
+  assert.match(html, /@media \(max-width:900px\)\{\.shell\{grid-template-columns:minmax\(0,1fr\);align-content:start\}\}/);
+});
+
+test("a loan record with missing fields never prints 'undefined' or 'null'", () => {
+  assert.doesNotMatch(script, /l\.scheme \+ ', '/);
+  assert.match(script, /'Scheme not recorded'/);
+  assert.match(script, /has\(l\.repayment_months\)/);
+  assert.match(script, /has\(l\.moratorium_months\)/);
+});
+
+test("decorative icons are hidden from assistive technology and notices are announced", () => {
+  const svgs = [...html.matchAll(/<svg class="i"[^>]*>/g)].map(m => m[0]);
+  assert.ok(svgs.length > 10);
+  for (const s of svgs) assert.match(s, /aria-hidden="true"/, s);                          // every icon in the page's own markup
+  assert.match(script, /s\.setAttribute\('aria-hidden', 'true'\)/);                         // and every icon the script draws
+  assert.match(html, /<div id="notices" role="status" aria-live="polite"><\/div>/);
+});

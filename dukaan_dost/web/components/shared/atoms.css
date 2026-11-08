@@ -5,14 +5,11 @@
   .brand b{display:block;font-size:16px;line-height:1.2}
   .brand span{font-size:12px;color:var(--muted)}
   .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:4px;border:1px solid var(--line);background:transparent;font-size:14px;color:var(--muted)}
-  .chip.on{border-color:var(--green-ink);color:var(--green-ink)}
+  .chip.on{border-color:var(--green-ink);color:var(--green-ink);font-weight:600}
   .chip b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
-  /* a live state is a pen caret (it blinks during a call), not a dot; idle is a short dash (DEC-051) */
-  .dot{display:inline-block;width:2px;height:13px;background:var(--green);flex:none}
-  .dot.off{background:var(--warn)}
-  .dot.idle,.chip:not(.on) .dot{width:9px;height:2px;background:var(--muted)}
-  @media (prefers-reduced-motion:no-preference){.chip.on .dot{animation:caret 1.05s steps(1) infinite}}
-  @keyframes caret{50%{opacity:0}}
+  /* No dot, no bar, nothing that blinks (DEC-051, changed 2026-11-09): a live state is said in words. A chip's state is
+     its text and its outline; the freshness label in the top bar (.live) is a tab with a word in it. */
+  .dot{display:none}
   .tag{font-size:12px;color:var(--muted);border:1px dashed var(--muted);border-radius:3px;padding:1px 8px;white-space:nowrap}
   .soon{margin-left:auto;font-size:11px;color:var(--muted);border:1px dashed var(--muted);border-radius:3px;padding:0 6px;white-space:nowrap}
   .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;font-size:14px}

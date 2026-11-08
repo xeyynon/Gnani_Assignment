@@ -1,5 +1,5 @@
   .stackl{display:flex;flex-direction:column;gap:10px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0;overflow-wrap:anywhere}
   .card.fresh{border-color:var(--green);background:var(--green-soft)}
   .row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
   .who{font-weight:600}
