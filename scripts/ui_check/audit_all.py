@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-WIDTHS = (360, 390, 768, 1280)
+WIDTHS = (300, 360, 390, 768, 1280)       # 300 is a 390 px phone at 130% browser zoom
 THEMES = ("light", "dark")
 SHOP = "demo_kirana"
 WRONG = "showResult(401, {wrong: true, remaining: 3})"
@@ -61,6 +61,8 @@ def main(argv) -> int:
                 env = {**os.environ, "SETUP": setup} if setup else {k: v for k, v in os.environ.items() if k != "SETUP"}
                 cmd = ["node", "--experimental-websocket", str(HERE / "audit.mjs"), base + path, str(width), theme] + ([auth] if auth else [])
                 r = subprocess.run(cmd, capture_output=True, text=True, env=env)
+                if r.returncode != 0 and not (r.stdout or "").strip():          # Chrome did not start (a clash on its random port, a busy machine): once more
+                    r = subprocess.run(cmd, capture_output=True, text=True, env=env)
                 for line in (r.stdout or "").splitlines():
                     if line.startswith(("ok ", "ERROR", "warn")):
                         lines.append(f"{label}: {line}")
