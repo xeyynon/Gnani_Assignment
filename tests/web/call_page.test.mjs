@@ -235,3 +235,9 @@ test("the panel does no arithmetic of its own", () => {
   assert.doesNotMatch(panel, /[^/*]\s[*+\-/]\s\d|Math\./);
   assert.doesNotMatch(panel, /\.toFixed|parseFloat|reduce\(/);
 });
+
+test("the Auto-scroll switch only animates when motion is allowed, and the page's icons are hidden from assistive technology", () => {
+  assert.doesNotMatch(html, /\.sw\{width:34px[^}]*transition/);          // the base rule has none; the one in the media query does
+  assert.match(html, /@media \(prefers-reduced-motion:no-preference\)\{\.sw\{transition/);
+  for (const s of [...html.matchAll(/<svg class="i"[^>]*>/g)].map(m => m[0])) assert.match(s, /aria-hidden="true"/, s);
+});

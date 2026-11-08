@@ -19,7 +19,7 @@ function h(tag, attrs) {
 }
 const SVG = document.querySelector('svg').namespaceURI;     // the icon sheet's own, so no address is written here
 function icon(name) {
-  const s = document.createElementNS(SVG, 'svg'); s.setAttribute('class', 'i');
+  const s = document.createElementNS(SVG, 'svg'); s.setAttribute('class', 'i'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false');
   const u = document.createElementNS(SVG, 'use'); u.setAttribute('href', '#i-' + name); s.appendChild(u);
   return s;
 }

@@ -326,3 +326,10 @@ test("each overview panel links to its full list and the copy button names its s
   assert.match(script, /navigator\.clipboard\.writeText\(url\)/);
   assert.match(script, /Could not copy automatically\. The link is /);          // no clipboard: the link is shown instead
 });
+
+test("on a touch screen the search box drops its Ctrl K hint, and may shrink, so a zoomed phone does not scroll sideways", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(style, /@media \(pointer:coarse\)\{kbd#searchkey\{display:none\}\}/);
+  assert.match(style, /@media \(max-width:900px\)\{\.search\{[^}]*min-width:0\}\}/);
+  assert.match(html, /<kbd id="searchkey">Ctrl K<\/kbd>/);          // still there for a keyboard
+});
