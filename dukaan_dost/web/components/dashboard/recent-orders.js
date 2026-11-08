@@ -8,7 +8,7 @@ function recentRow(o) {
     h('span', { class: 'c-status' }, h('span', { class: 'pill ' + o.status, text: statusLabel(o.status) })));
 }
 function renderRecent(orders) {
-  if (!orders.length) { $('recent').replaceChildren(h('div', { class: 'empty', text: 'No orders yet. They appear here within seconds of a call ending.' })); return; }
+  if (!orders.length) { $('recent').replaceChildren(emptyCard(EMPTY.orders)); return; }
   const head = h('div', { class: 'orow head' }, h('span', { text: 'When' }), h('span', { text: 'Customer' }), h('span', { text: 'Order' }), h('span', { class: 'num', text: 'Total' }), h('span', { text: 'Status' }));
   $('recent').replaceChildren(head, ...orders.slice(0, 5).map(recentRow));
 }
