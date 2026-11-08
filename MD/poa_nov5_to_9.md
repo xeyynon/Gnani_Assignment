@@ -38,7 +38,7 @@ Groq allows about 200,000 tokens a day per model, so each model gets about one f
 | 1.4 | Search mode (`ORDER_CATALOGUE=search`), 20 calls | gpt-oss-120b | `INVALID_orders_clean_search_120b` | ❌ INVALID, 2026-11-06: 3 requests refused in the last call (daily limit); 16 of 20 exact for causes only. Not repeated before the 120b budget returns |
 | 1.5 | Re-run of the calls that fail, after the fixes | 20b, Nov 6 or 7 | `orders_clean_after_fixes_20b` | ⬜ |
 | 1.6 | Prisma alone, 65 turns, four ways (clean or simulated phone line, language chosen or named) | no model | `stt_accuracy_prisma` | ✅ valid 2026-11-07; it led to naming the call's language (B-94) |
-| 1.7 | **Valid full-call run, 20 calls, search mode** | gpt-oss-20b, from about 20:40 on Nov 8, nothing else on that model | `orders_clean_search_20b` | ⬜ the one number still missing for the README |
+| 1.7 | **Valid full-call run, 20 calls, search mode** | gpt-oss-20b, 2026-11-09 00:11 to 00:43 | `orders_clean_search_20b` | ✅ valid, no refused request: 18 of 20 orders exactly right (90%; 95% interval 70% to 97%), totals 20 of 20, first audio 2.2 s median; the README row is filled |
 
 A run with any rate-limited request is flagged INVALID by the scorer and is not quoted (B-33).
 

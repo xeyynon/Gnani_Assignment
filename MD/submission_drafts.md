@@ -34,7 +34,7 @@ These are facts about what was built, checkable in the repo:
 > - gives small-business loan guidance from computed figures
 > - gives the shopkeeper a dashboard of orders and balances
 >
-> How I tested it: I sent 65 scripted turns of Telugu, Hindi and English speech to Gnani Prisma on its own, clean and through a simulated phone line. When the call's language is named to Prisma, Telugu turns were heard exactly right 10 times out of 16, against 5 out of 16 when Prisma chooses the language itself. A scripted run of 8 credit and loan calls was exactly right 8 times out of 8. All voices, shops and customers are synthetic, and I have not yet got a valid score for the full order script.
+> How I tested it: I sent 65 scripted turns of Telugu, Hindi and English speech to Gnani Prisma on its own, clean and through a simulated phone line. When the call's language is named to Prisma, Telugu turns were heard exactly right 10 times out of 16, against 5 out of 16 when Prisma chooses the language itself. A scripted run of 8 credit and loan calls was exactly right 8 times out of 8. I also ran the whole pipeline on 20 scripted calls: 18 of 20 orders were exactly right, and every spoken total matched the stock-list arithmetic. All voices, shops and customers are synthetic.
 >
 > Built for the @Gnani.ai Great Indian AI Internship Challenge.
 > Demo video below. Code: [GitHub link]
@@ -46,7 +46,7 @@ These are facts about what was built, checkable in the repo:
 >
 > The model never does the money. Code checks stock, adds up, and speaks every amount.
 >
-> Measured on 65 synthetic turns: naming the language to Prisma made Telugu answers exactly right 10 of 16 times, up from 5 of 16.
+> Measured on 20 scripted synthetic calls (65 turns) through the whole pipeline: 18 of 20 orders exactly right, every spoken total matching the stock-list arithmetic.
 >
 > Demo + code: [link]
 > #GreatIndianAIInternshipChallenge #GnaniAI
@@ -77,7 +77,7 @@ Before recording: restart the server (`python -m dukaan_dost`), do one practice 
 3. **Why the model never does the money (30 s):** show one order where the spoken total equals the dashboard total.
 4. **Udhaar and loans (30 s):** the limit check; a loan quote with "indicative".
 5. **How it was tested (40 s):** the scripted callers, clean and noisy; the results table from the README, read as measured, with the limits (synthetic voices, one shop, small counts).
-6. **What is not done (20 s):** the phone line is a trial number behind a temporary tunnel, one call at a time, no valid score yet for the whole order script, wording to be checked by native speakers. Say it plainly.
+6. **What is not done (20 s):** the phone line is a trial number behind a temporary tunnel, one call at a time, one valid 20-call score on synthetic voices only (18 of 20), wording to be checked by native speakers. Say it plainly.
 
 ## Submission form: answers to fill in
 | Field | Draft |
@@ -88,7 +88,7 @@ Before recording: restart the server (`python -m dukaan_dost`), do one practice 
 | Gnani models used | Prisma v3.0 (streaming speech to text, language detected per call), Timbre v3.0 (streaming text to speech, one voice for all four languages) |
 | Other models | Groq gpt-oss for the order note (Gnani has none public); Gemini is wired in as an option |
 | What is novel | Money and quantities are decided by code, not by the model; the model only extracts; every spoken amount is generated from templates |
-| Results | The Results section of the README: Prisma on its own, 65 synthetic turns, four ways (25, 31, 16 and 19 turns exactly right); 8 of 8 scripted credit and loan calls; a valid score for the 20-call order script is not yet available |
+| Results | The Results section of the README: 18 of 20 scripted orders exactly right (65 turns, gpt-oss-20b in search mode, 95% interval 70% to 97%), every total matching the stock list (20 of 20), first audio 2.2 s at the median; 8 of 8 scripted credit and loan calls; Prisma on its own, 65 turns, four ways (25, 31, 16 and 19 turns exactly right) |
 | Links | GitHub repo; LinkedIn post; X post; demo video; walkthrough |
-| Honest limits | Synthetic voices and data; one call at a time; the phone line is an Exotel trial number behind a temporary tunnel, tried by two real calls; the phone-line accuracy figures use a simulated line; no valid score yet for the full order script; native-speaker check of Hindi and Telugu wording [status on the day] |
+| Honest limits | Synthetic voices and data; one call at a time; the phone line is an Exotel trial number behind a temporary tunnel, tried by two real calls; the phone-line accuracy figures use a simulated line; one valid whole-script score on clean synthetic voices only; native-speaker check of Hindi and Telugu wording [status on the day] |
 | Tier 2/3 question | Open (tasks.md): Surya checks whether the college or town counts |
