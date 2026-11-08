@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-WIDTHS = (300, 360, 390, 768, 1280)       # 300 is a 390 px phone at 130% browser zoom
+WIDTHS = (195, 300, 360, 390, 768, 1280)       # 300 is a 390 px phone at 130% browser zoom, 195 at 200%
 THEMES = ("light", "dark")
 SHOP = "demo_kirana"
 TOUR = "startTour($('tourbtn'))"

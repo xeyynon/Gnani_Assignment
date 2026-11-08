@@ -278,8 +278,8 @@ Surya asked for "proper testing of the UI with every aspect". It was run in four
 - All icons are hidden from assistive technology (27 of 28 on the dashboard were announced as unnamed images). The page's notices are in a polite live region, so "Sign in again" and "could not show this data" are announced. The Auto-scroll switch only animates when motion is allowed.
 
 **Open, found and not fixed (so they are not forgotten):**
-1. At 200% zoom on a phone (195 px) the call page and the dashboard still scroll sideways (about 46 px): the COMING SOON and INDICATIVE tags and the Auto-scroll switch on the call page; the Quick actions buttons and the menu header on the dashboard. The 130% and 150% cases pass.
-2. On `/admin#edit/<shop>`, two stock checkboxes are 20 px and three links ("All shops", "Shop dashboard", "Call page") are 17 px tall, under the 44 px touch size.
+1. ~~At 200% zoom on a phone (195 px) the call page and the dashboard still scroll sideways.~~ **Fixed the same day; see "Zoom" below.**
+2. On `/admin#edit/<shop>`, two stock checkboxes were 20 px (**fixed: 24 px, 44 px on a touch screen**); three links ("All shops", "Shop dashboard", "Call page") are still 17 px tall, under the 44 px touch size. They sit in a line under the heading; the audit's 24 px minimum passes for them.
 3. The Show / Hide PIN button moves focus into the PIN field, so a second Space types a space; its label and pressed state change together, so it reads "Hide PIN, pressed".
 4. Opening a page directly at `#calls`, `#orders` or `#problems` can start the keyboard in the middle of the page, because the hash matches an element's id (`#calls` is the live-call chip). Menu clicks are fine.
 5. The top bars sit inside `<main>`, so the page has no banner landmark. A count in the menu reads "Orders 1" with no word saying it is a count. The top chip says "No call right now" while data is still loading. An 8-digit menu count overlaps its label, and a ₹9,99,99,99,999 total wraps over three lines (both beyond any realistic data).
@@ -315,3 +315,22 @@ Surya pasted a small example from a pattern library (an empty screen with an exp
 - The browser audit also covers the tour open and an empty Orders list, and the pictures are in `snapshots/latest/dashboard/` (the tour steps and the empty Orders and Calls lists).
 
 **Not done:** a real phone; a real screen reader; 200% zoom; Hindi and Telugu wording (needs a native reader); a tour on the admin page and the call page.
+
+## Zoom: 130%, 150% and 200% on a phone (2026-11-09)
+Browser zoom of 130%, 150% and 200% on a 390 px phone is the same as a window 300, 260 and 195 px wide, so the audit now also runs at 300 and 195 px (and 260 by hand). Zoom was a known gap from the first test pass; the cases that failed, and what was done:
+
+| Where | At | What happened | Fix |
+|---|---|---|---|
+| Admin search box | 300 px (130%) | The box with its "Ctrl K" hint was 22 px too wide: the page scrolled sideways | A touch screen no longer shows the hint, and the box may shrink |
+| Call page: COMING SOON, INDICATIVE and the Auto-scroll switch | 195 px | Each sat on the title's row and pushed the page 46 px sideways | A panel's heading row wraps (`.ph`): the tag or the switch drops under the title |
+| Dashboard: Quick actions and their "soon" tags | 195 px | The buttons held a 210 px minimum and pushed the page sideways | They may be narrower than 210 px and their words wrap |
+| Dashboard: Recent orders | 195 px | Passed the sideways test but was unreadable: names and times broke one letter to a line ("Ram / esh", "yest / erda / y") | Below 360 px a row is one column: name, status, items, time, total |
+| Dashboard: tiles | 195 px and under 260 px | A figure broke in the middle ("₹4,2 / 18") | Under 260 px the icon is hidden and the figure is smaller and whole |
+| Dashboard: Needs your attention | 195 px | The text was squeezed to one letter a line beside its amount | The amount drops under the text; under 260 px the icon is hidden |
+| Dashboard: the 7-day chart | 195 px | The day labels ran into each other | Under 360 px every other day is labelled; the chart's own label still lists all seven |
+| Admin notice | 195 px | The dismiss button was pushed off the right edge | The notice's text takes its own line when it must |
+| Admin stock table | 260 and 195 px | Two checkboxes were 20 px, under the WCAG 2.2 minimum of 24 | 24 px, and 44 px on a touch screen |
+
+**What this taught.** "No sideways scroll" is not the same as "readable": Recent orders passed the audit while every word broke in the middle. The audit does not find a word cut mid-way, so those were found by looking at the pictures at 195 and 260 px. The rules are tested in Node (the page tests assert each one) and the pages pass the audit at 195 px; the readability itself is only checked by eye.
+
+**Not done:** a real phone at 200% zoom; text-size settings on a real phone (a bigger system font is not the same as browser zoom); the 17 px links on the admin edit page.
