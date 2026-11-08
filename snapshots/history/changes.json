@@ -104,5 +104,17 @@
       "The figures, dates and order times differ only because the made-up demo data is generated for the day the picture was taken."
     ],
     "not_looked_at": "the menu on a phone with the drawer open (the item is there; the landing picture shows the drawer closed)."
+  },
+  "13-build-1018": {
+    "title": "A Calls view, and highlights taken from the shop's own books",
+    "summary": "Every page marks things its own way instead of tinted pills, rows and dots: statuses are tabs on a card's edge, the desktop menu's open item is a tab into the page, counts are small tabs, the demo note is a paper slip, and a live call is a notched green tab on the dashboard and an outlined box with a pen caret elsewhere. The dashboard gets a Calls menu item.",
+    "visible": [
+      "Dashboard: the open menu item is a tab joined to the page; Orders and Calls counts are small dark tabs; the demo-data note is a paper slip with a NOTE label; a live call is a solid green tab with a notch; 'Live, updated' has a green edge instead of a dot; statuses in Recent orders are solid tabs.",
+      "Admin: the same menu tab and count tabs; 'Needs a look' is a card with a red tab label; each shop's state is a tab standing on its card's edge; the filter tabs are ruled off twice; a live call is an outlined green box with a caret.",
+      "Call page: squared chips and shop name; the call state (IDLE) and the COMING SOON and INDICATIVE labels are straight ruled capitals.",
+      "Sign-in pages: look the same as the release before.",
+      "Phone: the menu marks the open item with a double underline and shows counts as figures behind a rule."
+    ],
+    "not_looked_at": "the Calls view itself, which is not a landing view (it is in snapshots/latest/dashboard/05-calls/); the two prototypes are in snapshots/prototypes/."
   }
 }

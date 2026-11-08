@@ -1,7 +1,7 @@
   aside{background:var(--surface);border:1px solid var(--line);border-left:0;border-radius:0 30px 30px 0;margin:10px 0;padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:10px;height:calc(100vh - 20px);overflow:hidden;min-width:0}
   .menu-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 16px 8px}
   .menu-head .brand{min-width:0}
-  .menu-btn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0;flex:none}
+  .menu-btn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:6px 6px 2px 2px;box-shadow:inset 0 -2px 0 var(--line);border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:0;flex:none}
   .menu-btn:hover{color:var(--ink)}
   .menu-btn svg{width:18px;height:18px}
   .menu-show{display:none}
@@ -9,10 +9,8 @@
   nav{display:flex;flex-direction:column;gap:3px}
   .nav{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:15px;border:0;background:none;text-align:left;width:100%}
   .nav:hover{background:var(--surface2)}
-  .nav[aria-current=page]{background:var(--green-soft);color:var(--green-ink);font-weight:600}
   .nav[aria-disabled=true]{color:var(--muted);cursor:default}
   .nav[aria-disabled=true]:hover{background:none}
-  .nav .n{margin-left:auto;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green-ink);border-radius:999px;padding:0 8px}
   /* Hidden: the column closes and the menu slides out to the left (visibility waits until it has gone, so it leaves the tab order too). */
   @media (min-width:901px){
     html[data-menu=closed] .shell{grid-template-columns:0 minmax(0,1fr)}
@@ -31,4 +29,26 @@
     .nav{white-space:nowrap;padding:8px 12px;width:auto}
     .nav[aria-disabled=true]{display:none}
     html[data-menu=closed] aside{display:none}
+  }
+  /* the open section and the counts (DEC-051) */
+  .nav{position:relative}
+  .nav .n{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:700;line-height:1.5;padding:1px 6px 0;border-radius:4px 4px 0 0;background:var(--ink);color:var(--bg);box-shadow:inset 0 -2px 0 var(--green)}
+  @media (min-width:901px){
+    aside{overflow:visible}
+    .nav{border-radius:var(--tab-r) 0 0 var(--tab-r)}
+    .nav[aria-current=page]{background:var(--bg);color:var(--ink);font-weight:700;border:1px solid var(--line);border-right:0;margin-right:-15px;width:calc(100% + 15px);padding-right:27px;z-index:1}
+    .nav[aria-current=page] svg{color:var(--green)}
+    .nav[aria-current=page]:hover{background:var(--bg)}
+    .nav[aria-current=page]::before,.nav[aria-current=page]::after{content:"";position:absolute;right:0;width:10px;height:10px;pointer-events:none}
+    .nav[aria-current=page]::before{top:-11px;background:radial-gradient(circle at 0 0,transparent 9.5px,var(--line) 9.5px,var(--line) 10.5px,var(--bg) 10.5px)}
+    .nav[aria-current=page]::after{bottom:-11px;background:radial-gradient(circle at 0 100%,transparent 9.5px,var(--line) 9.5px,var(--line) 10.5px,var(--bg) 10.5px)}
+    .nav[aria-current=page] .n{background:var(--green);color:var(--on-ink);box-shadow:inset 0 -2px 0 var(--tab-fold)}
+  }
+  @media (max-width:900px){
+    .nav{border-radius:0}
+    .nav:hover{background:none;text-decoration:underline 1px var(--line);text-underline-offset:6px}
+    .nav[aria-current=page]{background:none;color:var(--ink);font-weight:700;text-decoration-line:underline;text-decoration-style:double;text-decoration-color:var(--green);text-decoration-thickness:1.5px;text-underline-offset:6px}
+    .nav[aria-current=page] svg{color:var(--green-ink)}
+    .nav .n{position:absolute;right:12px;top:50%;transform:translateY(-50%);margin:0;background:none;color:var(--ink);box-shadow:none;border-radius:0;font-size:13px;padding:0 0 0 10px;border-left:1px solid var(--line)}
+    .nav:has(>.n:not([hidden])){padding-right:46px}
   }

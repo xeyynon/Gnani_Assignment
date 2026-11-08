@@ -8,3 +8,7 @@
     [data-page=overview] .b-trend{grid-column:9/13;grid-row:4}
     [data-page=overview] .b-act{grid-column:1/13;grid-row:5}
   }
+  /* The shop dashboard's live call is the one thing to spot from across the counter: a solid green tab with a notch cut
+     into its left end, no caret (DEC-051). The admin page and the call page keep the outlined chip with the caret. */
+  #calls.chip.on{background:var(--green);color:var(--on-ink);border-color:transparent;border-radius:0 6px 6px 0;padding-left:18px;font-weight:600;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,9px 50%)}
+  #calls.chip.on .dot{display:none}

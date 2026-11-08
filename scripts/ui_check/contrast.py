@@ -45,6 +45,16 @@ PAIRS = [
     ("blue", "blue-soft", UI, "an icon on the blue tile"),
     ("end", "surface", UI, "the red hang-up button against its card"),
     ("amber", "surface", UI, "the focus ring against a card"),
+    # DEC-051: solid status tabs, a note slip, and the margin notes
+    ("on-ink", "green", TEXT, "a Confirmed, Ordered or Ready status tab; the dashboard's live-call tab"),
+    ("on-ink", "amber", TEXT, "a Credit pending or Needs attention tab; an amount in the attention list"),
+    ("on-ink", "warn", TEXT, "an Incomplete or Broken tab; a problem notice's label"),
+    ("on-ink", "credit", TEXT, "a Loan guidance tab"),
+    ("on-ink", "muted", TEXT, "a No order tab"),
+    ("bg", "ink", TEXT, "a count in the side menu"),
+    ("paper-ink", "paper", TEXT, "the text of a note slip"),
+    ("amber", "paper", TEXT, "a note slip's NOTE label"),
+    ("warn", "surface", TEXT, "an italic margin note when the agent could not answer"),
 ]
 
 

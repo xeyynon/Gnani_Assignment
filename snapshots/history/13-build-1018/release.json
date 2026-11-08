@@ -1,0 +1,15 @@
+{
+ "label": "13-build-1018",
+ "rev": "build-1018",
+ "commit": "a028be7",
+ "date": "2026-11-08",
+ "title": "A Calls view on the dashboard, and highlights that look like the shop's own books",
+ "ran_code_of": "build-1018",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}
