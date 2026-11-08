@@ -1,0 +1,15 @@
+{
+ "label": "16-build-1024",
+ "rev": "build-1024",
+ "commit": "802a815",
+ "date": "2026-11-09",
+ "title": "The pages hold together when zoomed in to 200% on a phone",
+ "ran_code_of": "build-1024",
+ "pages": [
+  "call-page",
+  "dashboard",
+  "admin",
+  "sign-in-shop",
+  "sign-in-admin"
+ ]
+}
