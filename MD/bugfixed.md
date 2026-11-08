@@ -4,6 +4,7 @@ A dated log of every fix, newest first. [bugs.md](bugs.md) is the register (what
 
 | Date | Bug | Fix | Proof (test or run) | Commit | Build or InBul |
 |---|---|---|---|---|---|
+| 2026-11-08 | B-96 | Only Telugu is named to Prisma; naming Hindi kept a Telugu call decoded as Hindi (loan call L02 lost) | `tests/test_lifecycle_fixes.py`; rerun `credit_loans_clean_120b` (4 of 4 loans) | 10efdf8 | Build 1019 |
 | 2026-11-08 | B-95 | The replay transport's close() waits for the final results file, so a caller no longer reads it mid-write (a flaky Windows test) | `tests/test_transport_replay.py`, repeated runs in a clean environment | InBul36 | InBul36 |
 | 2026-11-07 | B-94 | A Hindi or Telugu call names its language to Prisma from the second turn (Telugu 10 of 16 exact against 5 of 16) | `evaluation/results/stt_accuracy_prisma`; `tests/test_lifecycle_fixes.py` | a439851 | Build 1016 |
 | 2026-11-07 | B-93 | An empty turn is heard again with the language named (8 of 8 problem clips recovered against 1 of 8) | `tests/test_lifecycle_fixes.py`, four tests; synthetic-clip experiment in bugs.md | a439851 | Build 1016 |

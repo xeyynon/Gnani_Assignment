@@ -58,6 +58,9 @@ def main() -> int:
                     help="least gap between turns; 28 keeps a 20b run under the 8,000 tokens a minute limit")
     ap.add_argument("--timeout", type=int, default=3000, help="seconds a run may take")
     ap.add_argument("--keep", action="store_true", help="keep the frozen copy afterwards")
+    ap.add_argument("--working-tree", action="store_true",
+                    help="freeze the files as they are, uncommitted changes included, instead of the committed state; "
+                         "use it only to test a change that will be committed unchanged right after")
     args = ap.parse_args()
 
     names = [n.strip() for n in args.runs.split(",") if n.strip()]
@@ -77,14 +80,15 @@ def main() -> int:
 
     shutil.rmtree(snap)
     shutil.copytree(ROOT, snap, ignore=_ignore)
-    tar = subprocess.run(["git", "archive", "HEAD"], cwd=ROOT, capture_output=True, check=True).stdout
-    with tarfile.open(fileobj=io.BytesIO(tar)) as t:
-        t.extractall(snap)
+    if not args.working_tree:
+        tar = subprocess.run(["git", "archive", "HEAD"], cwd=ROOT, capture_output=True, check=True).stdout
+        with tarfile.open(fileobj=io.BytesIO(tar)) as t:
+            t.extractall(snap)
     head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     dirty = subprocess.run(["git", "status", "--short"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-    (snap / "SNAPSHOT_STATE.txt").write_text(f"commit {head} exactly as committed ({time.strftime('%Y-%m-%d %H:%M')} IST)\n",
-                                             encoding="utf-8")
-    say(f"frozen copy at {snap}: commit {head}" + (" (the working folder has uncommitted changes that are NOT in the copy)" if dirty else ""))
+    state = f"commit {head} plus the uncommitted working tree" if args.working_tree else f"commit {head} exactly as committed"
+    (snap / "SNAPSHOT_STATE.txt").write_text(f"{state} ({time.strftime('%Y-%m-%d %H:%M')} IST)\n", encoding="utf-8")
+    say(f"frozen copy at {snap}: {state}" + ("" if args.working_tree or not dirty else " (the working folder has uncommitted changes that are NOT in the copy)"))
     say(f"log: {log_path}")
 
     base_env = dict(os.environ, LLM_PROVIDER="groq", PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
