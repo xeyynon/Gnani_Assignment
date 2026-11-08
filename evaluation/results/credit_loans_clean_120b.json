@@ -1,9 +1,9 @@
 {
-  "source_run": "run_credit_loans_2.json",
+  "source_run": "run_credit_loans.json",
   "script": "credit_loans.json",
   "noise_snr_db": null,
   "snr_definition": null,
-  "elapsed_sec": 548,
+  "elapsed_sec": 573,
   "model": "openai/gpt-oss-120b",
   "llm_provider": "Groq",
   "speech": "synthetic (Timbre)",
@@ -130,19 +130,19 @@
   "turns_without_response": 0,
   "time_to_first_audio_ms": {
     "n": 18,
-    "median": 2526,
-    "p90": 3403,
-    "min": 1928,
-    "max": 4035,
+    "median": 2159,
+    "p90": 3616,
+    "min": 1742,
+    "max": 5057,
     "basis": "from the caller's last word: first_audio_after_ms plus the quiet at the end of the clip",
     "turns_without_silence_correction": 0
   },
   "time_to_first_audio_from_clip_end_ms": {
     "n": 18,
-    "median": 2281,
-    "p90": 3064,
-    "min": 1172,
-    "max": 3875,
+    "median": 1930,
+    "p90": 3128,
+    "min": 1469,
+    "max": 4937,
     "basis": "from the end of the audio file, uncorrected"
   },
   "wer_raw": 0.474,
@@ -392,7 +392,7 @@
       "total_matches_stock_list": true,
       "customer_expected": null,
       "customer_got": "पप्पू",
-      "order_total": 520,
+      "order_total": 110,
       "status": "credit_pending"
     },
     {

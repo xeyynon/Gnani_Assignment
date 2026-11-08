@@ -1,4 +1,4 @@
-# run_credit_loans_2: clean
+# run_credit_loans: clean
 
 Model: openai/gpt-oss-120b (Groq). Synthetic Timbre speech; 4 scripted order calls and 4 loan calls, 18 turns.
 
@@ -9,8 +9,8 @@ Model: openai/gpt-oss-120b (Groq). Synthetic Timbre speech; 4 scripted order cal
 | Payment chosen correctly (orders only) | 4/4 |
 | Loan calls: exact | 4/4 (100%; 95% interval 51% to 100%) |
 | Totals equal to the stock-list arithmetic | 3/3 |
-| Time to first audio from the caller's last word, median / 90th percentile | 2526 ms / 3403 ms (n=18) |
-| Time to first audio from the end of the audio file (uncorrected: the clips end with a pause, so this is too small) | 2281 ms / 3064 ms (n=18) |
+| Time to first audio from the caller's last word, median / 90th percentile | 2159 ms / 3616 ms (n=18) |
+| Time to first audio from the end of the audio file (uncorrected: the clips end with a pause, so this is too small) | 1930 ms / 3128 ms (n=18) |
 | Turns with no reply | 0/18 |
 | Word error rate, raw / number-normalised | 0.474 / 0.421 (57 words) |
 | T-WER (English words missed) | 0.456 (57 English words) |
