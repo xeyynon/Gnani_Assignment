@@ -1,7 +1,7 @@
     <div class="top">
       <div class="shop">
 {{include:shared/menu-show.html}}
-        <div class="mark sm"><svg class="i"><use href="#i-store"/></svg></div><h1 id="title">{{SHOP}}</h1></div>
+        <div class="mark sm"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-store"/></svg></div><h1 id="title">{{SHOP}}</h1></div>
       <div class="topright">
         <span class="chip" id="calls" aria-live="polite"><span class="dot idle"></span>No call right now</span>
         <span class="live"><span class="dot" id="dot"></span><span id="updated">Loading...</span></span>
@@ -10,4 +10,4 @@
 {{include:shared/signout-button.html}}
       </div>
     </div>
-    <div id="notices"></div>
+    <div id="notices" role="status" aria-live="polite"></div>

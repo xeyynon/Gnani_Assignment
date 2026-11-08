@@ -90,6 +90,7 @@ const seen = new Set(), freshUntil = {}; let firstLoad = true, lastData = null;
 {{include:dashboard/attention.js}}
 {{include:dashboard/sales-trend.js}}
 {{include:dashboard/orders-page.js}}
+{{include:dashboard/order-jump.js}}
 {{include:dashboard/credit-page.js}}
 {{include:dashboard/loans-page.js}}
 {{include:dashboard/calls-page.js}}
@@ -124,6 +125,7 @@ function render(d) {
   if ([...d.orders, ...d.loans, ...(d.calls || [])].some(r => r.synthetic)) notes.push(h('div', { class: 'banner' }, h('span', { class: 'nlabel', text: 'Note' }), 'This shows made-up demo data.'));
   d.problems.forEach(p => notes.push(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Problem' }), p)));
   $('notices').replaceChildren(...notes);
+  if (firstLoad) jumpToOrder();                       // the page was opened at '#orders/<id>'
   firstLoad = false;
 }
 
