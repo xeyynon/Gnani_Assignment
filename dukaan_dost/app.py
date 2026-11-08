@@ -1812,11 +1812,13 @@ STT_RETRY_MIN_SEC = 0.4
 STT_RETRY_MAX_SEC = 6.0
 
 
-# Once a call is known to be in Hindi or Telugu, Prisma is told so from the next turn on. Measured on the 65 turns of the
-# order script (evaluation/results/stt_accuracy_prisma): with the language named, Telugu calls were exactly right on
-# 10 of 16 turns against 5 of 16 with Prisma choosing, short turns 19 of 31 against 14 of 31, and no turn came back
-# empty (3 did on automatic). English calls stay on automatic detection: told "English", Prisma would garble a caller
-# who slips into Hindi. The first turn of a call is always automatic, because nothing is known yet.
+# Once a call is known to be in TELUGU, Prisma is told so from the next turn on. Measured on the 65 turns of the order
+# script (evaluation/results/stt_accuracy_prisma): with the language named, Telugu calls were exactly right on 10 of 16
+# turns against 5 of 16 with Prisma choosing, and no turn came back empty (3 did on automatic). Hindi calls gained one
+# turn in nine, and the first scripted loan call in Telugu (2026-11-08, run_credit_loans) was heard as Hindi on its first
+# turn, so a Hindi name would have been kept for the rest of the call and decoded the Telugu speech as Hindi: naming Hindi
+# is not worth that risk. English calls stay automatic too: told "English", Prisma would garble a caller who slips into
+# Hindi. The first turn of a call is always automatic, because nothing is known yet.
 STT_USE_CALL_LANGUAGE = os.getenv("STT_USE_CALL_LANGUAGE", "1") == "1" and _STT_PROVIDER == "gnani"
 
 
@@ -1825,7 +1827,7 @@ def _stt_language_for_call():
     if not STT_USE_CALL_LANGUAGE:
         return None
     locked = (_locked_language_code or "").strip()
-    return locked if locked.lower() in ("hi-in", "te-in") else None
+    return locked if locked.lower() == "te-in" else None
 
 
 def _retry_languages() -> list:

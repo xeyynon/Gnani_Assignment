@@ -31,7 +31,7 @@ Caller (browser microphone, 16 kHz) ──WebSocket──▶ voice-activity dete
 - **Many shops, one agent:** the call link `/s/<shop>/` picks the shop; each shop has a PIN-protected dashboard at `/s/<shop>/dashboard` (orders, credit balances, loan enquiries), and one admin page looks after every shop.
 
 How Gnani's models are used:
-- **Prisma v3.0:** streaming WebSocket, the shop's product names sent as boost terms, a commit after the caller stops. The first turn of a call lets Prisma choose the language (`indic-auto`); from the second turn of a Hindi or Telugu call the language is named, and a turn that comes back empty is heard again with the language named, because Prisma's own choice is unreliable on short answers (measured below).
+- **Prisma v3.0:** streaming WebSocket, the shop's product names sent as boost terms, a commit after the caller stops. The first turn of a call lets Prisma choose the language (`indic-auto`); from the second turn of a Telugu call the language is named (Hindi calls stay automatic: a wrong first guess would be kept for the whole call), and a turn that comes back empty is heard again with the language named, because Prisma's own choice is unreliable on short answers (measured below).
 - **Timbre v3.0:** streaming WebSocket, 16 kHz audio, one voice for all four languages; a spare connection is opened ahead of time to save about 0.3 s per sentence.
 
 The full architecture is in [MD/architecture.md](MD/architecture.md).
@@ -51,7 +51,7 @@ Every figure below comes from a saved run in [evaluation/results/](evaluation/re
 
 Short turns (up to 1.6 s: "cash", "that's all", a name) were exactly right on 14 of 31 with Prisma choosing and 19 of 31 with the language named; Telugu calls on 5 of 16 and 10 of 16. This is why the agent now names the language.
 
-**Scripted credit and loan calls, the whole pipeline** ([credit_loans_clean_120b](evaluation/results/credit_loans_clean_120b.md), 2026-11-06, gpt-oss-120b): 4 of 4 order calls and 4 of 4 loan calls exactly right, every turn answered (18 of 18), first audio 2.5 s at the median and 3.4 s at the 90th percentile after the caller's last word. Only 8 calls, so the 95% interval is wide (51% to 100%), and it was scored against the shop's stock before the loose-atta item was added.
+**Scripted credit and loan calls, the whole pipeline** ([credit_loans_clean_120b](evaluation/results/credit_loans_clean_120b.md), 2026-11-08, gpt-oss-120b, with the loose-atta stock and the fixes of Builds 1016 and 1019): 4 of 4 order calls and 4 of 4 loan calls exactly right, every turn answered (18 of 18), first audio 2.2 s at the median and 3.6 s at the 90th percentile after the caller's last word. Only 8 calls, so the 95% interval is wide (51% to 100%). The same calls one change earlier (Hindi also named to Prisma) lost one Telugu loan call (3 of 4 loans; [credit_loans_hindi_named_120b](evaluation/results/credit_loans_hindi_named_120b.md), kept as evidence): the first turn of that call was heard as Hindi, and naming Hindi decoded the rest wrongly.
 
 **Not available yet:** a valid score for the 20-call order script. Two full runs (gpt-oss-20b and gpt-oss-120b) were marked INVALID because the model's daily token limit ran out near their end, so no figure from them is quoted; they are kept as evidence in `evaluation/results/INVALID_*`. A valid run is planned for when the model's daily window clears.
 
