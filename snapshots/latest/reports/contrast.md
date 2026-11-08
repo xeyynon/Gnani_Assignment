@@ -22,6 +22,15 @@
 | light | `blue` | `blue-soft` | 5.55:1 | 3.0:1 | an icon on the blue tile |
 | light | `end` | `surface` | 4.83:1 | 3.0:1 | the red hang-up button against its card |
 | light | `amber` | `surface` | 5.74:1 | 3.0:1 | the focus ring against a card |
+| light | `on-ink` | `green` | 5.32:1 | 4.5:1 | a Confirmed, Ordered or Ready status tab; the dashboard's live-call tab |
+| light | `on-ink` | `amber` | 5.74:1 | 4.5:1 | a Credit pending or Needs attention tab; an amount in the attention list |
+| light | `on-ink` | `warn` | 6.47:1 | 4.5:1 | an Incomplete or Broken tab; a problem notice's label |
+| light | `on-ink` | `credit` | 6.30:1 | 4.5:1 | a Loan guidance tab |
+| light | `on-ink` | `muted` | 7.41:1 | 4.5:1 | a No order tab |
+| light | `bg` | `ink` | 15.31:1 | 4.5:1 | a count in the side menu |
+| light | `paper-ink` | `paper` | 7.89:1 | 4.5:1 | the text of a note slip |
+| light | `amber` | `paper` | 5.27:1 | 4.5:1 | a note slip's NOTE label |
+| light | `warn` | `surface` | 6.47:1 | 4.5:1 | an italic margin note when the agent could not answer |
 | dark | `ink` | `bg` | 15.60:1 | 4.5:1 | body text on the page |
 | dark | `ink` | `surface` | 14.26:1 | 4.5:1 | body text on a card |
 | dark | `ink` | `surface2` | 12.64:1 | 4.5:1 | text in a chip, a caller's bubble, a field |
@@ -44,3 +53,12 @@
 | dark | `blue` | `blue-soft` | 7.20:1 | 3.0:1 | an icon on the blue tile |
 | dark | `end` | `surface` | 3.48:1 | 3.0:1 | the red hang-up button against its card |
 | dark | `amber` | `surface` | 8.68:1 | 3.0:1 | the focus ring against a card |
+| dark | `on-ink` | `green` | 8.10:1 | 4.5:1 | a Confirmed, Ordered or Ready status tab; the dashboard's live-call tab |
+| dark | `on-ink` | `amber` | 9.81:1 | 4.5:1 | a Credit pending or Needs attention tab; an amount in the attention list |
+| dark | `on-ink` | `warn` | 7.96:1 | 4.5:1 | an Incomplete or Broken tab; a problem notice's label |
+| dark | `on-ink` | `credit` | 8.70:1 | 4.5:1 | a Loan guidance tab |
+| dark | `on-ink` | `muted` | 7.85:1 | 4.5:1 | a No order tab |
+| dark | `bg` | `ink` | 15.60:1 | 4.5:1 | a count in the side menu |
+| dark | `paper-ink` | `paper` | 11.44:1 | 4.5:1 | the text of a note slip |
+| dark | `amber` | `paper` | 8.28:1 | 4.5:1 | a note slip's NOTE label |
+| dark | `warn` | `surface` | 7.05:1 | 4.5:1 | an italic margin note when the agent could not answer |

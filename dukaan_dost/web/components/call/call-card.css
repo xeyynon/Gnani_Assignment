@@ -21,9 +21,11 @@
   #level i{display:block;width:4px;height:4px;border-radius:2px;background:var(--green);opacity:.8}
   [data-view=thinking] #level i{background:var(--blue)}
   [data-view=muted] #level i,[data-view=idle] #level i,[data-view=ended] #level i{background:var(--muted);opacity:.45}
-  #speaking{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:999px;background:var(--green-soft);color:var(--green-ink);font-size:14px;font-weight:600}
-  [data-view=thinking] #speaking{background:var(--blue-soft);color:var(--blue)}
-  [data-view=muted] #speaking,[data-view=idle] #speaking,[data-view=ended] #speaking,[data-view=connecting] #speaking{background:var(--surface2);color:var(--muted)}
+  /* the call's state is a ruled label: straight, the page's own font, small spaced capitals, a 1 px line (DEC-051) */
+  #speaking{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:3px;border:1px solid currentColor;background:transparent;color:var(--green-ink);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  [data-view=thinking] #speaking{color:var(--blue)}
+  [data-view=muted] #speaking,[data-view=idle] #speaking,[data-view=ended] #speaking,[data-view=connecting] #speaking{color:var(--muted)}
+  .ph .tag{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
   .controls{display:flex;justify-content:center;align-items:flex-start;gap:28px;margin:26px 0 auto}
   .ctl{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:14px;color:var(--muted)}
   .round{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;padding:0}

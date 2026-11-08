@@ -42,3 +42,36 @@ function callPageUrl(pathname) {                          // /s/<shop>/dashboard
   const m = /^(\/s\/[^/]+\/)dashboard\/?$/.exec(String(pathname || ''));
   return m ? m[1] : '/';
 }
+/* ---- the Calls view: one card per ended call, from the counts-only record (call_stats.py) ---- */
+const LANGUAGE_NAMES = { 'te-in': 'Telugu', 'hi-in': 'Hindi', 'en-in': 'English', 'hi-en': 'Hinglish', 'en-us': 'English' };
+function languageName(code) { return LANGUAGE_NAMES[String(code || '').toLowerCase()] || ''; }
+function callLength(seconds) {               // 192 -> '3:12'
+  const s = Math.max(0, Math.round(Number(seconds) || 0));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+function timesWord(n) { return n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'; }
+function callOutcome(c) {                    // -> {text, cls}: what came of the call, as a pill
+  if (c.outcome === 'ordered') {
+    if (c.status === 'incomplete') return { text: 'Order incomplete', cls: 'incomplete' };
+    if (c.status === 'credit_pending') return { text: 'Ordered, credit pending', cls: 'credit_pending' };
+    return { text: 'Ordered', cls: 'confirmed' };
+  }
+  if (c.outcome === 'loan') return { text: 'Loan guidance', cls: 'loan' };
+  return { text: 'No order', cls: 'none' };
+}
+function callMeta(c) {                       // 'Hindi · 3:12 · spoke 7 times'
+  const n = Math.max(0, Number(c.turns) || 0);
+  return [languageName(c.language), callLength(c.seconds), n ? 'spoke ' + timesWord(n) : 'nothing understood']
+    .filter(Boolean).join(' · ');
+}
+function callNotes(c) {                      // what got in the way on this call, in plain words; [] when nothing did
+  const out = [], n = k => Math.max(0, Number(c[k]) || 0);
+  if (n('model_failures')) out.push({ kind: 'warn', text: 'The agent could not answer ' + timesWord(n('model_failures')) });
+  if (n('no_speech')) out.push({ kind: '', text: 'Speech not caught ' + timesWord(n('no_speech')) });
+  if (n('barge_ins')) out.push({ kind: '', text: 'Caller cut in ' + timesWord(n('barge_ins')) });
+  return out;
+}
+function callsLine(summary) {                // the line under the Calls heading
+  const today = Number((summary || {}).calls_today) || 0, all = Number((summary || {}).calls_total) || 0;
+  return (today ? today + (today === 1 ? ' call' : ' calls') + ' today' : 'No calls yet today') + (all ? ', ' + all + ' in all' : '') + '.';
+}

@@ -2,4 +2,6 @@
   .shop{display:flex;align-items:center;gap:10px;min-width:0}
   .shop h1{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .topright{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:14px;color:var(--muted)}
-  .live{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
+  .live{font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:7px;padding-left:8px;border-left:3px solid var(--green)}
+  .live .dot{display:none}
+  .live:has(.dot.off){border-left-color:var(--warn)}
