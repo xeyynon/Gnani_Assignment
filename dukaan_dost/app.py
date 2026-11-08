@@ -508,6 +508,18 @@ ACK_WORDS = {
 UNIVERSAL_GREETING_WORDS = {"hello", "hi", "hey", "hallo"}
 
 
+# Words that carry no language: a caller in a Hindi or Telugu call who answers the payment question with the English word
+# "cash" has not changed language. Before this, "Cash, cash." (third real phone call, 2026-11-09) made the agent read the
+# order back and say its thanks in English in the middle of a Hindi call.
+NEUTRAL_REPLY_WORDS = {"cash", "upi", "udhaar", "credit", "ok", "okay", "yes", "no", "thanks", "thank", "you", "please", "sir",
+                       "ji", "madam", "hello", "hi", "hey"}
+
+
+def _is_neutral_reply(transcript: str) -> bool:
+    words = re.findall(r"[a-z]+", (transcript or "").lower())
+    return bool(words) and all(w in NEUTRAL_REPLY_WORDS for w in words) and not re.search(r"[^\x00-\x7F]", transcript or "")
+
+
 def _is_universal_greeting(transcript: str) -> bool:
     """True if the transcript is nothing but greeting word(s) common
     across all three languages — too language-ambiguous to lock on."""
@@ -3009,6 +3021,9 @@ def processor_thread():
                             f"rest of this call (first detected language, "
                             f"from: '{transcript}')."
                         )
+
+            if _locked_language_code in ("hi-IN", "te-IN") and _is_neutral_reply(transcript):
+                language_code = _locked_language_code          # "Cash, cash." in a Hindi call: the reply stays Hindi
 
             if _is_acknowledgment(transcript):
                 log.info(f"[ACK] '{transcript}' — acknowledgment, no reply needed")
