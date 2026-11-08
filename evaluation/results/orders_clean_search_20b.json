@@ -1,0 +1,804 @@
+{
+  "source_run": "run_search_20b.json",
+  "script": "orders.json",
+  "noise_snr_db": null,
+  "snr_definition": null,
+  "elapsed_sec": 1883,
+  "model": "openai/gpt-oss-20b",
+  "llm_provider": "Groq",
+  "speech": "synthetic (Timbre)",
+  "overall": {
+    "calls": 20,
+    "exact_orders": 18,
+    "exact_rate": 0.9,
+    "exact_ci95": [
+      0.699,
+      0.972
+    ],
+    "item_recall": 1.0,
+    "item_precision": 1.0,
+    "payment_right": 16,
+    "orders_saved": 20
+  },
+  "loans": {
+    "calls": 0,
+    "exact": 0,
+    "exact_rate": null,
+    "exact_ci95": [
+      0.0,
+      0.0
+    ],
+    "quotes_saved": 0
+  },
+  "by_language": {
+    "en-IN": {
+      "calls": 4,
+      "exact_orders": 4,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.51,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 3,
+      "orders_saved": 4
+    },
+    "hi-IN": {
+      "calls": 3,
+      "exact_orders": 2,
+      "exact_rate": 0.667,
+      "exact_ci95": [
+        0.208,
+        0.939
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "hi-en": {
+      "calls": 8,
+      "exact_orders": 8,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.676,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 6,
+      "orders_saved": 8
+    },
+    "te-IN": {
+      "calls": 5,
+      "exact_orders": 4,
+      "exact_rate": 0.8,
+      "exact_ci95": [
+        0.376,
+        0.964
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 5,
+      "orders_saved": 5
+    }
+  },
+  "by_tag": {
+    "brands": {
+      "calls": 1,
+      "exact_orders": 1,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.207,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 1,
+      "orders_saved": 1
+    },
+    "change": {
+      "calls": 4,
+      "exact_orders": 4,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.51,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 3,
+      "orders_saved": 4
+    },
+    "credit": {
+      "calls": 3,
+      "exact_orders": 3,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.438,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 3,
+      "orders_saved": 3
+    },
+    "english": {
+      "calls": 4,
+      "exact_orders": 4,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.51,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 3,
+      "orders_saved": 4
+    },
+    "fractions": {
+      "calls": 5,
+      "exact_orders": 4,
+      "exact_rate": 0.8,
+      "exact_ci95": [
+        0.376,
+        0.964
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 4,
+      "orders_saved": 5
+    },
+    "hindi": {
+      "calls": 3,
+      "exact_orders": 2,
+      "exact_rate": 0.667,
+      "exact_ci95": [
+        0.208,
+        0.939
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "hinglish": {
+      "calls": 8,
+      "exact_orders": 8,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.676,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 6,
+      "orders_saved": 8
+    },
+    "not_sold": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 2
+    },
+    "out_of_stock": {
+      "calls": 3,
+      "exact_orders": 3,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.438,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 3
+    },
+    "removal": {
+      "calls": 2,
+      "exact_orders": 2,
+      "exact_rate": 1.0,
+      "exact_ci95": [
+        0.342,
+        1.0
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 2,
+      "orders_saved": 2
+    },
+    "telugu": {
+      "calls": 5,
+      "exact_orders": 4,
+      "exact_rate": 0.8,
+      "exact_ci95": [
+        0.376,
+        0.964
+      ],
+      "item_recall": 1.0,
+      "item_precision": 1.0,
+      "payment_right": 5,
+      "orders_saved": 5
+    }
+  },
+  "total_matches_stock_list": "20/20",
+  "turns": 65,
+  "turns_without_response": 1,
+  "time_to_first_audio_ms": {
+    "n": 64,
+    "median": 2151,
+    "p90": 2746,
+    "min": 848,
+    "max": 23613,
+    "basis": "from the caller's last word: first_audio_after_ms plus the quiet at the end of the clip",
+    "turns_without_silence_correction": 0
+  },
+  "time_to_first_audio_from_clip_end_ms": {
+    "n": 64,
+    "median": 1867,
+    "p90": 2435,
+    "min": 282,
+    "max": 23453,
+    "basis": "from the end of the audio file, uncorrected"
+  },
+  "wer_raw": 0.464,
+  "wer_number_normalised": 0.331,
+  "t_wer": 0.503,
+  "english_words": 195,
+  "cut_off": {
+    "turns_heard": 63,
+    "split_into_pieces": 0,
+    "under_half_the_words": 1,
+    "agent_clips_cut_by_the_caller_unscripted": 0
+  },
+  "rate_limited_requests": 0,
+  "agent_log_found": true,
+  "complete": true,
+  "calls_finished": 20,
+  "calls_expected": 20,
+  "calls_missing": [],
+  "run_done_flag": true,
+  "valid_run": true,
+  "reference_words": 293,
+  "calls_detail": [
+    {
+      "id": "h01",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": "Ramesh",
+      "customer_got": "Ramesh",
+      "order_total": 253,
+      "status": "incomplete"
+    },
+    {
+      "id": "h02",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "brands"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 92,
+      "status": "confirmed"
+    },
+    {
+      "id": "h03",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 55,
+      "status": "confirmed"
+    },
+    {
+      "id": "h04",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "change"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 265,
+      "status": "confirmed"
+    },
+    {
+      "id": "h05",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "removal",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": "Anita",
+      "customer_got": "Anita",
+      "order_total": 330,
+      "status": "confirmed"
+    },
+    {
+      "id": "h06",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "out_of_stock"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 45,
+      "status": "incomplete"
+    },
+    {
+      "id": "h07",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "not_sold"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 28,
+      "status": "confirmed"
+    },
+    {
+      "id": "h08",
+      "kind": "order",
+      "lang": "hi-en",
+      "tags": [
+        "hinglish",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 66,
+      "status": "confirmed"
+    },
+    {
+      "id": "d01",
+      "kind": "order",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {
+        "OIL-1L": [
+          1.0,
+          8.0
+        ]
+      },
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 1430,
+      "status": "confirmed"
+    },
+    {
+      "id": "d02",
+      "kind": "order",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 404,
+      "status": "confirmed"
+    },
+    {
+      "id": "d03",
+      "kind": "order",
+      "lang": "hi-IN",
+      "tags": [
+        "hindi",
+        "change",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 140,
+      "status": "incomplete"
+    },
+    {
+      "id": "t01",
+      "kind": "order",
+      "lang": "te-IN",
+      "tags": [
+        "telugu"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 285,
+      "status": "confirmed"
+    },
+    {
+      "id": "t02",
+      "kind": "order",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": false,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {
+        "ONION-1KG": [
+          0.5,
+          1.0
+        ]
+      },
+      "payment_right": true,
+      "payment_got": "upi",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 75,
+      "status": "confirmed"
+    },
+    {
+      "id": "t03",
+      "kind": "order",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "change"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 208,
+      "status": "confirmed"
+    },
+    {
+      "id": "t04",
+      "kind": "order",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": "లక్ష్మి",
+      "customer_got": null,
+      "order_total": 221,
+      "status": "credit_pending"
+    },
+    {
+      "id": "t05",
+      "kind": "order",
+      "lang": "te-IN",
+      "tags": [
+        "telugu",
+        "out_of_stock"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 35,
+      "status": "confirmed"
+    },
+    {
+      "id": "e01",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "english"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": false,
+      "payment_got": "",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 285,
+      "status": "incomplete"
+    },
+    {
+      "id": "e02",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "not_sold"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "upi",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 34,
+      "status": "confirmed"
+    },
+    {
+      "id": "e03",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "change",
+        "fractions"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "cash",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": null,
+      "customer_got": null,
+      "order_total": 85,
+      "status": "confirmed"
+    },
+    {
+      "id": "e04",
+      "kind": "order",
+      "lang": "en-IN",
+      "tags": [
+        "english",
+        "removal",
+        "out_of_stock",
+        "credit"
+      ],
+      "order_saved": true,
+      "exact": true,
+      "recall": 1.0,
+      "precision": 1.0,
+      "extra_items": [],
+      "missing_items": [],
+      "wrong_quantities": {},
+      "payment_right": true,
+      "payment_got": "udhaar",
+      "status_right": true,
+      "balance_right": true,
+      "said_right": true,
+      "total_matches_stock_list": true,
+      "customer_expected": "Ramesh",
+      "customer_got": "Ramesh",
+      "order_total": 330,
+      "status": "confirmed"
+    }
+  ],
+  "not_computed": []
+}
