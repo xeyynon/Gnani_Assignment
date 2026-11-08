@@ -1,0 +1,101 @@
+/* ==== Index tabs: a prototype look, injected after the page's own CSS ====
+   The idea is a shop register's index tabs: the open section is a tab cut out of the menu into the page,
+   a status is a coloured tab standing on the card's top edge, notices are divider cards with a labelled tab. */
+
+:root{--tab-ink:#FFFFFF;--tab-fold:rgba(0,0,0,.22);--tab-r:7px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--tab-ink:#101011;--tab-fold:rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--tab-ink:#101011;--tab-fold:rgba(0,0,0,.35)}
+
+/* ---- the menu: the open section is a tab cut through the menu's edge into the page ---- */
+aside{overflow:visible}
+.nav{border-radius:var(--tab-r) 0 0 var(--tab-r);position:relative}
+.nav:hover{background:var(--surface2)}
+.nav[aria-current=page]{
+  background:var(--bg);color:var(--ink);font-weight:700;
+  border:1px solid var(--line);border-right:0;
+  margin-right:-15px;width:calc(100% + 15px);padding-right:27px;z-index:1;
+}
+.nav[aria-current=page] svg{color:var(--green)}
+.nav[aria-current=page]:hover{background:var(--bg)}
+/* the tab's two outer corners curve into the page, like a register tab joined to its sheet */
+.nav[aria-current=page]::before,.nav[aria-current=page]::after{content:"";position:absolute;right:0;width:10px;height:10px;pointer-events:none}
+.nav[aria-current=page]::before{top:-11px;background:radial-gradient(circle at 0 0,transparent 9.5px,var(--line) 9.5px,var(--line) 10.5px,var(--bg) 10.5px)}
+.nav[aria-current=page]::after{bottom:-11px;background:radial-gradient(circle at 0 100%,transparent 9.5px,var(--line) 9.5px,var(--line) 10.5px,var(--bg) 10.5px)}
+
+/* the count: a small tab standing on a line, not a bubble */
+.nav .n{border-radius:4px 4px 0 0;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:700;padding:1px 6px 0;line-height:1.5;box-shadow:inset 0 -2px 0 var(--green)}
+.nav[aria-current=page] .n{background:var(--green);color:var(--tab-ink);box-shadow:inset 0 -2px 0 var(--tab-fold)}
+.soon{border-radius:3px;border-style:dashed}
+
+/* the hide-menu button and other small icon buttons: squared, like a tab */
+.menu-btn{border-radius:6px 6px 2px 2px;box-shadow:inset 0 -2px 0 var(--line)}
+
+@media (max-width:900px){
+  /* phone and tablet: the menu is a strip of tabs; the open one hangs open into the page */
+  aside{padding-bottom:0;border-bottom:0;border-radius:0 0 18px 18px}
+  nav{gap:0;row-gap:6px}
+  .nav{border-radius:var(--tab-r) var(--tab-r) 0 0;border-bottom:1px solid var(--line)}
+  .nav[aria-current=page]{
+    margin:0;width:auto;padding:8px 12px;
+    border:1px solid var(--line);border-bottom:1px solid var(--bg);
+    box-shadow:inset 0 3px 0 var(--green);
+  }
+  .nav[aria-current=page]::before,.nav[aria-current=page]::after{display:none}
+  nav::after{content:"";flex:1 0 12px;border-bottom:1px solid var(--line);align-self:stretch}
+}
+
+/* ---- statuses: a coloured index tab on the card's top edge ---- */
+.pill{border-radius:5px 5px 0 0;border:0;font-weight:700;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px 2px;box-shadow:inset 0 -2px 0 var(--tab-fold)}
+.pill.confirmed{background:var(--green);color:var(--tab-ink)}
+.pill.credit_pending{background:var(--amber);color:var(--tab-ink)}
+.pill.incomplete{background:var(--warn);color:var(--tab-ink)}
+.pill.loan{background:var(--credit);color:var(--tab-ink)}
+.pill.none{background:var(--muted);color:var(--tab-ink)}
+/* payment and what-went-wrong notes are labels, not statuses: plain squared outlines */
+.pill.pay,.pill.pay.credit,.pill.note{border-radius:3px;box-shadow:none;text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;padding:1px 7px;background:transparent;border:1px solid var(--line);color:var(--muted)}
+.pill.pay.credit{border-color:var(--credit);color:var(--credit)}
+.pill.note.warn{border-color:var(--warn);color:var(--warn);background:transparent}
+
+/* inside a card the status tab stands up out of the card's top edge, at the right */
+.stackl{gap:22px}
+.card{position:relative}
+.card:has(.pill:not(.pay):not(.note)){padding-top:16px}
+.card .pill:not(.pay):not(.note){position:absolute;top:-19px;right:16px;padding:4px 11px 3px;box-shadow:none}
+/* the card's top edge takes the tab's colour under the tab, so tab and card read as one piece */
+.card .pill:not(.pay):not(.note)::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:3px;background:inherit}
+details[open]>summary{margin-bottom:8px}
+
+/* the attention list's amounts and count: small squared tabs in solid ink, not tinted bubbles */
+.tag2{border-radius:4px 4px 0 0;font-family:var(--mono);font-weight:700;padding:2px 8px 1px;box-shadow:inset 0 -2px 0 var(--tab-fold)}
+.tag2.warn{background:var(--warn);color:var(--tab-ink)}
+.tag2.amber{background:var(--amber);color:var(--tab-ink)}
+.alert .ico{border-radius:6px 6px 2px 2px}
+
+/* ---- notices: a divider card with a tab label ---- */
+#notices{display:flex;flex-direction:column;gap:30px;margin-top:30px}
+.banner{position:relative;margin-top:0;border-radius:0 10px 10px 10px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--amber);color:var(--ink);padding:10px 14px}
+.banner::before{content:"DEMO DATA";position:absolute;left:-1px;top:-24px;background:var(--amber);color:var(--tab-ink);font-size:11px;font-weight:700;letter-spacing:.08em;padding:4px 12px 3px;border-radius:6px 6px 0 0}
+.banner.bad{border-top-color:var(--warn);background:var(--surface);color:var(--ink)}
+.banner.bad::before{content:"PROBLEM";background:var(--warn)}
+.banner button{border-radius:6px 6px 2px 2px}
+/* the admin's notice: the same divider card */
+.notice{position:relative;margin-top:24px;border-radius:0 10px 10px 10px;background:var(--surface);border-top:3px solid var(--warn)}
+.notice::before{content:"NEEDS A LOOK";position:absolute;left:-1px;top:-24px;background:var(--warn);color:var(--tab-ink);font-size:11px;font-weight:700;letter-spacing:.08em;padding:4px 12px 3px;border-radius:6px 6px 0 0}
+
+/* ---- the live-call chip: no dot; a green tab with a cut-in notch when a call is on ---- */
+.chip .dot,.live .dot{display:none}
+.chip{border-radius:6px}
+.chip.on{background:var(--green);color:var(--tab-ink);border-color:transparent;border-radius:0 6px 6px 0;padding-left:18px;font-weight:600;
+  clip-path:polygon(0 0,100% 0,100% 100%,0 100%,9px 50%)}
+.chip:has(.dot.off){color:var(--warn);border-color:var(--warn)}
+.live{padding-left:8px;border-left:3px solid var(--green)}
+
+/* ---- the call page and the admin: the same squared language ---- */
+.shop-chip{border-radius:8px 8px 2px 2px;box-shadow:inset 0 -2px 0 var(--green)}
+#speaking{border-radius:6px 6px 0 0;box-shadow:inset 0 -2px 0 currentColor}
+.tag{border-radius:3px}
+.tabs{gap:2px}
+.tab{border:1px solid transparent;border-bottom:0;border-radius:var(--tab-r) var(--tab-r) 0 0;margin-bottom:-1px}
+.tab[aria-pressed=true]{background:var(--surface);border-color:var(--line);border-bottom:1px solid var(--surface);color:var(--ink);box-shadow:inset 0 3px 0 var(--green)}
+
+@media (prefers-reduced-motion:no-preference){.nav{transition:background .15s}}
