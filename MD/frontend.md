@@ -228,7 +228,7 @@ He answered that he liked both khata and index tabs and wanted to see how both w
 - After each one, the running list of choices was read back to him. Where two picks disagreed, the difference was named and a rule proposed:
   - *Live-call chip.* He picked khata's outlined box on the admin page and index tabs' solid notched chip on the shop dashboard. The rule: decide by page. The dashboard is where a shopkeeper must see a call from across the counter.
   - *Menu.* He picked index tabs on a desktop and khata's double underline on a phone, where the tab cannot reach the page. The rule: decide by width.
-  - *Notes on a call card.* He first liked the squared outlines in a whole-page picture, then picked khata's italic note with a left rule. The later, closer pick won.
+  - *Notes on a call card.* He first liked the squared outlines in a whole-page picture, then picked khata's italic note with a left rule (on 2026-11-09, after it was built, he asked for the left rule to be taken away: the italic note stays, the line goes). The later, closer pick won.
 - One question stayed open: khata's red margin line down each card. He said "now proceed" without answering, so the line was left out, because his "overall better" pictures did not have it. It is said here so it can be added if wanted.
 
 **6. The final mapping.**
@@ -245,9 +245,9 @@ He answered that he liked both khata and index tabs and wanted to see how both w
 | Demo-data notice | Khata | Paper slip: punched holes, dashed tear line, NOTE label |
 | Problem notices (admin NEEDS A LOOK, dashboard PROBLEM, SIGNED OUT) | Index tabs, without the top line | Plain card with a red tab label at its top-left |
 | Live call on the shop dashboard | Index tabs | Solid green tab with a notch, no dot |
-| Live call on the admin page and the call page | Khata | Outlined green box with a blinking pen caret; a dash when idle |
-| "Live, updated" | Index tabs | A thin green edge in front (red when the data is stale), no dot |
-| Problems on a call card | Khata | Italic margin note with a rule on the left, red when the agent could not answer |
+| Live call on the admin page and the call page | Khata, without its caret | Outlined green box with bold green words; no mark in front (the blinking pen caret was dropped on 2026-11-09: Surya did not want vertical-bar marks) |
+| Freshness ("Updated just now") | Index tabs, reworked 2026-11-09 | A small tab with a word in it: green **LIVE**, red **OFFLINE** (or Signed out), then the time in plain text. It replaced the thin green edge in front of the text, a vertical bar of the same kind as the caret. No dot, no bar, nothing blinks |
+| Problems on a call card | Khata, without its line | Plain italic note, red when the agent could not answer; no rule on the left and no box (Surya, 2026-11-09: "i dont want this line design as i said earlier") |
 | Call page chips, shop name, IDLE / COMING SOON / INDICATIVE | Khata, made straight and clean | Squared boxes; labels in the page's font with a 1 px line, no tilt, no ink texture |
 
 **7. Built into the product, not layered on.**
@@ -259,3 +259,28 @@ He answered that he liked both khata and index tabs and wanted to see how both w
 - *Pictures.* The same 8 pictures were retaken from the real pages. The first round showed a bug: the lists stylesheet loads after the status stylesheet and set the gap between cards back to 10 px, so each tab touched the card above it. Fixed with a rule that applies only to lists whose cards carry a tab (`.stackl:has(>.card .pill…){gap:22px}`). The admin's BROKEN tab, clipped in the prototype, now has room above the first card.
 - *Contrast.* `contrast.py` passes 62 of 62 pairs, including 9 new pairs a theme for the tabs, the slip and the notes.
 - *Page test.* One test changed: the admin's "no glow" test banned every `radial-gradient`. It now allows only the two hard-edged uses (the open tab's corners and the slip's holes) and still bans blur.
+
+## A full UI test pass (2026-11-09)
+Surya asked for "proper testing of the UI with every aspect". It was run in four parts at once: the automated suites, and three testers working independently, each on its own preview server (port 8901, 8902, 8903, so the sign-in lockout of one could not disturb another). Nobody edited a file while testing; fixes were made afterwards, from the reports. The testers ran the build-1018 code, so the admin search fix made the same day was not in their copy.
+
+| Part | What it covered | Result |
+|---|---|---|
+| Automated | Python tests, page tests, contrast, repo and docs checks | 1226 Python pass; page tests 130 pass at the end of the day (see the build report for the final count); contrast 62 of 62 |
+| Flows in a real browser | Sign-in (empty, wrong, right, keep-me-signed-in, sign out, a shop session refused by the admin page), every dashboard view, back and forward, menu counts against the data, order cards, the Calls cards against the data, theme, menu hide, admin filters and search, the admin notice, the call page, console and network | 55 of 57 passed. One failure was the tester's expectation (the 12-hour session is enforced on the server, not by a cookie date); one was a real weakness in the demo data, now fixed (demo calls depended on the time of day). No JavaScript error and no request to any other host |
+| States and extreme data | Loading, empty, connection lost and recovered, signed out, a failing server, very long and odd text, 40 shops, 30 calls, HTML in every text field, a live call, both themes at 390 and 1280 | 85 checks; the failures were long unbroken text pushing the page sideways, a phone page with a stretched menu panel, and a loan record with missing fields printing "undefined". All three fixed and re-run: 51 of 51 dashboard cases pass at 1280, 390 and 300 px. Nothing in any text field ran as script or HTML |
+| Accessibility and user settings | Keyboard, names and roles, zoom and large text, reduced motion, forced colours, colour never the only signal, touch targets | Passed for keyboard, forced colours and colour; failures below |
+
+**Fixed after the pass:**
+- The admin search box scrolled the page sideways at 130% zoom (found by the zoom check the same morning). Touch screens no longer show its "Ctrl K" hint, and the box may shrink.
+- Long unbroken text wraps inside cards, notices and the admin's problem cards.
+- On a phone the menu row no longer takes the spare height of a short page.
+- A loan record with missing fields says "Scheme not recorded" and leaves out the missing terms.
+- All icons are hidden from assistive technology (27 of 28 on the dashboard were announced as unnamed images). The page's notices are in a polite live region, so "Sign in again" and "could not show this data" are announced. The Auto-scroll switch only animates when motion is allowed.
+
+**Open, found and not fixed (so they are not forgotten):**
+1. At 200% zoom on a phone (195 px) the call page and the dashboard still scroll sideways (about 46 px): the COMING SOON and INDICATIVE tags and the Auto-scroll switch on the call page; the Quick actions buttons and the menu header on the dashboard. The 130% and 150% cases pass.
+2. On `/admin#edit/<shop>`, two stock checkboxes are 20 px and three links ("All shops", "Shop dashboard", "Call page") are 17 px tall, under the 44 px touch size.
+3. The Show / Hide PIN button moves focus into the PIN field, so a second Space types a space; its label and pressed state change together, so it reads "Hide PIN, pressed".
+4. Opening a page directly at `#calls`, `#orders` or `#problems` can start the keyboard in the middle of the page, because the hash matches an element's id (`#calls` is the live-call chip). Menu clicks are fine.
+5. The top bars sit inside `<main>`, so the page has no banner landmark. A count in the menu reads "Orders 1" with no word saying it is a count. The top chip says "No call right now" while data is still loading. An 8-digit menu count overlaps its label, and a ₹9,99,99,99,999 total wraps over three lines (both beyond any realistic data).
+6. Not tested by anyone: Start call (no microphone), a form that saves, more than 30 calls, a real phone, a real screen reader.
