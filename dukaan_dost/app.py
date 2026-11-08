@@ -79,7 +79,7 @@ from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from dukaan_dost.validator import validate_reply
 from dukaan_dost.spoken_history import SpokenTracker
-from dukaan_dost.order_session import OrderSession
+from dukaan_dost.order_session import OrderSession, SAY as _ORDER_SAY, lang_key as _order_lang_key
 from dukaan_dost.loan_session import LoanSession
 from dukaan_dost import credit as _credit
 from dukaan_dost import stock as _stock
@@ -217,6 +217,26 @@ def _greeting() -> str:
 # error, distinct from normal silence/noise) — English only, since the
 # caller's language isn't known when STT couldn't run at all.
 STT_ERROR_MESSAGE = "Sorry, I didn't catch that. Could you please repeat?"
+
+_SORRY = {"en": "Sorry, I didn't catch that.", "hi": "माफ़ कीजिए, मैं समझ नहीं पाया।", "te": "క్షమించండి, నాకు అర్థం కాలేదు."}
+
+
+def _no_speech_reply() -> tuple:
+    """(text, language) to speak when speech was heard but nothing was recognised. At the payment step, where the caller
+    has said that is all and still owes the payment word, the answer to ask for is named in the caller's language
+    ("Sorry, I didn't catch that. How would you like to pay: cash, UPI or credit?"): on the scripted order calls the
+    last one-word answer ("cash") was not heard on 4 of 20 calls, and a bare "please repeat" gave the caller no hint of
+    what to say. Anywhere else the plain apology."""
+    code = _locked_language_code or "en-IN"
+    try:
+        with _order_lock:
+            order = _order
+        if order is not None and order.finished and order.payment is None and not order.is_empty:
+            key = _order_lang_key(code)
+            return f"{_SORRY[key]} {_ORDER_SAY[key]['pay']}", code
+    except Exception as e:
+        log.warning(f"[STT] could not tailor the apology: {e}")
+    return STT_ERROR_MESSAGE, "en-IN"
 
 # VAD / Audio
 #
@@ -2927,7 +2947,8 @@ def processor_thread():
                         if gen == _call_gen:
                             _no_speech_apologized = True
                     log.info("[STT] Nothing recognised — informing the caller once")
-                    _tts_and_enqueue(STT_ERROR_MESSAGE, "en-IN", gen, _next_reply_id())
+                    _apology, _apology_lang = _no_speech_reply()
+                    _tts_and_enqueue(_apology, _apology_lang, gen, _next_reply_id())
                 continue
 
             with _hist_lock:

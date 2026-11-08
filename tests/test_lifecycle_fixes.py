@@ -578,3 +578,38 @@ def test_only_telugu_calls_name_their_language_to_the_recogniser(app, monkeypatc
     monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", False)
     monkeypatch.setattr(app, "_locked_language_code", "te-IN")
     assert app._stt_language_for_call() is None
+
+
+# ---- at the payment step a missed word is asked for by name -------------------------------------------------------
+
+def _empty_turn_now(app, seconds=0.3):
+    app.audio_q.put((app._call_gen, b"\x01\x02" * int(16000 * seconds), seconds, {}, False, "", "", 0))
+
+
+def test_a_missed_payment_word_is_asked_for_by_name(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", False)
+    monkeypatch.setattr(app, "_locked_language_code", "en-IN")
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, True)        # "that is all": the payment is owed
+    rig.start()
+    _empty_turn_now(app)
+    rig.settle()
+    assert rig.said and rig.said[-1][0] == "Sorry, I didn't catch that. How would you like to pay: cash, UPI or credit?"
+
+
+def test_the_payment_question_follows_the_callers_language(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", False)
+    monkeypatch.setattr(app, "_locked_language_code", "hi-IN")
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, True)
+    text, lang = app._no_speech_reply()
+    assert lang == "hi-IN" and text.endswith("पेमेंट कैसे करेंगे: कैश, यूपीआई या उधार?")
+    monkeypatch.setattr(app, "_locked_language_code", "te-IN")
+    assert app._no_speech_reply()[0].endswith("చెల్లింపు ఎలా చేస్తారు: నగదు, యూపీఐ లేదా అప్పు?")
+
+
+def test_elsewhere_a_missed_turn_gets_the_plain_apology(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "_locked_language_code", "en-IN")
+    assert app._no_speech_reply() == (app.STT_ERROR_MESSAGE, "en-IN")                     # nothing ordered yet
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, False)
+    assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # items, but the caller is not done
+    app._order.apply([], "cash", None, None, True)
+    assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # payment already chosen
