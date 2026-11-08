@@ -83,3 +83,28 @@ function orderIdFromHash(hash) {             // '#orders/20261107-215910-717' ->
   const m = /^#orders\/([A-Za-z0-9_-]+)$/.exec(String(hash || ''));
   return m ? m[1] : null;
 }
+/* ---- onboarding: what an empty list says, and the steps of the first-visit tour ---- */
+const EMPTY = {                              // a title that says what is missing, one sentence on what will appear, one way to start
+  orders: { title: 'No orders yet', text: 'When a customer orders by phone, the order appears here within seconds of the call ending.', action: 'Try a call yourself' },
+  ledger: { title: 'Nobody owes anything', text: 'A customer who buys on credit (udhaar) appears here with what they owe and their limit.' },
+  loans: { title: 'No loan enquiries yet', text: 'When a caller asks about a business loan, the figures the agent quoted are kept here.', action: 'Try a call yourself' },
+  calls: { title: 'No calls yet', text: 'Every call that ends is listed here, even when nothing was ordered.', action: 'Try a call yourself' },
+};
+const TOUR_STEPS = [                         // four steps, each on something the shopkeeper will use first
+  { target: '#callpage', title: 'Try a call yourself', text: 'This opens the page your customers call from. Press Start call and order something, the way a customer would.' },
+  { target: '.nav[data-view="orders"]', title: 'Orders arrive here', text: 'When a call ends with an order, it appears here within seconds, with what was bought and the total.' },
+  { target: '.nav[data-view="calls"]', title: 'Every call is listed', text: 'Calls where nothing was ordered show here too, with what got in the way.' },
+  { target: '#calls', title: 'A call in progress', text: 'While a customer is on a call, this bar says so and how long it has lasted.' },
+];
+function tourLabel(i, n) { return 'Step ' + (i + 1) + ' of ' + n; }
+function tourPlace(rect, view, pop, gap) {   // where the tip goes: below the target, above it when there is no room below; always inside the window
+  gap = gap == null ? 12 : gap;
+  const m = 8;
+  const below = rect.bottom + gap + pop.h <= view.h - m, above = rect.top - gap - pop.h >= m;
+  const side = below || !above ? 'below' : 'above';
+  let top = side === 'below' ? rect.bottom + gap : rect.top - gap - pop.h;
+  top = Math.max(m, Math.min(top, view.h - pop.h - m));
+  const left = Math.max(m, Math.min(rect.left, view.w - pop.w - m));
+  const arrow = Math.max(14, Math.min(rect.left + rect.width / 2 - left, pop.w - 14));      // where the tip's pointer sits along its edge
+  return { left, top, arrow, side };
+}

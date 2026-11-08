@@ -300,7 +300,7 @@ test("an opened order stays open when the list is redrawn, and the link opens an
   assert.match(script, /'data-oid': o\.id/);
   assert.match(script, /h\('a', \{ class: 'link', href: link, text: 'View order' \}\)/);
   assert.match(script, /window\.addEventListener\('hashchange', jumpToOrder\)/);
-  assert.match(script, /if \(firstLoad\) jumpToOrder\(\)/);                                  // a page opened at #orders/<id>
+  assert.match(script, /if \(firstLoad\) \{ jumpToOrder\(\); maybeStartTour\(\); \}/);          // a page opened at #orders/<id>; a first visit
   assert.match(script, /scrollIntoView\(\{ block: 'center' \}\)/);
 });
 
@@ -333,4 +333,53 @@ test("decorative icons are hidden from assistive technology and notices are anno
   for (const s of svgs) assert.match(s, /aria-hidden="true"/, s);                          // every icon in the page's own markup
   assert.match(script, /s\.setAttribute\('aria-hidden', 'true'\)/);                         // and every icon the script draws
   assert.match(html, /<div id="notices" role="status" aria-live="polite"><\/div>/);
+});
+
+test("the tour tip sits below its target, above it when there is no room, and always inside the window", () => {
+  const { tourPlace, tourLabel } = new Function(`${helperSource}; return { tourPlace, tourLabel };`)();
+  const view = { w: 1280, h: 800 }, pop = { w: 320, h: 160 };
+  const near = tourPlace({ left: 20, top: 100, right: 200, bottom: 140, width: 180, height: 40 }, view, pop);
+  assert.equal(near.side, "below"); assert.equal(near.top, 152); assert.equal(near.left, 20);
+  const low = tourPlace({ left: 20, top: 700, right: 200, bottom: 740, width: 180, height: 40 }, view, pop);
+  assert.equal(low.side, "above"); assert.equal(low.top, 700 - 12 - 160);
+  const right = tourPlace({ left: 1200, top: 100, right: 1260, bottom: 140, width: 60, height: 40 }, view, pop);
+  assert.equal(right.left, 1280 - 320 - 8);                                                  // pulled back inside the window
+  assert.ok(right.arrow >= 14 && right.arrow <= 306);                                         // the pointer stays on the tip's edge, over the target
+  const phone = tourPlace({ left: 10, top: 20, right: 90, bottom: 52, width: 80, height: 32 }, { w: 300, h: 600 }, { w: 284, h: 170 });
+  assert.ok(phone.left >= 8 && phone.left + 284 <= 300 - 8 + 0.001);
+  const tall = tourPlace({ left: 10, top: 300, right: 90, bottom: 340, width: 80, height: 40 }, { w: 300, h: 330 }, { w: 284, h: 170 });
+  assert.ok(tall.top >= 8 && tall.top + 170 <= 330 - 8);                                      // no room either side: still inside
+  assert.equal(tourLabel(0, 4), "Step 1 of 4");
+  assert.equal(tourLabel(3, 4), "Step 4 of 4");
+});
+
+test("an empty list says what is missing, what will appear and how to start", () => {
+  const { EMPTY, TOUR_STEPS } = new Function(`${helperSource}; return { EMPTY, TOUR_STEPS };`)();
+  for (const k of ["orders", "ledger", "loans", "calls"]) {
+    assert.ok(EMPTY[k].title.length > 3 && EMPTY[k].text.length > 20, k);
+    assert.doesNotMatch(EMPTY[k].title + EMPTY[k].text, /undefined|null/);
+  }
+  assert.equal(EMPTY.orders.action, "Try a call yourself");
+  assert.equal(EMPTY.ledger.action, undefined);                                               // nothing to start from that list
+  assert.match(script, /spec\.action \? h\('a', \{ class: 'link', href: callPageUrl\(location\.pathname\)/);
+  assert.match(script, /typeof empty === 'string'/);                                          // the admin still passes a plain sentence
+  assert.match(script, /fill\('orders', d\.orders, orderCard, EMPTY\.orders\)/);
+  assert.match(script, /fill\('callslist', calls, callCard, EMPTY\.calls\)/);
+  assert.ok(TOUR_STEPS.length >= 3 && TOUR_STEPS.length <= 5);                                // short: the research says 3 to 5
+  for (const s of TOUR_STEPS) assert.ok(s.target && s.title && s.text.length > 20);
+});
+
+test("the tour can always be skipped, ended with Escape, replayed, and never starts by itself without storage or twice", () => {
+  assert.match(html, /<div id="tour-tip" role="dialog" aria-modal="false" aria-labelledby="tour-title" aria-describedby="tour-text" tabindex="-1">/);
+  assert.match(html, /<button type="button" id="tour-skip">Skip tour<\/button>/);
+  assert.match(html, /<button type="button" id="tourbtn" class="nav"|<button type="button" class="nav" id="tourbtn"/);
+  assert.match(script, /e\.key === 'Escape'/);
+  assert.match(script, /try \{ return localStorage\.getItem\(TOUR_KEY\) !== null; \} catch \(e\) \{ return true; \}/);   // no storage: never by itself
+  assert.match(script, /function tourRemember\(\) \{ try \{ localStorage\.setItem\(TOUR_KEY, '1'\); \} catch \(e\) \{\} \}/);
+  assert.match(script, /if \(!tourSeen\(\) && !orderIdFromHash\(location\.hash\)\) startTour\(null\)/);
+  assert.match(script, /\$\('tour-tip'\)\.focus\(\)/);                                       // focus moves into the tip
+  assert.match(script, /\(tourOpener \|\| \$\('tourbtn'\)\)\.focus\(\)/);                     // and back out
+  assert.match(script, /\$\('tour-catch'\)\.addEventListener\('click', endTour\)/);
+  assert.doesNotMatch(html, /#tour[^{]*\{[^}]*animation|#tour[^{]*\{[^}]*transition/);          // nothing slides or blinks
+  assert.match(html, /#tour-ring\{[^}]*pointer-events:none/);
 });
