@@ -315,6 +315,8 @@ class ConversationManager:
             yield self._fallback_for(detected_language), reply_language
             return
 
+        if not plan.finish and order_turn.says_that_is_all(transcript):
+            plan.finish = True
         plan.say = validate_reply(plan.say, self._fallback_for(detected_language), not recent_history,
                                   language_code=detected_language or "") if plan.say else ""
         plan.ops, replayed = order.drop_replayed_ops(plan.ops, self.named_skus(transcript), order_turn.has_quantity(transcript))

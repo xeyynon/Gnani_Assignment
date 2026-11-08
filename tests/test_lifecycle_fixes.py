@@ -613,3 +613,9 @@ def test_elsewhere_a_missed_turn_gets_the_plain_apology(app, rig, monkeypatch):
     assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # items, but the caller is not done
     app._order.apply([], "cash", None, None, True)
     assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # payment already chosen
+
+
+@pytest.mark.parametrize("text, neutral", [("Cash, cash.", True), ("cash", True), ("UPI", True), ("Yes please", True), ("Thank you", True),
+                                          ("two kilo sugar", False), ("कैश", False), ("Cash please, aur ek packet", False), ("", False)])
+def test_a_bare_payment_word_in_english_does_not_change_the_calls_language(app, text, neutral):
+    assert app._is_neutral_reply(text) is neutral
