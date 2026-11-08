@@ -1,8 +1,8 @@
     <div class="top">
       <div class="shop">
 {{include:shared/menu-show.html}}
-        <div class="mark sm"><svg class="i"><use href="#i-store"/></svg></div><h1 id="title">Admin</h1></div>
-      <div class="search"><label for="search" class="sr">Search shops</label><svg class="i"><use href="#i-search"/></svg>
+        <div class="mark sm"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-store"/></svg></div><h1 id="title">Admin</h1></div>
+      <div class="search"><label for="search" class="sr">Search shops</label><svg class="i" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
         <input type="search" id="search" placeholder="Search shops" autocomplete="off" spellcheck="false"><kbd id="searchkey">Ctrl K</kbd></div>
       <div class="topright">
         <span class="chip" id="calls" aria-live="polite"><span class="dot idle"></span>No call right now</span>
@@ -12,4 +12,4 @@
 {{include:shared/signout-button.html}}
       </div>
     </div>
-    <div id="notices"></div>
+    <div id="notices" role="status" aria-live="polite"></div>

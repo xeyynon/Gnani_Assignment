@@ -160,6 +160,15 @@ Colours and layout were not the problem; those had been settled (DEC-049).
    - Add a contrast pair for every new ink (62 of 62 pass).
    - Update any test that banned a technique the new look uses on purpose. The "no glow" test now allows only the hard-edged `radial-gradient` shapes.
 
+**A second pass, the next day (2026-11-09).** After the merge, Surya sent two more rejections: "I don't want this line design" (the thin rule down the left of the call card's notes) and a crop of a green vertical bar (the edge before "Live, updated", and the pen caret in the live-call box), with "we did research for replacing this kind of design; if we need colour, do the research again".
+- **Lesson:** the rejected thing is a *kind* of mark. A dot, a bar and a caret are the same tell. After one is rejected, list every place that uses the kind (here: the notes' left rule, the freshness edge, the caret) and replace them together, not one at a time.
+- **Research, done properly and with its limits said.** Two web searches (live-status indicators; status without colour alone). They found:
+  - Component libraries mostly default to a pulsing dot, with the pulse optional. ServiceTitan's design system pulses only for states that need attention ([Anvil status light](https://v1.anvil.servicetitan.com/components/status-light)).
+  - Alternatives in use: a static label beside a "last checked" time, swapping the icon or the date text for a green "Live" word ([CNOE spec](https://cnoe-io.github.io/ai-platform-engineering/specs/live-status-indicator/087-live-status-indicator-spec)), and explicit online / offline / reconnecting words ([PhiaUi StatusIndicator](https://hexdocs.pm/phia_ui/PhiaUi.Components.StatusIndicator.html)).
+  - WCAG 1.4.1 (Use of Color) needs a second cue, such as text or a shape, next to colour ([W3C Understanding 1.4.1](https://www.w3.org/WAI/WCAG21/Understanding/use-of-color)). Oracle's guidance adds that status should not rely on blinking ([Oracle](https://docs.oracle.com/cd/F86650_01/pt859pbr5/eng/pt/tacs/ProvidingAlternativestoColorCodingtoConveyMeaning-ba7fc3.html)).
+  - **Not found:** any comparison or usability study of these alternatives; the sources are examples of practice, not evidence of what works best. Nothing was found on "last updated" time patterns.
+- **What it led to:** say the state in a word, in a tab shaped like the statuses: green LIVE or red OFFLINE, then the time as plain text. The live-call box keeps its outline and bold green words and loses the caret, which also removes the only blinking element.
+
 **What to copy into another project:**
 - The trigger words: "AI generated", "generic", "template".
 - The four tell-tale devices.
@@ -223,7 +232,7 @@ dukaan_dost/
 | 1007 | Bento grid, glass over coloured glows, hard-edged accents, a drawer menu, Auto / Light / Dark | Surya asked for bento, glass, brutalism and minimalism together; each was given one job (DEC-041) |
 | 1010 | The admin alone: near-black and lime, from a reference dashboard | Surya asked for that reference's dark look |
 | 1012 | **One neutral palette on every page**: charcoal and off-white, one calm green, no glass, no glows | "Too much"; and flat colours can be measured exactly (DEC-049) |
-| 1018 | **Highlights from the product's own world**: statuses as index tabs on the cards' edges, the open menu item as a tab into the page, notes as paper slips, a pen caret for a live call | The tinted pills, rows, bubbles and dots "felt AI generated"; two prototypes were built and Surya chose per element (DEC-051, section A7) |
+| 1018 | **Highlights from the product's own world**: statuses as index tabs on the cards' edges, the open menu item as a tab into the page, notes as paper slips, the live state said as a word in a tab (LIVE / OFFLINE) | The tinted pills, rows, bubbles and dots "felt AI generated"; two prototypes were built and Surya chose per element (DEC-051, section A7) |
 
 The lesson: mixing named styles works only when each has one job; and the plainest version that keeps one strong accent is the one that survived. The second lesson (1018): when the plain version then looks generic, the fix was not more colour but marks taken from the product's own world.
 

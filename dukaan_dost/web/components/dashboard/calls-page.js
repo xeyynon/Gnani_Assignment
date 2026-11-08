@@ -1,10 +1,11 @@
 function callCard(c) {
-  const out = callOutcome(c), notes = callNotes(c);
+  const out = callOutcome(c), notes = callNotes(c), link = orderLink(c, lastData && lastData.orders);
   return h('div', { class: 'card' },
     h('div', { class: 'row' }, h('span', { class: 'who', text: c.channel === 'phone' ? 'Phone call' : 'Browser call' }), h('span', { class: 'pill ' + out.cls, text: out.text })),
     h('div', { class: 'muted', text: callMeta(c) }),
     notes.length ? h('div', { class: 'notes' }, ...notes.map(x => h('span', { class: 'pill note' + (x.kind ? ' ' + x.kind : ''), text: x.text }))) : null,
-    h('div', { class: 'row' }, h('span', { class: 'muted', text: relTime(c.time) }), c.total != null ? h('span', { class: 'total', text: rupees(c.total) }) : null));
+    h('div', { class: 'row' }, h('span', { class: 'muted', text: relTime(c.time) }),
+      h('span', null, link ? h('a', { class: 'link', href: link, text: 'View order' }) : null, link && c.total != null ? ' ' : null, c.total != null ? h('span', { class: 'total', text: rupees(c.total) }) : null)));
 }
 function renderCalls(calls, summary) {
   $('callsline').textContent = callsLine(summary);

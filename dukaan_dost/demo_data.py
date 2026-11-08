@@ -98,8 +98,8 @@ def build(now: datetime):
 
 
 def build_calls(now: datetime, orders: list, loans: list) -> list:
-    """One counts-only call record (the shape call_stats.finish() returns) for each of today's demo orders and loan
-    enquiries, and three calls where nothing came of it, so every state of the dashboard's Calls view has an example."""
+    """One counts-only call record (the shape call_stats.finish() returns) for each demo order and loan enquiry of the
+    last 12 hours, and three calls where nothing came of it, so every state of the dashboard's Calls view has an example."""
     def call(call_id, when, channel, seconds, language, turns, outcome, barge_ins=0, no_speech=0, model_failures=0,
              order=None):
         record = {"call_id": call_id, "time": when, "channel": channel, "seconds": seconds, "language": language,
@@ -109,13 +109,13 @@ def build_calls(now: datetime, orders: list, loans: list) -> list:
             record.update(order_id=order["call_id"], total=order["total"], status=order["status"])
         return record
 
-    today = now.date()
-    todays = [o for o in orders if datetime.fromisoformat(o["time"]).date() == today]
+    recent = now - timedelta(hours=12)           # the last 12 hours, not "today": just after midnight "today" has almost nothing in it
+    todays = [o for o in orders if datetime.fromisoformat(o["time"]) >= recent]
     calls = []
     for n, o in enumerate(todays):
         calls.append(call(f"c{n + 1:02d}", o["time"], "phone" if n % 2 else "browser", 70 + 23 * n, o["language"],
                           3 + n % 4, "ordered", barge_ins=1 if n == 2 else 0, no_speech=2 if n == 3 else 0, order=o))
-    for n, l in enumerate(l for l in loans if datetime.fromisoformat(l["time"]).date() == today):
+    for n, l in enumerate(l for l in loans if datetime.fromisoformat(l["time"]) >= recent):
         calls.append(call(f"c{20 + n}", l["time"], "browser", 150 + 40 * n, l["language"], 5, "loan"))
     at = lambda minutes: (now - timedelta(minutes=minutes)).isoformat()
     calls += [

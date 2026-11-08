@@ -1,13 +1,13 @@
 <main class="login" id="login" data-kind="{{KIND}}" data-session="{{SESSION_URL}}" data-back="{{BACK_URL}}" data-nopin="{{NOPIN}}">
   <div class="login-top">
-    <div class="brand"><div class="mark sm"><svg class="i"><use href="#i-store"/></svg></div><div><b>Dukaan Dost</b><span>Voice ordering</span></div></div>
+    <div class="brand"><div class="mark sm"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-store"/></svg></div><div><b>Dukaan Dost</b><span>Voice ordering</span></div></div>
 {{include:shared/theme-button.html}}
   </div>
 
   <div class="login-body">
     <section class="login-card" aria-labelledby="login-h">
       <div class="login-head">
-        <div class="mark"><svg class="i"><use href="#i-lock"/></svg></div>
+        <div class="mark"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></div>
         <h1 id="login-h">Sign in</h1>
         <p class="login-sub" id="login-sub"></p>
       </div>
@@ -18,7 +18,7 @@
           <div class="field-row"><label for="secret" id="secret-label">PIN</label><button type="button" class="linkbtn" id="kbd" hidden>Use letters</button></div>
           <div class="pinbox">
             <input id="secret" name="password" type="password" autocomplete="current-password" inputmode="numeric" enterkeyhint="go" autocapitalize="off" spellcheck="false" aria-describedby="msg">
-            <button type="button" class="peek" id="peek" aria-pressed="false" aria-label="Show PIN"><svg class="i"><use href="#i-eye"/></svg></button>
+            <button type="button" class="peek" id="peek" aria-pressed="false" aria-label="Show PIN"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg></button>
           </div>
         </div>
         <label class="keep"><input type="checkbox" id="keep"><span>Keep me signed in on this device</span></label>

@@ -288,6 +288,16 @@ def test_demo_calls_match_the_demo_orders_and_show_every_kind_of_call():
     assert any(c["model_failures"] for c in calls) and any(c["no_speech"] for c in calls) and any(c["barge_ins"] for c in calls)
 
 
+def test_demo_calls_show_every_kind_at_any_time_of_day():
+    for hour, minute in [(0, 24), (3, 0), (9, 30), (15, 30), (23, 59)]:
+        now = datetime(2026, 11, 9, hour, minute, tzinfo=store.IST)
+        orders, loans, _ = demo_data.build(now)
+        calls = demo_data.build_calls(now, orders, loans)
+        assert {c["outcome"] for c in calls} == {"ordered", "loan", "nothing"}, (hour, minute)
+        assert {c["status"] for c in calls if c["outcome"] == "ordered"} >= {"confirmed", "credit_pending"}, (hour, minute)
+        assert any(c["model_failures"] for c in calls) and any(c["no_speech"] for c in calls), (hour, minute)
+
+
 def test_seeding_fills_the_dashboard_and_reset_wipes_first(tmp_path):
     n = demo_data.seed("alpha", tmp_path, now=NOW)
     snap = store.snapshot("alpha", NOW, tmp_path)
