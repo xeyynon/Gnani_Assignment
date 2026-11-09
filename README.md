@@ -8,6 +8,13 @@ Built for Gnani.ai's **Great Indian AI Internship Challenge**, on Gnani's **Pris
 
 It is software only: you call it from a browser tab, or from an ordinary phone through a provider's number. The phone transport (Twilio and Exotel media streams) was tested against a stand-in provider and then took two real calls on an Exotel trial number on 2026-11-07; it is a demonstration line, not a production one.
 
+## Live demo
+
+A call to the agent, with the shopkeeper's dashboard beside it.
+
+- [Watch the 60-second demo](demo/dukaan_dost_demo_60s.mp4)
+- [Watch the full, unedited take](demo/dukaan_dost_full_take.mp4)
+
 ## The idea: the model never does the money
 Language models are good at hearing "do kilo cheeni aur ek litre tel" and bad at arithmetic they must get exactly right. So the split is strict:
 
