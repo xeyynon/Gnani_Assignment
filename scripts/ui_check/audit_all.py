@@ -20,6 +20,14 @@ WIDTHS = (195, 300, 360, 390, 768, 1280)       # 300 is a 390 px phone at 130% b
 THEMES = ("light", "dark")
 SHOP = "demo_kirana"
 TOUR = "startTour($('tourbtn'))"
+LIVE = ("window.fetch=()=>new Promise(()=>{});render({title:'New Shop',shop:'new',summary:{orders_today:0,sales_today:0,orders_total:0,orders_yesterday:0,sales_yesterday:0,"
+        "orders_yesterday_same_time:0,sales_yesterday_same_time:0,udhaar_outstanding:0,customers_owing:0,loans_today:0,loans_total:0,calls_today:0,calls_total:0,needs_attention:0},"
+        "trend:[],orders:[],loans:[],calls:[],ledger:[],problems:[],live:[{seconds:74,channel:'phone',language:'hi-IN',"
+        "lines:[{who:'agent',text:'Namaste, Dukaan Dost mein aapka swagat hai. Aap kya lena chahenge?'},{who:'caller',text:'Do kilo chawal aur ek litre tel chahiye.'},"
+        "{who:'agent',text:'Theek hai. Do kilo chawal aur ek litre sunflower oil. Kuch aur?'},{who:'caller',text:'Haan, ek lakh margin money hai. Loan kitna milega?'}],"
+        "order:{total:285,items:[{name:'Rice',qty:2,unit:'kg',line_total:120},{name:'Sunflower oil',qty:1,unit:'litre',line_total:165}]},"
+        "loan:{heard_amount:100000,kind:'margin_money',business:'kirana',place:'Nandyal',margin_money:100000,project_cost:500000,covered:true,scheme:'Mudra Kishor',"
+        "annual_rate_pct:10,loan_amount:400000,own_contribution:100000,monthly_instalment:9000,repayment_months:60,moratorium_months:6,total_interest:140000}}]});location.hash='#live'")
 EMPTY = ("window.fetch=()=>new Promise(()=>{});render({title:'New Shop',shop:'new',summary:{orders_today:0,sales_today:0,orders_total:0,orders_yesterday:0,sales_yesterday:0,"
          "orders_yesterday_same_time:0,sales_yesterday_same_time:0,udhaar_outstanding:0,customers_owing:0,loans_today:0,loans_total:0,calls_today:0,calls_total:0,needs_attention:0},"
          "trend:[],orders:[],loans:[],calls:[],ledger:[],live:[],problems:[]})")
@@ -39,6 +47,8 @@ def pages(pin: str, admin_password: str) -> list:
         ("dashboard (calls)", f"/s/{SHOP}/dashboard#calls", basic("shop", pin), ""),
         ("dashboard (tour)", f"/s/{SHOP}/dashboard", basic("shop", pin), TOUR),
         ("dashboard (empty orders)", f"/s/{SHOP}/dashboard#orders", basic("shop", pin), EMPTY),
+        ("dashboard (live call)", f"/s/{SHOP}/dashboard#live", basic("shop", pin), LIVE),
+        ("dashboard (no live call)", f"/s/{SHOP}/dashboard#live", basic("shop", pin), EMPTY + ";location.hash='#live'"),
         ("admin", "/admin", basic("admin", admin_password), ""),
         ("sign-in (shop)", f"/s/{SHOP}/dashboard", "", ""),
         ("sign-in (shop, wrong PIN)", f"/s/{SHOP}/dashboard", "", WRONG),
