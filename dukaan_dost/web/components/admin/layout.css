@@ -2,6 +2,7 @@
   [data-page=overview],[data-page=problems],[data-page=activity],[data-page=add],[data-page=edit]{display:flex;flex-direction:column;gap:14px;margin-top:14px}
   .pagehead{margin:22px 0 0}
   .pagehead p{margin:4px 0 0}
+  .pagehead p a{color:var(--green-ink);font-weight:600;text-underline-offset:3px;display:inline-block;padding:3px 0}     /* the links under a heading are the product's links, not the browser's blue; 24 px tall for a finger */
   .shoprow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.7fr) minmax(0,1fr) auto;gap:10px 16px;align-items:center}
   .shoprow .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700}
   .shoprow .lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}

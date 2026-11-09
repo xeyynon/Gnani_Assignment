@@ -457,3 +457,32 @@ def test_a_browser_call_on_the_same_server_still_gets_the_events(server):
         call_up(server)
         server.send_event({"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"})
         assert json.loads(ws.recv(timeout=3))["text"] == "ek kilo chawal"
+
+
+# ---- a phone call can be watched on the signed-in dashboard, and still sends nothing to the provider ----------------
+
+def test_a_phone_call_is_kept_for_the_dashboard_though_nothing_goes_to_the_provider(server):
+    with connect(twilio_url(server)) as ws:
+        twilio_start(ws)
+        call_up(server)
+        server.send_event({"type": "user", "text": "ek kilo chawal", "lang": "hi-IN"})
+        server.send_event({"type": "agent", "reply": 1, "text": "Theek hai."})
+        server.send_event({"type": "order", "total": 60, "items": [{"name": "Rice", "qty": 1, "unit": "kg", "line_total": 60}]})
+        with pytest.raises(TimeoutError):
+            ws.recv(timeout=0.5)                                  # the provider's socket still gets none of the page's events
+        live = server.live_calls()
+        assert len(live) == 1 and live[0]["channel"] == "phone" and live[0]["language"] == "hi-IN"
+        assert [x["text"] for x in live[0]["lines"]] == ["ek kilo chawal", "Theek hai."]
+        assert live[0]["order"]["total"] == 60
+
+
+def test_when_the_phone_call_ends_its_words_are_forgotten(server):
+    with connect(twilio_url(server)) as ws:
+        twilio_start(ws)
+        call_up(server)
+        server.send_event({"type": "user", "text": "private words", "lang": "en-IN"})
+        assert server.live_calls()[0]["lines"]
+    end = time.monotonic() + 3
+    while time.monotonic() < end and server.find_call()[0] is not None:
+        time.sleep(0.02)
+    assert server.live_calls() == [] and server._feed._lines == []

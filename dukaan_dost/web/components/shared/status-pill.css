@@ -7,6 +7,7 @@
   .pill.incomplete{background:var(--warn)}
   .pill.pay{border-radius:3px;box-shadow:none;text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;padding:1px 7px;background:transparent;border:1px solid var(--line);color:var(--muted)}
   .pill.pay.credit{border-color:var(--credit);color:var(--credit)}
+  .pill.pay{margin-right:6px}
   .card{position:relative}
   .stackl:has(>.card .pill:not(.pay):not(.note)){gap:22px}                        /* room above each card for its tab */
   .stackl:has(>.card:first-child .pill:not(.pay):not(.note)){padding-top:20px}
