@@ -1,4 +1,4 @@
-  .top{position:sticky;top:10px;z-index:5;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid var(--line);border-radius:20px}
+  .top{position:sticky;top:10px;z-index:5;margin-top:10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 -10px 0 var(--bg)}   /* solid, so what scrolls under the bar does not show through it; the shadow hides the strip above it */
   .shop{display:flex;align-items:center;gap:10px;min-width:0}
   .shop h1{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .topright{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:14px;color:var(--muted)}

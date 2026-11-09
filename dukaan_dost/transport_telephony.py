@@ -352,6 +352,8 @@ class TelephonyTransport(WebSocketTransport):
         socket understands only its own messages, so a phone session gets none of them."""
         s = self._session
         if getattr(s, "adapter", None) is not None:
+            if not s.closed.is_set():
+                self._feed.add(s.id, event)                # no page to send it to, but the signed-in dashboard can show it live
             return
         super().send_event(event)
 

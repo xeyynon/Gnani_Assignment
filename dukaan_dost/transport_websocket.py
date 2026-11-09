@@ -49,6 +49,7 @@ from pathlib import Path
 from websockets.asyncio.server import serve
 
 from . import webpage
+from .live_feed import LiveFeed
 from .shops import valid_name
 from .transport import Capture, PlaybackTimeout, Transport
 
@@ -148,6 +149,7 @@ class WebSocketTransport(Transport):
         self._error = None
         self._session = None
         self._session_lock = threading.Lock()
+        self._feed = LiveFeed()            # the call in progress, in memory only, for the signed-in dashboard (live_feed.py)
         self._default_shop = None
         self._shop_exists = None        # callable(name) -> bool; None accepts any valid name
         self._shop_title = None         # callable(name) -> str shown on the call page
@@ -185,8 +187,11 @@ class WebSocketTransport(Transport):
     def live_calls(self) -> list:
         s = self._session
         if s is None or s.closed.is_set():
+            self._feed.clear()                              # the call is over: what was said goes with it
             return []
-        return [{"shop": s.shop or self._default_shop, "seconds": int(time.monotonic() - s.started)}]
+        return [{"shop": s.shop or self._default_shop, "seconds": int(time.monotonic() - s.started),
+                 "channel": "phone" if getattr(s, "adapter", None) is not None else "browser",
+                 **self._feed.view(s.id)}]
 
     def call_shop(self):
         s = self._session
@@ -350,7 +355,10 @@ class WebSocketTransport(Transport):
 
     def send_event(self, event: dict) -> None:
         s = self._session
-        if s is None or s.closed.is_set() or self._loop is None:
+        if s is None or s.closed.is_set():
+            return
+        self._feed.add(s.id, event)                        # kept for the dashboard first: a phone call has no page to send it to
+        if self._loop is None or getattr(s, "ws", None) is None:
             return
         try:                                               # fire and forget: a slow page must never stall the pipeline
             asyncio.run_coroutine_threadsafe(s.ws.send(json.dumps(event)), self._loop)

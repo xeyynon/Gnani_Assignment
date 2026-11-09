@@ -53,5 +53,6 @@ document.addEventListener('keydown', e => {
   }
 });
 window.addEventListener('resize', () => { if (tourOpen()) placeTour(); });
+if (window.ResizeObserver) new ResizeObserver(() => { if (tourOpen()) placeTour(); }).observe(document.body);      // the page may change size under an open tour: data arriving, a menu wrapping
 document.addEventListener('transitionend', () => { if (tourOpen()) placeTour(); }, true);      // the menu may still be sliding in when the tour opens it
 window.addEventListener('scroll', () => { if (tourOpen()) placeTour(); }, true);

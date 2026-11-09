@@ -35,11 +35,15 @@ def _text(status: int, message: str, headers: dict | None = None) -> Reply:
 
 
 def _live_for(shop: str, live_calls) -> list:
-    """This shop's calls in progress, from the transport. Only the length of each call is shared."""
+    """This shop's calls in progress, from the transport: how long each has lasted, by which line it came in, and what is
+    being said and ordered right now (live_feed.py: in memory only, nothing saved). Only the signed-in dashboard gets this
+    (handle() has already checked the sign-in); a transport that keeps no feed gives just the length."""
     if live_calls is None:
         return []
     try:
-        return [{"seconds": int(c.get("seconds", 0))} for c in live_calls() if c.get("shop") == shop]
+        return [{"seconds": int(c.get("seconds", 0)), "channel": c.get("channel") or "browser", "language": c.get("language"),
+                 "lines": c.get("lines") or [], "order": c.get("order"), "loan": c.get("loan")}
+                for c in live_calls() if c.get("shop") == shop]
     except Exception:
         return []
 
