@@ -32,6 +32,7 @@
 {{include:dashboard/sales-trend.css}}
 {{include:shared/lists.css}}
 {{include:dashboard/calls-page.css}}
+{{include:dashboard/live-page.css}}
 {{include:dashboard/tour.css}}
 {{include:shared/skeleton.css}}
 {{include:shared/brutal.css}}
@@ -65,6 +66,7 @@
 {{include:dashboard/credit-page.html}}
 {{include:dashboard/loans-page.html}}
 {{include:dashboard/calls-page.html}}
+{{include:dashboard/live-page.html}}
 {{include:dashboard/tour.html}}
   </main>
 </div>
@@ -76,6 +78,7 @@
 {{include:shared/keys.js}}
 {{include:shared/theme-helpers.js}}
 {{include:shared/menu-helpers.js}}
+{{include:shared/loan-view.js}}
 {{include:dashboard/helpers.js}}
 /* ---- end helpers ---- */
 
@@ -96,11 +99,12 @@ const seen = new Set(), freshUntil = {}; let firstLoad = true, lastData = null;
 {{include:dashboard/credit-page.js}}
 {{include:dashboard/loans-page.js}}
 {{include:dashboard/calls-page.js}}
+{{include:dashboard/live-page.js}}
 {{include:shared/lists.js}}
 {{include:shared/skeleton.js}}
 {{include:dashboard/loading.js}}
 
-/* ---- the data: draw what the server sent, say how fresh it is, ask again every 3 seconds ---- */
+/* ---- the data: draw what the server sent, say how fresh it is, ask again every 3 seconds, every second while a call is on ---- */
 function render(d) {
   lastData = d;
   document.querySelector('main').removeAttribute('aria-busy');
@@ -123,6 +127,7 @@ function render(d) {
   fill('ledger', d.ledger, ledgerRow, EMPTY.ledger);
   fill('loans', d.loans, loanCard, EMPTY.loans);
   renderCalls(d.calls || [], d.summary);
+  renderLive(live);
   const notes = [];
   if ([...d.orders, ...d.loans, ...(d.calls || [])].some(r => r.synthetic)) notes.push(h('div', { class: 'banner' }, h('span', { class: 'nlabel', text: 'Note' }), 'This shows made-up demo data.'));
   d.problems.forEach(p => notes.push(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Problem' }), p)));
@@ -140,7 +145,7 @@ function render(d) {
 renderLoading();
 showView();
 setInterval(tick, 1000);
-poll(location.origin + location.pathname.replace(/\/$/, '') + '/data', render, 3000);
+poll(location.origin + location.pathname.replace(/\/$/, '') + '/data', render, liveDelay);
 </script>
 </body>
 </html>
