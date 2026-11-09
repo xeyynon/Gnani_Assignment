@@ -10,7 +10,8 @@ function tick() {
   dot.textContent = stale ? 'Offline' : 'Live';                       // the word, not a colour alone (WCAG 1.4.1)
   el.textContent = stale ? 'Connection lost. Showing data from ' + s + ' s ago.' : 'Updated ' + (s < 2 ? 'just now' : s + ' s ago');
 }
-async function poll(url, draw, everyMs) {
+async function poll(url, draw, everyMs) {       // everyMs: a number, or a function of the data just drawn that gives the next wait
+  let data = null;
   try {
     const r = await fetch(url, { cache: 'no-store', credentials: 'same-origin' });
     if (r.status === 401 || r.status === 429) {
@@ -23,7 +24,7 @@ async function poll(url, draw, everyMs) {
       return;
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
+    data = await r.json();
     try {
       draw(data);
       lastOk = Date.now();
@@ -34,5 +35,5 @@ async function poll(url, draw, everyMs) {
     }
   } catch (e) { failed = true; /* a network problem: keep the last data; tick() shows the connection warning */ }
   tick();
-  setTimeout(() => poll(url, draw, everyMs), everyMs);
+  setTimeout(() => poll(url, draw, everyMs), typeof everyMs === 'function' ? everyMs(data) : everyMs);
 }
