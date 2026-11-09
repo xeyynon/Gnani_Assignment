@@ -36,6 +36,100 @@ How Gnani's models are used:
 
 The full architecture is in [MD/architecture.md](MD/architecture.md).
 
+## What it looks like
+These are real screenshots of the pages, taken by `scripts/ui_check/snapshots.mjs` against the preview shop. **Every name, amount and order in them is made up** (the preview's demo data), and the figures in them are not results. The full set (every page and state, light and dark, at phone, tablet and desktop widths) is in [snapshots/latest/INDEX.md](snapshots/latest/INDEX.md); how the pages changed build by build is in [snapshots/CHANGES.md](snapshots/CHANGES.md).
+
+**The call page** is what a caller (or someone trying the demo) opens at the shop's link `/s/<shop>/`. Press Start call and talk; the order and the transcript fill in beside the call card. The order panel shows each line and the total, and the loan panel shows a quote when the caller asks about a loan. Here it is before a call, with its panels filled with made-up data.
+
+![The call page on a desktop: a Start call button, the current order with its total, a loan quote marked indicative, and an empty live transcript](snapshots/latest/call-page/03-order-and-loan-quote/light-desktop-1280.png)
+
+<table>
+<tr>
+<td width="33%" valign="top"><b>Call page on a phone</b><br><img src="snapshots/latest/call-page/02-order-in-progress/light-phone-390.png" alt="The call page at phone width, with the order, loan and transcript panels stacked under the call card"></td>
+<td width="33%" valign="top"><b>Shopkeeper sign-in</b><br>A PIN per shop, with a limit on wrong guesses.<br><img src="snapshots/latest/sign-in-shop/01-idle/light-phone-390.png" alt="The shop sign-in page at phone width with a PIN field"></td>
+<td width="33%" valign="top"><b>Dark theme</b><br>Every page has a light and a dark theme.<br><img src="snapshots/latest/call-page/02-order-in-progress/dark-phone-390.png" alt="The call page at phone width in the dark theme"></td>
+</tr>
+</table>
+
+**The shopkeeper dashboard** (`/s/<shop>/dashboard`, behind the shop's PIN) shows today's sales and orders, what is owed on credit, recent orders with their status, the things that need the shopkeeper's attention (a credit request to confirm, an incomplete order, a customer near their limit) and the last seven days of sales. While someone is on a call, a green strip says so and for how long.
+
+![The shopkeeper dashboard on a desktop: sales today, orders today, owed on credit, recent orders, needs your attention and sales for the last 7 days](snapshots/latest/dashboard/01-overview/light-desktop-1280.png)
+
+**The credit book (udhaar)** lists each regular customer with what they owe against their limit. The bar turns red near the limit.
+
+![The credit book: five customers, each with a bar showing the balance against the limit](snapshots/latest/dashboard/03-credit-book/light-desktop-1280.png)
+
+**Calls** lists every call that ended, including the ones where nothing was ordered, with a plain reason (speech not caught, the caller cut in, the agent could not answer). Only counts are kept: no words, no recording, no phone numbers.
+
+![The calls page: one call that ended in an order and three that did not, each with a reason](snapshots/latest/dashboard/05-calls/light-desktop-1280.png)
+
+**The admin page** (`/admin`, behind the admin password) looks after every shop: which are ready, which need attention and which are broken, what to fix first, and adding or editing a shop without touching files.
+
+![The admin page: three shops with their state, the problems to fix and recent activity](snapshots/latest/admin/01-overview/light-desktop-1280.png)
+
+## How everything works
+### One call, start to finish
+Take a caller who says, in Hinglish, "do kilo toor dal, ek litre sunflower oil aur char Parle-G, bas" ("two kilos of toor dal, one litre of sunflower oil and four Parle-G, that is all"):
+
+1. **The call opens.** The call page asks for the microphone and opens a WebSocket to the agent. The agent starts a new call, and every item it queues from then on carries that call's number, so nothing from an earlier call can be spoken into this one.
+2. **The agent hears the caller.** The microphone audio (16 kHz) goes through voice-activity detection (`webrtcvad`), which decides when the caller starts and stops talking. While they talk it is streamed to **Gnani Prisma**, which sends back text.
+3. **The model reads the order.** The text goes to the language model with the shop's instructions and only the part of the shop's knowledge that matches the sentence. The model must answer with one small JSON note: which items, how many, whether the caller said "that is all", the payment word, a name, and a short reply.
+4. **Code does everything about money.** `order_session.py` checks each item against the shop's `stock.json` (an unknown or out-of-stock item is refused), keeps the order, rounds each line half-up and adds the total. The sentences that state an amount, such as the line added and the running total, are written by code from templates in the caller's language and put into the model's reply where it left a placeholder. The model never writes an amount.
+5. **A last check, then speech.** `validator.py` swaps in a safe fallback if the reply is empty or has drifted off the shop. The sentences go to **Gnani Timbre**, which streams audio back, and the call page plays it.
+6. **The caller can interrupt.** If they talk over the agent, playback stops and the agent listens. `spoken_history.py` records which sentences were actually played, so after an interruption the conversation holds only what the caller heard, and the cart is not changed by words they never heard.
+7. **Payment.** On "that is all" the agent reads the whole order back with the total and asks how the caller will pay: cash, UPI or credit (udhaar). If the answer is not heard it asks again by name.
+8. **After hang-up** the order is written as a small file, together with a count-only record of the call. The shopkeeper's dashboard reads those files.
+
+### The pieces
+| Piece | File | What it does |
+|---|---|---|
+| Main process | `dukaan_dost/app.py` | Five threads (recorder, processor, playback, a watchdog and a metrics writer) that talk only through queues and events |
+| Audio transport | `transport_websocket.py`, `transport_telephony.py`, `transport_replay.py` | Where a call's audio comes from: a browser page, a phone provider's stream (Twilio or Exotel), or a script for the evaluation. The rest of the pipeline is the same for all three. Chosen by `AUDIO_TRANSPORT` |
+| Speech to text | `stt_gnani.py` (through `stt_provider.py`) | Gnani Prisma over a streaming WebSocket, with the shop's product names as boost terms |
+| Language model | `llm_groq.py`, `llm_gemini.py` (through `llm_provider.py`) | Reads the order into JSON. Groq's gpt-oss by default, Gemini optional. Gnani's own reasoning model is not used |
+| Knowledge | `knowledge_retriever.py`, `product_search.py` | An always-on core plus the best-matching sections of the shop's files; for a long stock list, only the best few matching items are sent to the model |
+| Order | `order_turn.py`, `order_session.py`, `stock.py` | The model's JSON note, the cart, the stock check, every amount and every sentence that states one |
+| Credit | `credit.py` | The udhaar book: finds the customer from the name heard, checks the limit and balance, approves, refuses or leaves it to the shopkeeper |
+| Loan guidance | `loan_turn.py`, `loan_session.py`, `loan_calculator.py` | A keyword check starts loan mode; the model only reads the amount and whether it is the caller's own money or the project cost; code works out the scheme, the loan and the instalment |
+| Text to speech | `tts_gnani.py` (through `tts_provider.py`) | Gnani Timbre over a streaming WebSocket, 16 kHz, one voice for all four languages |
+| Interruptions | `spoken_history.py` | Keeps the history to what was really played |
+| Saved files | `store.py` | The one place that writes and reads the order, loan, call and ledger files |
+| Dashboards | `dashboard.py`, `admin.py`, `auth.py`, `shop_health.py`, `web/` | The shop page, the admin page, the sign-in, and the checks that say what is wrong with a shop |
+
+### The shop folder
+Each shop is one folder under `shops/<shop>/`, and the call link `/s/<shop>/` picks it:
+- `config.yaml`: the shop's name and its **system prompt**, the instructions the model follows (how to speak, how to take an order, what never to invent).
+- `stock.json`: every item with its price and unit and its English, Hindi and Telugu names. This is the only source of prices.
+- `customers.json`: the regular customers, each with a credit limit and an opening balance.
+- `knowledge/`: Markdown files on delivery, payment, refunds, packaging and recommendations. The always-on core is loaded into every reply; the other files are searched by keyword for the part that matches what the caller said.
+
+Adding a shop is adding a folder, or using the admin page. `shop_health.py` checks the folder (config readable, prompt present, knowledge in place, stock list present, a PIN set) and the admin page shows what is wrong.
+
+### Credit (udhaar) and loans
+- **Credit.** The caller says a name. `credit.py` matches it to a customer by letter overlap, so a slightly misheard name still finds the right person, and compares the order total plus the balance with the limit. The outcome is approved, refused, or left for the shopkeeper to confirm. The model passes on the name it heard and nothing else.
+- **Loan guidance.** A keyword check in code starts loan mode, with no model call. The model reads the amount in rupees, whether it is the caller's own margin money or the whole project cost, and the business and place. `loan_calculator.py` then works out the project cost, the scheme, the loan, the interest and the monthly instalment, and the agent speaks them marked as indicative. The scheme figures come from the challenge's problem statement and are not a bank's or the government's current terms.
+
+### What is saved, and what is not
+- `orders/<shop>/order_<call_id>.json`: one order per call, with every line, the total, the payment and a status (confirmed, credit pending or incomplete).
+- `orders/<shop>/loan_<call_id>.json`: one loan enquiry per loan call.
+- `orders/<shop>/ledger.json`: the credit book.
+- A **count-only call record** (`call_stats.py`): how many times the caller spoke, whether they cut in, how many times speech was not caught. No words, no audio, no phone number.
+- **Nothing else is kept.** The live transcript the shopkeeper's dashboard shows during a call (`live_feed.py`) lives in memory for the length of the call, is never written to disk and reaches only the signed-in dashboard, not the public call page. Call recording is off.
+
+The `orders/` folder is gitignored (only `orders/samples/` is committed), so data from a run never reaches the repository.
+
+### Sign-in
+There are no accounts and no database. Each shop has a **PIN**, stored hashed with a random salt in `data/auth.json` (gitignored), and a shop with no PIN cannot be signed in to: there is no default. The admin page uses one password from the `ADMIN_PASSWORD` setting. Five wrong guesses from one address lock that shop's sign-in for a while.
+
+### The phone line and the evaluation use the same pipeline
+`AUDIO_TRANSPORT` changes only where the audio comes from. With `telephony`, a Twilio or Exotel media stream connects to the agent through a public address (`scripts/phone_demo.py` starts the agent and a tunnel together; see [MD/phone_setup.md](MD/phone_setup.md)). With `replay`, a script plays prepared synthetic speech into the real pipeline at real-time pace, with silence or steady noise in between, and the scorer compares the saved order with the expected one. That is how the figures under [Results](#results) were produced.
+
+### Try the pages without any keys
+```bash
+python -m dukaan_dost.preview      # a made-up shop, made-up orders, no speech and no model
+```
+It starts only the web server with three made-up shops (one ready, one with no PIN, one broken), prints the sign-in details, and opens the dashboard. Talking to the agent needs the real run (`python -m dukaan_dost`, with the keys from [SETUP.md](SETUP.md)). To retake the screenshots above, run the preview and point `scripts/ui_check/snapshots.mjs` at it (the command is in that file's header).
+
 ## Results
 <!-- RESULTS:BEGIN -->
 Every figure below comes from a saved run in [evaluation/results/](evaluation/results/). Voices are synthetic Timbre voices, not people.
