@@ -152,7 +152,7 @@ def test_the_playback_and_processor_threads_are_wired_to_the_tracker():
     """The threads cannot be run here, so check the hooks exist (a guard against them being edited away)."""
     source = (ROOT / "dukaan_dost" / "app.py").read_text(encoding="utf-8")
     calls = re.findall(r"^\s+_trim_history_for_interrupt\(reply_id\)", source, re.MULTILINE)
-    assert len(calls) == 3                                                    # one per place a reply is abandoned
+    assert len(calls) == 4                                                    # one per place a reply is abandoned (the last: held back for a caller mid-sentence)
     assert source.count("_spoken.clip_finished(reply_id)") == 1
     assert len(re.findall(r"_spoken\.planned\(reply_id, ", source)) == 2     # the sentence and the fallback
     assert "_spoken.register_entry(reply_id," in source
