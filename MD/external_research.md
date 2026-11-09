@@ -93,7 +93,7 @@ Multipart `audio_file`, `language_code`, `model`, `format`. **Clips up to 30 s**
 
 ## Errors and rate limits (docs.gnani.ai/api/introduction/errors, read 2026-10-28)
 - `401` bad key · **`402` insufficient credit** · **`429 RATE_LIMITED`**, for example *"Only 1 active request is allowed at a time"* for accounts limited to one active request. No `Retry-After`; back off (0.5 s, 1 s, 2 s; three tries).
-- **Risk:** if contest accounts are limited to **one active request**, then STT and TTS can't overlap, and the recorder's speculative STT sessions will be refused. **Check the limit on app.gnani.ai as soon as the key exists** (task in [tasks.md](tasks.md)).
+- **Risk:** if contest accounts are limited to **one active request**, then STT and TTS can't overlap, and the recorder's speculative STT sessions will be refused. **Check the limit on app.gnani.ai as soon as the key exists** (task in tasks.md).
 - **Credit cost per second of audio or per character isn't published** in the docs. Measure it from the dashboard in the smoke test.
 
 ## Python SDK (PyPI, read 2026-10-28)

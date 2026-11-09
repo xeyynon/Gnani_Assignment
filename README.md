@@ -88,11 +88,11 @@ evaluation/    scripted calls, the runner and scorer; committed results
 tests/         offline tests (tests/manual needs cloud credentials)
 scripts/       changelog.mjs (builds and InBuls), the checks CI runs, a local CI copy
 .github/       GitHub Actions: CI on every push, a release and image per build tag
-MD/            project documentation, start at MD/DukaanDost_MASTER.md
+MD/            architecture, flow, product, phone-line and deployment notes, and the build reports
 ```
 
 ## Documentation
-All project docs live in [MD/](MD/). Start with [MD/DukaanDost_MASTER.md](MD/DukaanDost_MASTER.md). How builds and internal changes are numbered is in [MD/project_docs_guide.md](MD/project_docs_guide.md); what has shipped is in [CHANGELOG.md](CHANGELOG.md).
+The public project docs are in [MD/](MD/): the architecture, the call flow, the product requirements, the phone-line set-up and deployment. What has shipped, build by build, is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Data
 **All data in this project is synthetic.** The stock list, prices, customers, shop details, UPI ID, order scripts and test audio are made up. No real phone numbers, IDs or recordings of real calls are used, and call recording is turned off.

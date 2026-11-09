@@ -34,7 +34,7 @@
 ```
 
 ## Audio transport (DEC-029, DEC-032)
-Everything between the browser and the pipeline goes through `dukaan_dost/transport.py`. `AUDIO_TRANSPORT` picks the implementation; today there is one, `websocket` (`transport_websocket.py`): it serves the call page at `/` and the call at `/ws`. The pipeline only knows the interface, so a phone-number transport or an offline replay transport (for the evaluation) can be added without touching it. Details and the protocol are in [transport_plan.md](transport_plan.md).
+Everything between the browser and the pipeline goes through `dukaan_dost/transport.py`. `AUDIO_TRANSPORT` picks the implementation; today there is one, `websocket` (`transport_websocket.py`): it serves the call page at `/` and the call at `/ws`. The pipeline only knows the interface, so a phone-number transport or an offline replay transport (for the evaluation) can be added without touching it. Details and the protocol are in transport_plan.md.
 
 ## Many shops and the dashboards (DEC-034)
 The transport also routes by shop: `/s/<shop>/ws` is a call for that shop, and the app loads that shop's prompt, knowledge and greeting for the call (`_active_shop`, `_get_conv_mgr`). `dashboard.py` plugs into the same server as an HTTP handler and serves each shop's owner a PIN-protected page (`/s/<shop>/dashboard`) from the JSON files in `orders/<shop>/` (`store.py`). Sign-in and shop names are in `auth.py` and `shops.py`. The agent will write those files at hang-up; today only `demo_data.py` does.
@@ -80,7 +80,7 @@ Shared safely between calls already: the model client, each shop's `Conversation
 ## Design principles we keep
 - **Threads talk only through queues and events.** Recorder, processor and playback never call each other.
 - **Every queued item carries the call generation** (`_call_gen`). Work from a finished call is dropped, never spoken into the next one.
-- **Providers sit behind a dispatcher with a fixed interface.** The main file never imports a backend directly. See [integration_handoff.md](integration_handoff.md).
+- **Providers sit behind a dispatcher with a fixed interface.** The main file never imports a backend directly. See integration_handoff.md.
 - **Everything tunable is an env var.** No code edit to retune VAD, barge-in or timeouts.
 - **Keys come from `local_config.py`, then env vars.** `local_config.py` is gitignored.
 

@@ -1,9 +1,9 @@
 # Runtime flow
 
-This builds on [pipeline_reference.md](pipeline_reference.md), which describes the code exactly as it is today. This file adds what changes for Dukaan Dost. Lines marked **[NEW]** or **[CHANGE]** don't exist yet.
+This builds on pipeline_reference.md, which describes the code exactly as it is today. This file adds what changes for Dukaan Dost. Lines marked **[NEW]** or **[CHANGE]** don't exist yet.
 
 ## Startup (`main()`, around line 3286 of `dukaan_dost/app.py`)
-1. **[CHANGE]** Check the LLM credentials. If `GEMINI_API_KEY` is set, skip the `GOOGLE_CLOUD_PROJECT` check. Otherwise require a real project (see [bugs.md](bugs.md) B-01 for a hole in today's check).
+1. **[CHANGE]** Check the LLM credentials. If `GEMINI_API_KEY` is set, skip the `GOOGLE_CLOUD_PROJECT` check. Otherwise require a real project (see bugs.md B-01 for a hole in today's check).
 2. Create `logs/vad_metrics.csv` if it's missing.
 3. Build `ConversationManager`, which loads `shops/$SHOP_NAME/config.yaml` and `knowledge/core/always_on.md`. For us, `SHOP_NAME=dukaan_dost`.
 4. Warm up, in order: STT (`stt_provider.warmup()`), then TTS (**[CHANGE]** `tts_provider.warmup()`), then the LLM.
@@ -64,6 +64,6 @@ playback
 ```
 
 ## How the order state gets updated (open design question)
-Two options. It's not decided yet, so it's tracked in [tasks.md](tasks.md).
+Two options. It's not decided yet, so it's tracked in tasks.md.
 1. **Structured output from Gemini:** each reply also returns a JSON block with the order changes. This is the most reliable, but streaming a JSON block alongside speech needs care.
 2. **A second, small Gemini call at hang-up** that extracts the order from the transcript. Simple, but the summary isn't live during the call, and the read-back has to come from the conversation itself.

@@ -29,3 +29,17 @@ node_modules/
 
 # Browser-automation output (screenshots and logs from the Playwright tool)
 .playwright-mcp/
+
+# Private working notes stay on this machine. Only the public project docs in MD/ are committed:
+# the allow-list below, plus the build reports in MD/builds/.
+MD/*
+!MD/architecture.md
+!MD/ci_cd.md
+!MD/deployment.md
+!MD/external_research.md
+!MD/flow.md
+!MD/ml.md
+!MD/phone_setup.md
+!MD/prd.md
+!MD/problem_statement.md
+!MD/builds/

@@ -26,6 +26,6 @@
   - **Order accuracy:** the share of scripts where the final order (items and quantities) exactly matches the script. Also report per-item precision and recall.
   - **Time to first audio:** from the caller stopping speaking to the first agent audio. Upstream logs this as `[SPAN] total_to_first_audio_ms`.
 - **Tools:** extend `evaluation/run_benchmark.py` and `evaluation/analyze_benchmark.py`. `evaluation/benchmark_dataset.json` holds 60 generic questions, not orders, so add an order dataset alongside it.
-- **Caveat from upstream:** its earlier benchmark voiced Hindi and Telugu through an English TTS voice and got meaningless language results (see [tried_and_failed.md](tried_and_failed.md)). **Synthesise each script in its own language.**
+- **Caveat from upstream:** its earlier benchmark voiced Hindi and Telugu through an English TTS voice and got meaningless language results (see tried_and_failed.md). **Synthesise each script in its own language.**
 
 **No numbers here until they're measured.**

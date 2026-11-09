@@ -45,4 +45,4 @@ Plus, from our own plan:
 
 There are ten awards in all (₹50,000 each, at most one per entry). Two-Person Army doesn't apply, and Small Town, Big Build depends on the college. See [external_research.md](external_research.md).
 
-What's still missing for each award is in [problem_statement-gap-plan.md](problem_statement-gap-plan.md).
+What's still missing for each award is in problem_statement-gap-plan.md.

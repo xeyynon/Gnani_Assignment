@@ -46,7 +46,7 @@ A would-be or new shopkeeper says how much money they can put in and what busine
 - Project cost up to ₹1.40 lakh: **Micro Finance Scheme**, 6.5% a year, 3-year repayment including a 3-month moratorium, loan up to ₹1.25 lakh.
 - Project cost above ₹1.40 lakh up to ₹50 lakh: **Term Loan Scheme**, 8% a year, 7-year repayment including a 6-month moratorium, loan up to ₹45 lakh.
 - Above ₹50 lakh: not covered; the agent says so.
-- The agent gives an **approximate monthly instalment**, computed in code from the scheme's rate and tenure after the moratorium. The exact formula is fixed in [decisions.md](decisions.md) when the calculator is built and is covered by unit tests.
+- The agent gives an **approximate monthly instalment**, computed in code from the scheme's rate and tenure after the moratorium. The exact formula is fixed in decisions.md when the calculator is built and is covered by unit tests.
 
 **Rules:**
 - The agent says these figures are **indicative** and the bank or agency confirms. It never promises approval.
@@ -93,7 +93,7 @@ Rules:
 ## Non-functional requirements
 - **Time to first audio:** as low as we can make it. Measure it; don't promise a number before the eval.
 - **Languages:** te-IN, hi-IN, en-IN, plus Hinglish.
-- **Data:** synthetic only. No call recording during the contest (see [decisions.md](decisions.md) DEC-007).
+- **Data:** synthetic only. No call recording during the contest (see decisions.md DEC-007).
 - **Runs on:** any laptop, as software only. The caller is a browser tab.
 
 ## Out of scope
