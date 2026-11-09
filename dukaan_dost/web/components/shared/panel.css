@@ -1,7 +1,7 @@
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:var(--panel-pad,16px 18px);min-width:0}
   .panel h2,.panel h3{font-size:16px;display:flex;align-items:center;gap:9px}
   .panel h2 svg,.panel h3 svg{color:var(--green)}
-  .ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .ph{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;margin-bottom:10px}
   .link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--green-ink);font-weight:600;background:none;border:0;padding:4px 0}
   .link svg{width:16px;height:16px}
   .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
