@@ -215,3 +215,36 @@ def test_a_call_to_an_unknown_shop_is_refused(env):
 def test_the_operator_is_told_where_to_call_and_where_the_dashboard_is(env):
     text = env[0].describe()
     assert "/s/alpha/" in text and "/s/alpha/dashboard" in text
+
+
+# ---- the full-screen Live call page (/s/<shop>/live) -------------------------
+
+def test_the_live_page_asks_for_the_same_sign_in(env):
+    status, headers, _ = get(env[0], "/s/alpha/live")
+    assert status == 401 and headers["WWW-Authenticate"].startswith("Basic ")
+
+
+def test_the_live_page_opens_for_this_shops_pin_only(env):
+    t = env[0]
+    assert get(t, "/s/alpha/live", password="1111")[0] == 200
+    assert get(t, "/s/alpha/live/", password="1111")[0] == 200
+    assert get(t, "/s/alpha/live", password="2222")[0] == 401           # another shop's PIN
+    assert get(t, "/s/alpha/live", password="1112")[0] == 401           # a wrong PIN
+    assert get(t, "/s/nobody/live", password="1111")[0] == 404          # a shop that does not exist
+
+
+def test_the_live_page_is_html_with_the_locked_down_policy_and_the_escaped_shop_name(env):
+    t, shops_root, _ = env
+    (shops_root / "alpha" / "config.yaml").write_text(
+        'system_prompt: "x"\nfallback_messages:\n  en-in: "y"\ndisplay_name: "<script>alert(1)</script>"\n', encoding="utf-8")
+    status, headers, body = get(t, "/s/alpha/live", password="1111")
+    assert status == 200 and headers.get_all("Content-Type") == ["text/html; charset=utf-8"]
+    assert "<script>alert(1)</script>" not in body and "&lt;script&gt;alert(1)&lt;/script&gt;" in body
+    assert "default-src 'none'" in headers["Content-Security-Policy"]
+    assert "no-store" in headers["Cache-Control"] and headers["X-Frame-Options"] == "DENY"
+    assert "live call" in body                                          # it is the Live page, not the dashboard
+
+
+def test_the_live_page_and_the_dashboard_are_different_pages(env):
+    t = env[0]
+    assert get(t, "/s/alpha/live", password="1111")[2] != get(t, "/s/alpha/dashboard", password="1111")[2]

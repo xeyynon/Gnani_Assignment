@@ -27,7 +27,8 @@ from . import auth, login, shops, store, webpage
 from .login import SECURITY_HEADERS, Reply          # the reply type and headers live in login.py; re-exported here for the admin page
 
 PAGE_PATH = Path(__file__).parent / "web" / "dashboard.html"
-ROUTE = re.compile(r"^/s/(?P<shop>[^/]+)/dashboard(?P<sub>/data|/session/keep|/session|/signout)?/?$")
+LIVE_PAGE_PATH = Path(__file__).parent / "web" / "live.html"     # /s/<shop>/live: the call in progress, full screen, same sign-in and same data
+ROUTE = re.compile(r"^/s/(?P<shop>[^/]+)/(?:dashboard(?P<sub>/data|/session/keep|/session|/signout)?|(?P<live>live))/?$")
 THROTTLE = auth.Throttle(max_failures=5, lock_sec=60.0)
 
 def _text(status: int, message: str, headers: dict | None = None) -> Reply:
@@ -97,8 +98,8 @@ def handle(path: str, headers, remote: str, shops_root: Path | None = None,
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         return Reply(200, "application/json; charset=utf-8", body, dict(SECURITY_HEADERS))
 
-    try:
-        page = webpage.load(PAGE_PATH).replace("{{SHOP}}", html.escape(title))     # the page, with its components stitched in
+    try:                                                           # the page, with its components stitched in
+        page = webpage.load(LIVE_PAGE_PATH if m.group("live") else PAGE_PATH).replace("{{SHOP}}", html.escape(title))
     except (OSError, webpage.ComponentError):
         return _text(500, "The dashboard page could not be built.")
     return Reply(200, "text/html; charset=utf-8", page.encode("utf-8"), dict(SECURITY_HEADERS))

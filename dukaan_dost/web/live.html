@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{include:shared/theme-init.html}}
+<title>{{SHOP}}: live call</title>
+<style>
+  /* The full-screen Live call page: the call that is on right now (phone or browser), for the signed-in shopkeeper only.
+     It is the dashboard's Live view on a page of its own, so it can be put on a big screen or recorded. It asks the same
+     data feed the dashboard asks and draws it with the same code. This file only says which components the page is made of. */
+{{include:shared/tokens.css}}
+{{include:shared/base.css}}
+{{include:shared/atoms.css}}
+{{include:shared/panel.css}}
+{{include:shared/theme-button.css}}
+{{include:shared/notices.css}}
+{{include:shared/lists.css}}
+{{include:dashboard/live-page.css}}
+{{include:live/screen.css}}
+</style>
+</head>
+<body>
+{{include:shared/icons.html}}
+
+{{include:live/screen.html}}
+
+<script>
+'use strict';
+/* ---- helpers (pure; tested in Node) ---- */
+{{include:shared/format.js}}
+{{include:shared/keys.js}}
+{{include:shared/theme-helpers.js}}
+{{include:shared/loan-view.js}}
+{{include:dashboard/helpers.js}}
+{{include:live/helpers.js}}
+/* ---- end helpers ---- */
+
+{{include:shared/dom.js}}
+EMPTY.live = { title: 'Waiting for a call', text: 'When a customer calls, the conversation, the order and the total appear here as it happens.' };   // no "try a call" link here: this page is for watching
+{{include:shared/lists.js}}
+{{include:dashboard/live-page.js}}
+{{include:live/calls.js}}
+
+/* ---- the data: the dashboard's own feed, asked every second while a call is on and every 3 seconds otherwise ---- */
+function render(d) {
+  document.querySelector('main').removeAttribute('aria-busy');
+  document.title = d.title + ': live call';
+  $('title').textContent = d.title;
+  drawLive(Array.isArray(d.live) ? d.live : []);
+}
+
+{{include:shared/poll.js}}
+
+{{include:shared/theme.js}}
+const here = location.pathname.replace(/\/+$/, '');
+$('todash').setAttribute('href', here.replace(/\/live$/, '/dashboard'));
+setInterval(tick, 1000);
+poll(location.origin + here.replace(/\/live$/, '/dashboard/data'), render, liveDelay);
+</script>
+</body>
+</html>

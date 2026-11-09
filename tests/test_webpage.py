@@ -77,7 +77,7 @@ def _pages():
 
 
 def test_both_real_pages_compose_completely():
-    assert set(_pages()) == {"index.html", "dashboard.html", "admin.html", "login.html"}
+    assert set(_pages()) == {"index.html", "dashboard.html", "live.html", "admin.html", "login.html"}
     for name, path in _pages().items():
         text = webpage.load(path)
         assert "{{include:" not in text, f"{name} has an include that did not resolve"
