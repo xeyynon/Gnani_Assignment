@@ -33,6 +33,15 @@ const LOAN = { type: 'loan', heard_amount: 150000, kind: 'working capital', busi
   monthly_instalment: 4900, repayment_months: 36, moratorium_months: 6, total_repayment: 176400, total_interest: 26400, indicative: true };
 const view = hash => `location.hash=${JSON.stringify(hash)}`;
 // A shop with nothing in it yet: what the empty lists say (made up, like everything else here).
+// A made-up call in progress, in the shape the dashboard's data feed gives for a live call (conversation, order so far, loan quote).
+const LIVE_CALL = { seconds: 74, channel: 'phone', language: 'hi-IN',
+  lines: [{ who: 'agent', text: 'Namaste, Dukaan Dost mein aapka swagat hai. Aap kya lena chahenge?' }, { who: 'caller', text: 'Do kilo chawal aur ek litre tel chahiye.' },
+    { who: 'agent', text: 'Theek hai. Do kilo chawal aur ek litre sunflower oil. Kuch aur?' }, { who: 'caller', text: 'Haan, char Maggi bhi dena.' },
+    { who: 'agent', text: 'Char Maggi noodles add kar diye. Payment kaise karenge?' }, { who: 'caller', text: 'UPI se kar dunga.' },
+    { who: 'agent', text: 'Theek hai, UPI. Business loan ke baare mein bhi pooch sakte hain.' }, { who: 'caller', text: 'Haan, ek lakh margin money hai. Loan kitna milega?' }],
+  order: { total: 341, items: [{ name: 'Rice', qty: 2, unit: 'kg', line_total: 120 }, { name: 'Sunflower oil', qty: 1, unit: 'litre', line_total: 165 }, { name: 'Maggi noodles', qty: 4, unit: 'pack', line_total: 56 }] },
+  loan: { heard_amount: 100000, kind: 'margin_money', business: 'kirana', place: 'Nandyal', margin_money: 100000, project_cost: 500000, covered: true, scheme: 'Mudra Kishor',
+    annual_rate_pct: 10, loan_amount: 400000, own_contribution: 100000, monthly_instalment: 9000, repayment_months: 60, moratorium_months: 6, total_interest: 140000 } };
 const EMPTY_SHOP = { title: 'New Shop', shop: 'new', summary: { orders_today: 0, sales_today: 0, orders_total: 0, orders_yesterday: 0, sales_yesterday: 0, orders_yesterday_same_time: 0, sales_yesterday_same_time: 0, udhaar_outstanding: 0, customers_owing: 0, loans_today: 0, loans_total: 0, calls_today: 0, calls_total: 0, needs_attention: 0 }, trend: [], orders: [], loans: [], calls: [], ledger: [], live: [], problems: [] };
 
 // A page is a URL, the credentials it needs, and the states to put it in. A state is a snippet run in the page, then a short wait.
@@ -63,10 +72,14 @@ const PAGES = process.env.SNAP_PAGES ? JSON.parse(process.env.SNAP_PAGES) : [
     ['credit-book', view('#credit')],
     ['loan-enquiries', view('#loans')],
     ['calls', view('#calls')],
+    ['overview-scrolled-long-name', `${view('#overview')};$('title').textContent='Dukaan Dost (real records, a copy)';window.scrollTo(0,40)`],   // the sticky top bar over content, with a name long enough to make it two rows
     ['tour-step-1', `${view('#overview')};startTour($('tourbtn'))`],
     ['tour-step-3', `${view('#overview')};startTour($('tourbtn'));showTourStep(2)`],
     ['empty-orders', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify(EMPTY_SHOP)});${view('#orders')}`],
     ['empty-calls', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify(EMPTY_SHOP)});${view('#calls')}`],
+    // The Live view: one made-up phone call in progress (a fixed picture, not the preview's call that comes and goes), and the view with no call.
+    ['live-call', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify({ ...EMPTY_SHOP, live: [LIVE_CALL] })});${view('#live')}`],
+    ['live-empty', `window.fetch=()=>new Promise(()=>{});render(${JSON.stringify(EMPTY_SHOP)});${view('#live')}`],
   ] },
   { name: 'admin', path: '/admin', auth: ADMIN, states: [
     ['overview', view('#overview')],

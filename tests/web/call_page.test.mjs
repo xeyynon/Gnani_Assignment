@@ -245,3 +245,7 @@ test("the Auto-scroll switch only animates when motion is allowed, and the page'
 test("at 200% zoom a panel's tag and the Auto-scroll switch drop under the title instead of leaving the screen", () => {
   assert.match(html, /\.ph\{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;/);
 });
+
+test("the call page's sticky header is solid, so the page scrolling under it never shows through", () => {
+  assert.match(html, /header\{position:sticky;top:10px;[^}]*background:var\(--surface\);box-shadow:0 -10px 0 var\(--bg\)\}/);
+});

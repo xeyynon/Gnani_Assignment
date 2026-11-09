@@ -832,41 +832,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "light",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/06-tour-step-1/light-phone-390.png",
+  "file": "dashboard/06-overview-scrolled-long-name/light-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "light",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/07-tour-step-3/light-phone-390.png",
+  "file": "dashboard/07-tour-step-1/light-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "light",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/08-empty-orders/light-phone-390.png",
+  "file": "dashboard/08-tour-step-3/light-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "light",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/09-empty-orders/light-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "light",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/09-empty-calls/light-phone-390.png",
+  "file": "dashboard/10-empty-calls/light-phone-390.png",
   "overflow": false
  },
  {
@@ -922,41 +932,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "light",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/06-tour-step-1/light-tablet-768.png",
+  "file": "dashboard/06-overview-scrolled-long-name/light-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "light",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/07-tour-step-3/light-tablet-768.png",
+  "file": "dashboard/07-tour-step-1/light-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "light",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/08-empty-orders/light-tablet-768.png",
+  "file": "dashboard/08-tour-step-3/light-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "light",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/09-empty-orders/light-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "light",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/09-empty-calls/light-tablet-768.png",
+  "file": "dashboard/10-empty-calls/light-tablet-768.png",
   "overflow": false
  },
  {
@@ -1012,41 +1032,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "light",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/06-tour-step-1/light-desktop-1280.png",
+  "file": "dashboard/06-overview-scrolled-long-name/light-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "light",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/07-tour-step-3/light-desktop-1280.png",
+  "file": "dashboard/07-tour-step-1/light-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "light",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/08-empty-orders/light-desktop-1280.png",
+  "file": "dashboard/08-tour-step-3/light-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "light",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/09-empty-orders/light-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "light",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/09-empty-calls/light-desktop-1280.png",
+  "file": "dashboard/10-empty-calls/light-desktop-1280.png",
   "overflow": false
  },
  {
@@ -1102,41 +1132,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "dark",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/06-tour-step-1/dark-phone-390.png",
+  "file": "dashboard/06-overview-scrolled-long-name/dark-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "dark",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/07-tour-step-3/dark-phone-390.png",
+  "file": "dashboard/07-tour-step-1/dark-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "dark",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/08-empty-orders/dark-phone-390.png",
+  "file": "dashboard/08-tour-step-3/dark-phone-390.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "dark",
+  "device": "phone",
+  "width": 390,
+  "file": "dashboard/09-empty-orders/dark-phone-390.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "dark",
   "device": "phone",
   "width": 390,
-  "file": "dashboard/09-empty-calls/dark-phone-390.png",
+  "file": "dashboard/10-empty-calls/dark-phone-390.png",
   "overflow": false
  },
  {
@@ -1192,41 +1232,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "dark",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/06-tour-step-1/dark-tablet-768.png",
+  "file": "dashboard/06-overview-scrolled-long-name/dark-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "dark",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/07-tour-step-3/dark-tablet-768.png",
+  "file": "dashboard/07-tour-step-1/dark-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "dark",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/08-empty-orders/dark-tablet-768.png",
+  "file": "dashboard/08-tour-step-3/dark-tablet-768.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "dark",
+  "device": "tablet",
+  "width": 768,
+  "file": "dashboard/09-empty-orders/dark-tablet-768.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "dark",
   "device": "tablet",
   "width": 768,
-  "file": "dashboard/09-empty-calls/dark-tablet-768.png",
+  "file": "dashboard/10-empty-calls/dark-tablet-768.png",
   "overflow": false
  },
  {
@@ -1282,41 +1332,51 @@
  {
   "page": "dashboard",
   "n": 6,
-  "state": "tour-step-1",
+  "state": "overview-scrolled-long-name",
   "theme": "dark",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/06-tour-step-1/dark-desktop-1280.png",
+  "file": "dashboard/06-overview-scrolled-long-name/dark-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 7,
-  "state": "tour-step-3",
+  "state": "tour-step-1",
   "theme": "dark",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/07-tour-step-3/dark-desktop-1280.png",
+  "file": "dashboard/07-tour-step-1/dark-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 8,
-  "state": "empty-orders",
+  "state": "tour-step-3",
   "theme": "dark",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/08-empty-orders/dark-desktop-1280.png",
+  "file": "dashboard/08-tour-step-3/dark-desktop-1280.png",
   "overflow": false
  },
  {
   "page": "dashboard",
   "n": 9,
+  "state": "empty-orders",
+  "theme": "dark",
+  "device": "desktop",
+  "width": 1280,
+  "file": "dashboard/09-empty-orders/dark-desktop-1280.png",
+  "overflow": false
+ },
+ {
+  "page": "dashboard",
+  "n": 10,
   "state": "empty-calls",
   "theme": "dark",
   "device": "desktop",
   "width": 1280,
-  "file": "dashboard/09-empty-calls/dark-desktop-1280.png",
+  "file": "dashboard/10-empty-calls/dark-desktop-1280.png",
   "overflow": false
  },
  {

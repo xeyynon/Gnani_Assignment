@@ -341,3 +341,13 @@ test("at 200% zoom the admin notice wraps, and the stock checkboxes are at least
   assert.match(style, /\.stocktable input\[type=checkbox\]\{width:24px;height:24px;/);
   assert.match(style, /@media \(pointer:coarse\)\{\.stocktable input\[type=checkbox\]\{width:44px;height:44px\}\}/);
 });
+
+test("the admin's sticky top bar is solid too", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(style, /\.top\{position:sticky;top:10px;[^}]*background:var\(--surface\);box-shadow:0 -10px 0 var\(--bg\)\}/);
+});
+
+test("the links under an admin heading use the product's link colour, and are tall enough to press", () => {
+  const style = html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(style, /\.pagehead p a\{color:var\(--green-ink\);font-weight:600;[^}]*padding:3px 0\}/);
+});

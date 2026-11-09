@@ -396,3 +396,103 @@ test("at 200% zoom on a phone (195 px) rows stack, tiles keep their figure whole
   assert.match(html, /grid-template-columns:repeat\(auto-fit,minmax\(min\(210px,100%\),1fr\)\)/);   // a quick action may be narrower than 210 px
   assert.match(script, /\$\('recent'\)\.replaceChildren\(emptyCard\(EMPTY\.orders\)\)/);
 });
+
+test("the sticky top bar is solid, so the page scrolling under it never shows through", () => {
+  assert.match(html, /\.top\{position:sticky;top:10px;[^}]*background:var\(--surface\);box-shadow:0 -10px 0 var\(--bg\)\}/);
+});
+
+test("the Live heading says what kind of call it is, how long it has lasted and in which language, and leaves out what is missing", () => {
+  const { liveHeading } = new Function(`${helperSource}; return { liveHeading };`)();
+  assert.equal(liveHeading({ channel: "phone", seconds: 42, language: "hi-IN" }), "Phone call, 0:42, Hindi");
+  assert.equal(liveHeading({ channel: "browser", seconds: 125, language: "te-IN" }), "Browser call, 2:05, Telugu");
+  assert.equal(liveHeading({ seconds: 7 }), "Call, 0:07");                                  // an older server: no channel, no language
+  assert.equal(liveHeading({ channel: "phone", language: null }), "Phone call");
+  assert.equal(liveHeading({ channel: "phone", seconds: "x", language: "xx-XX" }), "Phone call");
+  assert.equal(liveHeading({}), "Call");
+  assert.equal(liveHeading(undefined), "Call");
+  assert.doesNotMatch(liveHeading({ channel: "phone", seconds: null }), /undefined|null|NaN/);
+});
+
+test("conversation lines are grouped by who said them, and anything odd is left out", () => {
+  const { groupLines } = new Function(`${helperSource}; return { groupLines };`)();
+  assert.deepEqual(groupLines([{ who: "caller", text: "do kilo chawal" }, { who: "agent", text: "Theek hai." }, { who: "agent", text: "Kuch aur?" }, { who: "caller", text: "bas" }]),
+    [{ who: "caller", text: "do kilo chawal" }, { who: "agent", text: "Theek hai. Kuch aur?" }, { who: "caller", text: "bas" }]);
+  assert.deepEqual(groupLines([{ who: "robot", text: "x" }, { who: "agent", text: "   " }, { who: "agent", text: 5 }, null, undefined, "x", { who: "caller" }]), []);
+  assert.deepEqual(groupLines(undefined), []);
+  assert.deepEqual(groupLines("not a list"), []);
+  assert.deepEqual(groupLines([{ who: "agent", text: "  hello  " }]), [{ who: "agent", text: "hello" }]);        // trimmed
+  const many = Array.from({ length: 100 }, (_, i) => ({ who: i % 2 ? "agent" : "caller", text: "line " + i }));
+  assert.equal(groupLines(many).length, 60);                                                                 // only the last 60 are kept
+  assert.equal(groupLines(many).at(-1).text, "line 99");
+});
+
+test("the order so far reads in rupees, with the quantity and unit, and never prints undefined", () => {
+  const { liveOrder } = new Function(`${helperSource}; return { liveOrder };`)();
+  assert.deepEqual(liveOrder({ total: 285, items: [{ name: "Rice", qty: 2, unit: "kg", line_total: 120 }, { name: "Sunflower oil", qty: 1, unit: "litre", line_total: 165 }] }),
+    { items: [{ name: "Rice", qty: "2 kg", amount: "₹120" }, { name: "Sunflower oil", qty: "1 litre", amount: "₹165" }], total: "₹285" });
+  assert.deepEqual(liveOrder({ total: 1234567, items: [] }), { items: [], total: "₹12,34,567" });
+  assert.deepEqual(liveOrder({ items: [{ name: "Salt" }, { qty: 2 }, null, "x", { name: "" }] }), { items: [{ name: "Salt", qty: "", amount: "" }], total: "" });
+  assert.equal(liveOrder(null), null);
+  assert.equal(liveOrder(undefined), null);
+  assert.equal(liveOrder("x"), null);
+  assert.deepEqual(liveOrder({}), { items: [], total: "" });
+  assert.deepEqual(liveOrder({ items: [{ name: "Atta", qty: 0.5, unit: "kg", line_total: null }], total: null }), { items: [{ name: "Atta", qty: "0.5 kg", amount: "" }], total: "" });
+  assert.doesNotMatch(JSON.stringify(liveOrder({ items: [{ name: "A", qty: undefined, unit: undefined }] })), /undefined|NaN|null/);
+});
+
+test("the page asks every second while a call is on, every 3 seconds otherwise, and the poll accepts either a number or a function", () => {
+  const { liveDelay } = new Function(`${helperSource}; return { liveDelay };`)();
+  assert.equal(liveDelay({ live: [{ seconds: 3 }] }), 1000);
+  assert.equal(liveDelay({ live: [] }), 3000);
+  assert.equal(liveDelay({}), 3000);
+  assert.equal(liveDelay(null), 3000);                                                       // before the first answer, or after a failure
+  assert.equal(liveDelay({ live: "nope" }), 3000);
+  assert.match(script, /typeof everyMs === 'function' \? everyMs\(data\) : everyMs/);
+  assert.match(script, /'\/data', render, liveDelay\)/);
+});
+
+test("the Live view exists, with its menu item and count, a log that is announced, an empty state, and the call chip leads to it", () => {
+  assert.match(html, /<a class="nav" href="#live" data-view="live">[\s\S]*?Live<span class="n" id="navlive" hidden><\/span><\/a>/);
+  assert.ok(html.indexOf('data-view="live"') < html.indexOf('data-view="orders"'), "Live comes right after Dashboard");
+  assert.match(html, /<div data-page="live" hidden>[\s\S]*?<h2 tabindex="-1">Live<\/h2>/);
+  assert.match(html, /Shown live to you only\. Nothing said here is saved\./);
+  assert.match(html, /<div id="livelog" role="log" aria-live="polite" aria-label="The conversation so far" tabindex="0">/);
+  assert.match(html, /<section class="panel" id="liveloanbox"[^>]*hidden>/);                 // the loan card only when there is a quote
+  assert.match(html, /<span class="tag">indicative<\/span>/);
+  assert.match(html, /<a class="chip" id="calls" href="#live"/);                              // reachable by keyboard, and it opens the Live view
+  assert.match(script, /EMPTY\.live = \{ title: 'No call right now'/);
+  assert.match(script, /\$\('liveempty'\)\.replaceChildren\(emptyCard\(EMPTY\.live\)\)/);
+  assert.match(script, /renderLive\(live\)/);
+  assert.doesNotMatch(script, /innerHTML/);
+});
+
+test("the Live view rebuilds a part only when it changed, follows the call only when the reader is at the bottom, and forgets a call that ended", () => {
+  assert.match(script, /if \(liveSeen\[name\] === k\) return false/);
+  assert.match(script, /el\.scrollTop = liveFollow \? el\.scrollHeight : was/);
+  assert.match(script, /liveFollow = e\.scrollHeight - e\.scrollTop - e\.clientHeight < 24/);      // remembered from the reader's own scrolling, not measured at render time
+  assert.match(script, /if \(liveFollow && location\.hash === '#live'\)/);                        // opening the view lands on the newest line
+  assert.match(script, /Object\.keys\(liveSeen\)\.forEach\(k => delete liveSeen\[k\]\)/);
+  assert.match(script, /live\.length > 1 \? '\. ' \+ live\.length \+ ' calls are on; this shows the first\.'/);
+  assert.match(script, /'Nothing said yet\.'/);
+  assert.match(script, /'No items yet\.'/);
+  assert.doesNotMatch(html, /\.lmsg[^{]*\{[^}]*(animation|transition)/);                      // nothing slides or blinks
+  assert.doesNotMatch(html, /@keyframes (caret|blink|pulse)/);                                // and no blinking caret or pulse
+});
+
+test("a quote on the dashboard is worded by the same code as on the call page", () => {
+  const { loanView } = new Function(`${helperSource}; return { loanView };`)();
+  const v = loanView({ project_cost: 500000, margin_money: 100000, covered: true, scheme: "Mudra Kishor", annual_rate_pct: 10, loan_amount: 400000, own_contribution: 100000,
+    monthly_instalment: 9000, repayment_months: 60, moratorium_months: 6, total_interest: 140000, business: "kirana", place: "Nandyal" });
+  assert.equal(v.where, "kirana, Nandyal");
+  assert.deepEqual(v.rows[0], ["Project cost", "₹5,00,000"]);
+  assert.equal(v.emi.amount, "₹9,000");
+  assert.equal(v.emi.after, "after a 6-month moratorium");
+  assert.equal(loanView(null), null);
+  assert.equal(loanView({}), null);                                                           // no figures: the card stays away
+  assert.equal(loanView({ project_cost: 9000000, covered: false }).covered, false);
+});
+
+test("an open tour follows its target when the page changes size under it, and a payment chip never touches the total", () => {
+  assert.match(script, /new ResizeObserver\(\(\) => \{ if \(tourOpen\(\)\) placeTour\(\); \}\)\.observe\(document\.body\)/);
+  assert.match(html, /\.pill\.pay\{margin-right:6px\}/);
+});
