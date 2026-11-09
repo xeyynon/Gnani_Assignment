@@ -32,6 +32,7 @@
 {{include:dashboard/sales-trend.css}}
 {{include:shared/lists.css}}
 {{include:dashboard/calls-page.css}}
+{{include:dashboard/tour.css}}
 {{include:shared/skeleton.css}}
 {{include:shared/brutal.css}}
 </style>
@@ -64,6 +65,7 @@
 {{include:dashboard/credit-page.html}}
 {{include:dashboard/loans-page.html}}
 {{include:dashboard/calls-page.html}}
+{{include:dashboard/tour.html}}
   </main>
 </div>
 
@@ -117,15 +119,15 @@ function render(d) {
   $('calls').replaceChildren(h('span', { class: 'dot' + (live.length ? '' : ' idle') }), callStatus(live));
   $('calls').className = 'chip' + (live.length ? ' on' : '');
   const nav = $('navorders'); nav.textContent = String(d.summary.orders_today); nav.hidden = !d.summary.orders_today;
-  fill('orders', d.orders, orderCard, 'No orders yet. They appear here within seconds of a call ending.');
-  fill('ledger', d.ledger, ledgerRow, 'Nobody owes anything yet.');
-  fill('loans', d.loans, loanCard, 'No loan enquiries yet.');
+  fill('orders', d.orders, orderCard, EMPTY.orders);
+  fill('ledger', d.ledger, ledgerRow, EMPTY.ledger);
+  fill('loans', d.loans, loanCard, EMPTY.loans);
   renderCalls(d.calls || [], d.summary);
   const notes = [];
   if ([...d.orders, ...d.loans, ...(d.calls || [])].some(r => r.synthetic)) notes.push(h('div', { class: 'banner' }, h('span', { class: 'nlabel', text: 'Note' }), 'This shows made-up demo data.'));
   d.problems.forEach(p => notes.push(h('div', { class: 'banner bad' }, h('span', { class: 'nlabel', text: 'Problem' }), p)));
   $('notices').replaceChildren(...notes);
-  if (firstLoad) jumpToOrder();                       // the page was opened at '#orders/<id>'
+  if (firstLoad) { jumpToOrder(); maybeStartTour(); }   // opened at '#orders/<id>': show that order; a first visit: offer the tour
   firstLoad = false;
 }
 
@@ -134,6 +136,7 @@ function render(d) {
 {{include:shared/theme.js}}
 {{include:shared/signout.js}}
 {{include:dashboard/call-link.js}}
+{{include:dashboard/tour.js}}
 renderLoading();
 showView();
 setInterval(tick, 1000);
