@@ -1,0 +1,404 @@
+{
+ "calls": [
+  {
+   "id": "x01",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "e2e",
+    "hinglish",
+    "one_sentence_finish",
+    "thanks"
+   ],
+   "turns": [
+    {
+     "text": "Do kilo atta aur ek litre tel, bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Thank you",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ATTA-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "x02",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "e2e",
+    "telugu",
+    "upi"
+   ],
+   "turns": [
+    {
+     "text": "రెండు కిలోల బియ్యం, ఒక లీటర్ నూనె కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "యూపీఐ",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 2,
+     "OIL-1L": 1
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "x03",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "e2e",
+    "hindi",
+    "upi",
+    "thanks"
+   ],
+   "turns": [
+    {
+     "text": "एक किलो चीनी और दो पैकेट मैगी चाहिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "बस इतना ही",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "यूपीआई",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "धन्यवाद",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 1,
+     "MAGGI-70": 2
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "x04",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "e2e",
+    "english",
+    "change",
+    "removal"
+   ],
+   "turns": [
+    {
+     "text": "Three kilos of rice and one kilo of toor dal",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Make the rice two kilos",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Remove the dal",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "UPI",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 2
+    },
+    "payment": "upi",
+    "customer": null
+   }
+  },
+  {
+   "id": "x05",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "e2e",
+    "hinglish",
+    "out_of_stock",
+    "not_sold"
+   ],
+   "turns": [
+    {
+     "text": "Ek paneer aur ek bread dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Dragon fruit hai kya",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "BREAD-400": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "x06",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "e2e",
+    "hinglish",
+    "fractions"
+   ],
+   "turns": [
+    {
+     "text": "Aadha kilo cheeni aur teen packet chai",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "SUGAR-1KG": 0.5,
+     "TEA-250": 3
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "x07",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "e2e",
+    "english",
+    "pack_sizes"
+   ],
+   "turns": [
+    {
+     "text": "I want one five kilo bag of atta",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Cash",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ATTA-5KG": 1
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "x08",
+   "shop": "dukaan_dost",
+   "lang": "hi-IN",
+   "tags": [
+    "e2e",
+    "hindi",
+    "pack_sizes"
+   ],
+   "turns": [
+    {
+     "text": "तीन किलो आटा चाहिए",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "बस इतना ही",
+     "tts_lang": "hi-IN"
+    },
+    {
+     "text": "कैश",
+     "tts_lang": "hi-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "ATTA-1KG": 3
+    },
+    "payment": "cash",
+    "customer": null
+   }
+  },
+  {
+   "id": "x09",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "e2e",
+    "credit",
+    "approved"
+   ],
+   "turns": [
+    {
+     "text": "Ek kilo toor dal dena",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Bas itna hi",
+     "tts_lang": "hi-en"
+    },
+    {
+     "text": "Udhaar pe, mera naam Venkat hai",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {
+     "DAL-TOOR-1KG": 1
+    },
+    "payment": "udhaar",
+    "customer": "Venkat",
+    "status": "confirmed",
+    "balance_after": 145
+   }
+  },
+  {
+   "id": "x10",
+   "shop": "dukaan_dost",
+   "lang": "en-IN",
+   "tags": [
+    "e2e",
+    "credit",
+    "over_limit"
+   ],
+   "turns": [
+    {
+     "text": "Two packets of tea",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "That is all",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "On credit, my name is Meena",
+     "tts_lang": "en-IN"
+    },
+    {
+     "text": "Then I will pay by UPI",
+     "tts_lang": "en-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "TEA-250": 2
+    },
+    "payment": "upi",
+    "customer": null,
+    "status": "confirmed",
+    "balance_after": null
+   }
+  },
+  {
+   "id": "x11",
+   "shop": "dukaan_dost",
+   "lang": "te-IN",
+   "tags": [
+    "e2e",
+    "credit",
+    "approved",
+    "telugu"
+   ],
+   "turns": [
+    {
+     "text": "ఒక కిలో బియ్యం కావాలి",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అంతే",
+     "tts_lang": "te-IN"
+    },
+    {
+     "text": "అప్పు మీద, నా పేరు లక్ష్మి",
+     "tts_lang": "te-IN"
+    }
+   ],
+   "expected": {
+    "items": {
+     "RICE-1KG": 1
+    },
+    "payment": "udhaar",
+    "customer": "Lakshmi",
+    "status": "confirmed",
+    "balance_after": 960
+   }
+  },
+  {
+   "id": "x12",
+   "shop": "dukaan_dost",
+   "lang": "hi-en",
+   "tags": [
+    "e2e",
+    "credit",
+    "balance"
+   ],
+   "turns": [
+    {
+     "text": "Mera udhaar kitna hai? Mera naam Kiran hai",
+     "tts_lang": "hi-en"
+    }
+   ],
+   "expected": {
+    "items": {},
+    "payment": null,
+    "no_order": true,
+    "says": [
+     "1500"
+    ]
+   }
+  }
+ ]
+}

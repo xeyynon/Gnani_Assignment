@@ -315,6 +315,16 @@ class ConversationManager:
             yield self._fallback_for(detected_language), reply_language
             return
 
+        if not plan.finish and order_turn.says_that_is_all(transcript):
+            plan.finish = True
+        if order.finished and order.payment is None and not plan.ops and plan.payment is None:
+            # The payment is owed. A garbled one-word answer is taken for the payment word it is a letter away from; any
+            # other short word is not an item the caller wants ("Sorry, we do not have Gash"), so the payment is asked again.
+            guessed = order_turn.payment_guess(transcript)
+            if guessed:
+                plan.payment, plan.not_sold = guessed, []
+            elif plan.not_sold and len((transcript or "").split()) <= 2:
+                plan.not_sold = []
         plan.say = validate_reply(plan.say, self._fallback_for(detected_language), not recent_history,
                                   language_code=detected_language or "") if plan.say else ""
         plan.ops, replayed = order.drop_replayed_ops(plan.ops, self.named_skus(transcript), order_turn.has_quantity(transcript))

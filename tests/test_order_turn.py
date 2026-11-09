@@ -528,3 +528,74 @@ def test_has_quantity_sees_digits_and_number_words_in_three_languages():
         assert order_turn.has_quantity(text), text
     for text in ("UPI", "that is all", "bas itna hi", "cash, my name is Ramesh", "యూపీఐ", ""):
         assert not order_turn.has_quantity(text), text
+
+
+# ---- "that is all" said at the end of a sentence, and thanks once the order is complete -----------------------------
+
+@pytest.mark.parametrize("text", ["bas itna hi", "ek kilo tel, bas itna hi", "बस इतना ही, और कुछ नहीं।", "एक किलो तेल बस इतना ही।",
+                                  "That's all.", "that is all!", "అంతే", "nothing else"])
+def test_that_is_all_is_recognised_at_the_end_of_a_sentence(text):
+    assert order_turn.says_that_is_all(text)
+
+
+@pytest.mark.parametrize("text", ["", "do kilo cheeni", "bas do kilo", "no more than two kilo please", "that is all I need today and also oil",
+                                  "bus ka time kya hai"])
+def test_other_sentences_are_not_taken_as_that_is_all(text):
+    assert not order_turn.says_that_is_all(text)
+
+
+def test_a_that_is_all_the_model_missed_still_closes_the_list(manager, session, monkeypatch):
+    monkeypatch.setattr(cm, "gemini_ask_json", ScriptedModel(note([add("OIL-1L", 1)], "ok", finish=False)))
+    text = talk(manager, session, "ek kilo tel, bas itna hi")
+    assert "कुल 165 रुपये" in text and text.endswith("पेमेंट कैसे करेंगे: कैश, यूपीआई या उधार?")
+
+
+def test_after_the_order_is_complete_a_thank_you_gets_thanks_not_a_second_read_back(session):
+    reply(session, note([add("SUGAR-1KG", 1)], "x"))
+    reply(session, note([], "", payment="cash", name="Ramesh", delivery="home"), closing="Thank you, your order is noted.")
+    assert reply(session, note([], "")) == "Thank you! Your order is noted."                          # the model said nothing
+    assert reply(session, note([], "", finish=True)) == "Thank you! Your order is noted."             # "that is all" again
+    assert reply(session, note([], "", finish=True), "hi-IN") == "धन्यवाद! आपका ऑर्डर नोट हो गया है।"
+    assert reply(session, note([], "You are welcome!")) == "You are welcome!"                          # the model's own words stand
+
+
+def test_a_change_after_payment_is_still_confirmed(session):
+    reply(session, note([add("SUGAR-1KG", 1)], "x"))
+    reply(session, note([], "", payment="cash", delivery="home"), closing="Thank you, your order is noted.")
+    assert "Added 1 packet" in reply(session, note([add("MAGGI-70", 1)], "x"))
+
+
+@pytest.mark.parametrize("text", ["मुझे 2 किलो atta चाहिए और 1 लीटर तेल, बस इतना ही चाहिए।", "Bas itna hi chahiye", "bas itna hi hai ji",
+                                  "That's all, thank you", "ఇంతే చాలు", "बस इतना ही, धन्यवाद"])
+def test_that_is_all_followed_by_a_filler_word_still_counts(text):
+    assert order_turn.says_that_is_all(text)
+
+
+@pytest.mark.parametrize("text, expected", [("Gash", "cash"), ("Dash.", "cash"), ("cash", "cash"), ("cush", "cash"), ("UPI", "upi"), ("udhar", "udhaar"),
+                                            ("Credit", "udhaar"), ("dragon", None), ("sugar", None), ("kg", None), ("cash please", None),
+                                            ("कैश", None), ("", None)])
+def test_a_garbled_one_word_payment_answer_is_taken_for_the_word_it_is_a_letter_from(text, expected):
+    assert order_turn.payment_guess(text) == expected
+
+
+def test_at_the_payment_step_gash_is_cash_not_an_item_the_shop_lacks(manager, session, monkeypatch):
+    monkeypatch.setattr(cm, "gemini_ask_json", ScriptedModel(
+        note([add("SUGAR-1KG", 1)], "ok"),
+        note([], "", finish=True),
+        note([], "Sorry, we do not have Gash.", not_sold=["Gash"])))
+    talk(manager, session, "ek kilo cheeni")
+    talk(manager, session, "bas itna hi")
+    text = talk(manager, session, "Gash")
+    assert "do not have" not in text and "नहीं है" not in text
+    assert session.payment == "cash"
+
+
+def test_another_short_word_at_the_payment_step_asks_for_the_payment_again(manager, session, monkeypatch):
+    monkeypatch.setattr(cm, "gemini_ask_json", ScriptedModel(
+        note([add("SUGAR-1KG", 1)], "ok"),
+        note([], "", finish=True),
+        note([], "", not_sold=["banana"])))
+    talk(manager, session, "ek kilo cheeni")
+    talk(manager, session, "bas itna hi")
+    text = talk(manager, session, "banana")
+    assert text.endswith("पेमेंट कैसे करेंगे: कैश, यूपीआई या उधार?") and session.payment is None
