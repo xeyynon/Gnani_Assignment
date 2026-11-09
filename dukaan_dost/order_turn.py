@@ -24,6 +24,50 @@ from .order_session import SAY, lang_key
 log = logging.getLogger("order_turn")
 
 _PLACEHOLDER = re.compile(r"\[[A-Z_]+\]")
+
+# "That is all" said at the end of a sentence. The model sometimes ignores it when the same sentence also adds an item
+# ("ek kilo tel, bas itna hi": heard on the third real phone call, 2026-11-09), so the code backs it up. Only the end of
+# the sentence counts, and only these phrases: "bas" alone could be a bus, "no more" could be "no more than 2 kilo".
+_THAT_IS_ALL = re.compile(
+    r"(?:that'?s all|that is all|that'?s it|that is it|nothing else|bas itna(?: hi)?|itna hi|aur kuch nahi|और कुछ नहीं|"
+    r"बस इतना(?: ही)?|इतना ही|ఇంతే|అంతే|ఇంకేమీ వద్దు)"
+    r"(?:[\s,]+(?:चाहिए|चाहिये|है|हैं|जी|धन्यवाद|chahiye|hai|ji|please|thanks|thank you|చాలు|కావాలి))*$", re.IGNORECASE)
+
+
+# At the payment step a one-word answer that the phone line garbled ("Gash", "Dash" for "cash", heard on the sixth test call,
+# 2026-11-09) used to get "Sorry, we do not have Gash". These are the Latin-letter answers that are accepted when they are
+# within one letter of the real word, and only while the payment is owed.
+_PAYMENT_WORDS = {"cash": "cash", "upi": "upi", "udhaar": "udhaar", "udhar": "udhaar", "credit": "udhaar"}
+
+
+def _one_letter_apart(a: str, b: str) -> bool:
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(1 for x, y in zip(a, b) if x != y) == 1
+    short, long_ = (a, b) if len(a) < len(b) else (b, a)
+    return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+
+
+def payment_guess(transcript: str):
+    """cash, upi or udhaar when the transcript is ONE Latin-letter word within a letter of that payment word, else None."""
+    words = re.findall(r"[a-z]+", (transcript or "").lower())
+    if len(words) != 1 or re.search(r"[^ -~]", transcript or ""):
+        return None
+    word = words[0]
+    if len(word) < 3:
+        return None
+    for known, payment in _PAYMENT_WORDS.items():
+        if _one_letter_apart(word, known):
+            return payment
+    return None
+
+
+def says_that_is_all(transcript: str) -> bool:
+    tail = re.sub(r"[\s.,!?।]+$", "", transcript or "")
+    return bool(_THAT_IS_ALL.search(tail))
 _AMOUNT = re.compile(r"(?:₹\s*\d|\d[\d,.]*\s*(?:rupees?|rs\b|रुपये|रुपए|రూపాయలు|రూపాయి))", re.IGNORECASE)
 
 
@@ -163,8 +207,22 @@ def compose(plan: Plan, result, session, language, closing: str | None = None) -
         or (result.payment_set and (session.payment in ("cash", "upi") or (session.payment == "udhaar" and session.credit is None))))
     parts = []
 
+    # The order is complete (payment chosen) and this turn changed nothing: a "thank you", or "that is all" said again.
+    # Reading the whole order back again, or asking "Anything else?", was heard on the third real phone call.
+    if result.changes:
+        session.read_back_done = False                            # the order changed: a read-back is due again
+    already_read_back = getattr(session, "read_back_done", False)
+    was_closed = getattr(session, "order_closed", False)          # the order was already read back or closed earlier
+    complete_and_quiet = was_closed and (not session.is_empty) and session.payment is not None and not blocked and not (
+        result.changes or prices or not_sold or credit or result.payment_set or plan.balance_query)
+    if complete_and_quiet and (plan.finish or not say) and "[ORDER]" not in say:
+        return SAY[lang]["thanks"]
+
     if plan.finish:
-        parts += [session.rejections_text(result.changes, language), not_sold, session.readback(language)]
+        parts += [session.rejections_text(result.changes, language), not_sold]
+        if not already_read_back:                                 # the whole order is read back once, not at every turn
+            parts.append(session.readback(language))
+            session.read_back_done = True
     elif result.changes or prices or not_sold or credit:
         parts += [not_sold, session.changes_text(result.changes, language), prices]
     elif not (closing and completes):
@@ -175,10 +233,16 @@ def compose(plan: Plan, result, session, language, closing: str | None = None) -
             # The model said nothing and changed nothing (a name, a "hello", a word it did not follow). That used
             # to fall through to "Sorry, I did not catch that", which a caller heard three times in a row on the
             # first phone call (2026-11-07) after saying their own name. Say what comes next instead.
-            return SAY[lang]["what" if session.is_empty else "more"]
+            if session.is_empty:
+                return SAY[lang]["what"]
+            if session.payment is not None:
+                return SAY[lang]["thanks"]
+            return SAY[lang]["pay" if session.finished else "more"]     # waiting for the payment: ask for it again
         return text
 
     parts.append(credit)
+    if (plan.finish and session.payment is not None and not blocked) or (closing and completes):
+        session.order_closed = True                               # from now on a thank-you gets thanks, not a second read-back
     if closing and completes:
         parts.append(closing)
     elif blocked:

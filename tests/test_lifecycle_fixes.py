@@ -578,3 +578,98 @@ def test_only_telugu_calls_name_their_language_to_the_recogniser(app, monkeypatc
     monkeypatch.setattr(app, "STT_USE_CALL_LANGUAGE", False)
     monkeypatch.setattr(app, "_locked_language_code", "te-IN")
     assert app._stt_language_for_call() is None
+
+
+# ---- at the payment step a missed word is asked for by name -------------------------------------------------------
+
+def _empty_turn_now(app, seconds=0.3):
+    app.audio_q.put((app._call_gen, b"\x01\x02" * int(16000 * seconds), seconds, {}, False, "", "", 0))
+
+
+def test_a_missed_payment_word_is_asked_for_by_name(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", False)
+    monkeypatch.setattr(app, "_locked_language_code", "en-IN")
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, True)        # "that is all": the payment is owed
+    rig.start()
+    _empty_turn_now(app)
+    rig.settle()
+    assert rig.said and rig.said[-1][0] == "Sorry, I didn't catch that. How would you like to pay: cash, UPI or credit?"
+
+
+def test_the_payment_question_follows_the_callers_language(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "STT_LANGUAGE_RETRY", False)
+    monkeypatch.setattr(app, "_locked_language_code", "hi-IN")
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, True)
+    text, lang = app._no_speech_reply()
+    assert lang == "hi-IN" and text.endswith("पेमेंट कैसे करेंगे: कैश, यूपीआई या उधार?")
+    monkeypatch.setattr(app, "_locked_language_code", "te-IN")
+    assert app._no_speech_reply()[0].endswith("చెల్లింపు ఎలా చేస్తారు: నగదు, యూపీఐ లేదా అప్పు?")
+
+
+def test_elsewhere_a_missed_turn_gets_the_plain_apology(app, rig, monkeypatch):
+    monkeypatch.setattr(app, "_locked_language_code", "en-IN")
+    assert app._no_speech_reply() == (app.STT_ERROR_MESSAGE, "en-IN")                     # nothing ordered yet
+    app._order.apply([{"op": "add", "sku": "SUGAR-1KG", "qty": 1}], None, None, None, False)
+    assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # items, but the caller is not done
+    app._order.apply([], "cash", None, None, True)
+    assert app._no_speech_reply()[0] == app.STT_ERROR_MESSAGE                              # payment already chosen
+
+
+@pytest.mark.parametrize("text, neutral", [("Cash, cash.", True), ("cash", True), ("UPI", True), ("Yes please", True), ("Thank you", True),
+                                          ("two kilo sugar", False), ("कैश", False), ("Cash please, aur ek packet", False), ("", False)])
+def test_a_bare_payment_word_in_english_does_not_change_the_calls_language(app, text, neutral):
+    assert app._is_neutral_reply(text) is neutral
+
+
+# ---- a reply is not played over a caller who is still speaking ------------------------------------------------------
+
+def test_a_reply_is_held_back_only_when_the_caller_has_been_speaking_for_a_moment(app, monkeypatch):
+    app._utterance_open.clear()
+    assert app._caller_is_mid_utterance() is False
+    app._utterance_open.set()
+    monkeypatch.setattr(app, "_utterance_open_since", __import__("time").monotonic())          # just opened: may be a blip
+    assert app._caller_is_mid_utterance() is False
+    monkeypatch.setattr(app, "_utterance_open_since", __import__("time").monotonic() - 1.0)    # speaking for a second
+    assert app._caller_is_mid_utterance() is True
+    app._utterance_open.clear()
+    assert app._caller_is_mid_utterance() is False
+
+
+def _run_playback_with(app, monkeypatch, caller_speaking):
+    played = []
+    monkeypatch.setattr(app, "_play", lambda *a, **k: played.append(a) or True)
+    if caller_speaking:
+        app._utterance_open.set()
+        monkeypatch.setattr(app, "_utterance_open_since", time.monotonic() - 1.0)
+    else:
+        app._utterance_open.clear()
+    t = threading.Thread(target=app.playback_thread, daemon=True)
+    app._shutdown.clear()
+    t.start()
+    app.reply_q.put((app._call_gen, b"RIFFfake", 1, False))
+    time.sleep(1.5)
+    app._utterance_open.clear()
+    app._shutdown.set()
+    app.reply_q.put((-1, b"", 0, False))
+    t.join(timeout=3)
+    app._shutdown.clear()
+    return played
+
+
+def test_the_playback_thread_plays_a_reply_when_the_caller_is_quiet(app, rig, monkeypatch):
+    assert _run_playback_with(app, monkeypatch, caller_speaking=False) != []          # the control: the same item is played
+
+
+def test_the_playback_thread_does_not_start_a_reply_over_a_speaking_caller(app, rig, monkeypatch):
+    assert _run_playback_with(app, monkeypatch, caller_speaking=True) == []
+
+
+def test_a_language_free_answer_follows_the_language_the_agent_last_spoke(app, monkeypatch):
+    for last, locked, expected in (("en-in", "hi-IN", "en-IN"),      # an English order with one stray Hindi phrase: the closing stays English
+                                   ("hi-IN", "en-IN", "hi-IN"),      # a Hindi order, then "Cash": stays Hindi
+                                   (None, "hi-IN", "hi-IN"),         # nothing spoken yet: the call's Hindi lock
+                                   (None, "en-IN", None),            # nothing known: the detected language stands
+                                   ("hi-en", "te-IN", "te-IN")):     # an unusable last-reply tag falls back to the lock
+        monkeypatch.setattr(app, "_last_reply_lang", last)
+        monkeypatch.setattr(app, "_locked_language_code", locked)
+        assert app._language_for_neutral_reply() == expected

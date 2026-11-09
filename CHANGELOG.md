@@ -16,12 +16,26 @@ At 130%, 150% and 200% browser zoom on a phone the dashboard, call page and admi
 
 [Report](MD/builds/build-1024.md)
 
+## Build 1023 · 2026-11-09
+**A caller's "that's all" is no longer missed, and a thank-you after payment is answered with thanks**
+
+A sentence that adds an item and ends with a clear 'that's all' (in English, Hindi, Hinglish or Telugu) now closes the list even when the model misses it; once an order is complete a thank-you or a repeated 'that's all' gets 'Thank you! Your order is noted' instead of the whole order read back again; and a bare English payment word such as 'cash' no longer switches a Hindi or Telugu call to English.
+
+[Report](MD/builds/build-1023.md)
+
 ## Build 1022 · 2026-11-09
 **A short first-visit tour, and empty lists that say what will appear**
 
 The shop dashboard now has a four-step tour on a first visit (the Call page link, Orders, Calls and the live-call bar) with Skip tour always there, Escape to leave it and Take the tour in the menu to see it again. Empty lists say what is missing, what will appear there and, where it helps, offer Try a call yourself.
 
 [Report](MD/builds/build-1022.md)
+
+## Build 1021 · 2026-11-09
+**When a caller's payment word is not heard, the agent asks for it by name**
+
+At the payment step, when nothing is recognised, the agent now says 'Sorry, I didn't catch that. How would you like to pay: cash, UPI or credit?' in the caller's language instead of a bare 'please repeat'.
+
+[Report](MD/builds/build-1021.md)
 
 ## Build 1020 · 2026-11-09
 **From a call to its order, a clearer live label, and fixes from a full UI test pass**

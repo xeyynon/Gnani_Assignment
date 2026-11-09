@@ -79,7 +79,7 @@ from dukaan_dost.conversation_manager import ConversationManager
 from dukaan_dost.knowledge_retriever import prefetch_relevant_context as _prefetch_rag
 from dukaan_dost.validator import validate_reply
 from dukaan_dost.spoken_history import SpokenTracker
-from dukaan_dost.order_session import OrderSession
+from dukaan_dost.order_session import OrderSession, SAY as _ORDER_SAY, lang_key as _order_lang_key
 from dukaan_dost.loan_session import LoanSession
 from dukaan_dost import credit as _credit
 from dukaan_dost import stock as _stock
@@ -217,6 +217,26 @@ def _greeting() -> str:
 # error, distinct from normal silence/noise) — English only, since the
 # caller's language isn't known when STT couldn't run at all.
 STT_ERROR_MESSAGE = "Sorry, I didn't catch that. Could you please repeat?"
+
+_SORRY = {"en": "Sorry, I didn't catch that.", "hi": "माफ़ कीजिए, मैं समझ नहीं पाया।", "te": "క్షమించండి, నాకు అర్థం కాలేదు."}
+
+
+def _no_speech_reply() -> tuple:
+    """(text, language) to speak when speech was heard but nothing was recognised. At the payment step, where the caller
+    has said that is all and still owes the payment word, the answer to ask for is named in the caller's language
+    ("Sorry, I didn't catch that. How would you like to pay: cash, UPI or credit?"): on the scripted order calls the
+    last one-word answer ("cash") was not heard on 4 of 20 calls, and a bare "please repeat" gave the caller no hint of
+    what to say. Anywhere else the plain apology."""
+    code = _locked_language_code or "en-IN"
+    try:
+        with _order_lock:
+            order = _order
+        if order is not None and order.finished and order.payment is None and not order.is_empty:
+            key = _order_lang_key(code)
+            return f"{_SORRY[key]} {_ORDER_SAY[key]['pay']}", code
+    except Exception as e:
+        log.warning(f"[STT] could not tailor the apology: {e}")
+    return STT_ERROR_MESSAGE, "en-IN"
 
 # VAD / Audio
 #
@@ -486,6 +506,29 @@ ACK_WORDS = {
 # locking and wait for a linguistically distinctive utterance instead
 # — it does NOT affect acknowledgment/stop/repeat handling.
 UNIVERSAL_GREETING_WORDS = {"hello", "hi", "hey", "hallo"}
+
+
+# Words that carry no language: a caller in a Hindi or Telugu call who answers the payment question with the English word
+# "cash" has not changed language. Before this, "Cash, cash." (third real phone call, 2026-11-09) made the agent read the
+# order back and say its thanks in English in the middle of a Hindi call.
+NEUTRAL_REPLY_WORDS = {"cash", "upi", "udhaar", "credit", "ok", "okay", "yes", "no", "thanks", "thank", "you", "please", "sir",
+                       "ji", "madam", "hello", "hi", "hey"}
+
+
+def _language_for_neutral_reply():
+    """The language a language-free answer ("cash", "UPI", "thank you") is answered in: the one the agent was just speaking
+    to this caller, else the call's Hindi or Telugu lock, else None (the detected language stands). Following the last reply,
+    not the lock, matters: a caller ordering in English who said one stray Hindi phrase had the whole closing in Hindi
+    (third phone call, 2026-11-09), and a Hindi order closed in English on "Cash, cash." before that."""
+    previous = _canonical_sticky_lang(_last_reply_lang) if _last_reply_lang else None
+    if previous:
+        return previous
+    return _locked_language_code if _locked_language_code in ("hi-IN", "te-IN") else None
+
+
+def _is_neutral_reply(transcript: str) -> bool:
+    words = re.findall(r"[a-z]+", (transcript or "").lower())
+    return bool(words) and all(w in NEUTRAL_REPLY_WORDS for w in words) and not re.search(r"[^\x00-\x7F]", transcript or "")
 
 
 def _is_universal_greeting(transcript: str) -> bool:
@@ -840,6 +883,19 @@ _greeting_guard = threading.Event()
 # playback_thread — single writer/single reader, no lock needed (same
 # reasoning already used for _call_gen elsewhere in this file).
 _caller_speaking = threading.Event()
+
+# The caller is in the middle of an utterance that the recorder has accepted as speech (set when the streaming recogniser
+# session opens, cleared at every reset of the recorder). The playback thread reads it before it starts a reply: on the
+# third real phone call (2026-11-09) the caller said "2 kg atta" and, as soon as it ended, went on with "ek litre tel bas";
+# the first reply started playing a second later, the recorder threw away the half-captured second sentence as an
+# "utterance abandoned because playback began", and the caller had to say it again.
+_utterance_open = threading.Event()
+_utterance_open_since = 0.0
+MIN_UTTERANCE_TO_HOLD_REPLY_SEC = 0.4        # shorter than this it may be a blip, not the caller talking on
+
+
+def _caller_is_mid_utterance() -> bool:
+    return _utterance_open.is_set() and (time.monotonic() - _utterance_open_since) >= MIN_UTTERANCE_TO_HOLD_REPLY_SEC
 
 # The reply_id of a reply that was abandoned mid-stream via barge-in.
 # Written only by playback_thread (when it detects the interruption),
@@ -2260,7 +2316,7 @@ def _maybe_prefetch_rag(session, last_speculated: str) -> str:
 
 
 def recorder_thread():
-    global _call_key
+    global _call_key, _utterance_open_since
     log.info("Recorder started.")
     consecutive_failures = 0
 
@@ -2288,6 +2344,7 @@ def recorder_thread():
                 log.info(f"Stream open: {node}")
 
                 def _reset():
+                    _utterance_open.clear()
                     return 0, 0, False, bytearray(), time.time(), None
 
                 speech_frames, silence_run, triggered, buf, t_start, t_last_voiced = _reset()
@@ -2518,6 +2575,8 @@ def recorder_thread():
                                 # the lambda actually runs.
                                 is_stale=lambda g=_session_gen: _call_gen != g,
                             )
+                            _utterance_open_since = time.monotonic()
+                            _utterance_open.set()
                             if pending_buf:
                                 buf += pending_buf
                                 speech_frames += pending_frames
@@ -2927,7 +2986,8 @@ def processor_thread():
                         if gen == _call_gen:
                             _no_speech_apologized = True
                     log.info("[STT] Nothing recognised — informing the caller once")
-                    _tts_and_enqueue(STT_ERROR_MESSAGE, "en-IN", gen, _next_reply_id())
+                    _apology, _apology_lang = _no_speech_reply()
+                    _tts_and_enqueue(_apology, _apology_lang, gen, _next_reply_id())
                 continue
 
             with _hist_lock:
@@ -2988,6 +3048,11 @@ def processor_thread():
                             f"rest of this call (first detected language, "
                             f"from: '{transcript}')."
                         )
+
+            if _is_neutral_reply(transcript):
+                kept = _language_for_neutral_reply()
+                if kept:
+                    language_code = kept                       # "Cash" / "UPI" / "thank you": answered in the language the agent last spoke
 
             if _is_acknowledgment(transcript):
                 log.info(f"[ACK] '{transcript}' — acknowledgment, no reply needed")
@@ -3342,6 +3407,16 @@ def playback_thread():
         # a separate reply (e.g. the greeting followed by "I didn't
         # catch that") and is deliberately not merged, or the caller
         # hears the two as a single run-on utterance.
+        if _caller_is_mid_utterance():
+            # The caller is already talking on: do not start over them (the recorder would drop what they are saying).
+            # The reply is dropped like one that was interrupted before anything was heard; what they are saying is
+            # answered next, and the order read-back covers everything.
+            _abandoned_reply_id = reply_id
+            _trim_history_for_interrupt(reply_id)
+            _call_stats.barge_in()
+            log.info(f"[PLAY] The caller is still speaking: reply {reply_id} is not played over them.")
+            continue
+
         _playing.set()
         chunks = 0
         barged_in = False
