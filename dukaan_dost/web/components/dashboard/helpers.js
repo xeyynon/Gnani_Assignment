@@ -108,3 +108,29 @@ function tourPlace(rect, view, pop, gap) {   // where the tip goes: below the ta
   const arrow = Math.max(14, Math.min(rect.left + rect.width / 2 - left, pop.w - 14));      // where the tip's pointer sits along its edge
   return { left, top, arrow, side };
 }
+/* ---- the Live view: the call that is on right now (phone or browser): the conversation, the order, the loan quote ---- */
+EMPTY.live = { title: 'No call right now', text: 'When a customer calls, you see the conversation and the order here as it happens. Nothing is saved.', action: 'Try a call yourself' };
+function liveHeading(c) {                    // 'Phone call, 0:42, Hindi'; whatever is missing is left out
+  c = c || {};
+  const word = c.channel === 'phone' ? 'Phone call' : c.channel === 'browser' ? 'Browser call' : 'Call';
+  const secs = c.seconds == null || c.seconds === '' ? NaN : Number(c.seconds);
+  return [word, Number.isFinite(secs) ? callLength(secs) : '', languageName(c.language)].filter(Boolean).join(', ');
+}
+function groupLines(lines) {                 // lines from the same side, one after another, share a bubble (a reply is said a sentence at a time)
+  const out = [];
+  (Array.isArray(lines) ? lines : []).slice(-60).forEach(l => {
+    if (!l || (l.who !== 'caller' && l.who !== 'agent') || typeof l.text !== 'string' || !l.text.trim()) return;
+    const last = out[out.length - 1], t = l.text.trim();
+    if (last && last.who === l.who) last.text += ' ' + t; else out.push({ who: l.who, text: t });
+  });
+  return out;
+}
+function liveOrder(o) {                      // the order so far -> {items: [{name, qty, amount}], total}; null when there is no order object
+  if (!o || typeof o !== 'object') return null;
+  const money = v => (v == null || v === '' || !Number.isFinite(Number(v))) ? '' : rupees(v);
+  const items = (Array.isArray(o.items) ? o.items : []).filter(i => i && typeof i === 'object' && i.name != null && i.name !== '').map(i => ({
+    name: String(i.name), qty: i.qty != null && i.qty !== '' ? i.qty + (i.unit ? ' ' + i.unit : '') : '', amount: money(i.line_total) }));
+  return { items, total: money(o.total) };
+}
+function liveDelay(d) { return d && Array.isArray(d.live) && d.live.length ? 1000 : 3000; }      // ask every second while a call is on, every 3 otherwise
+

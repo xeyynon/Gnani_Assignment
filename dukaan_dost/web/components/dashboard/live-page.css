@@ -1,0 +1,25 @@
+  /* The Live view: the call on right now, for the signed-in shopkeeper only. Caller on the left, agent on the right, newest at the bottom. */
+  .livenote{margin:0 0 12px}
+  .livegrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:900px){.livegrid{grid-template-columns:minmax(0,1fr)}}
+  #livelog{display:flex;flex-direction:column;gap:8px;max-height:min(60vh,460px);min-height:120px;overflow-y:auto;padding:2px}
+  .lmsg{max-width:88%;padding:8px 12px;border-radius:12px;font-size:15px;overflow-wrap:anywhere}
+  .lmsg small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+  .lmsg.caller{align-self:flex-start;background:var(--surface2);border-top-left-radius:4px}
+  .lmsg.agent{align-self:flex-end;background:var(--green-soft);color:var(--green-ink);border-top-right-radius:4px}
+  .lmsg.agent small{color:var(--green-ink)}
+  #liveorder table{width:100%}
+  #liveorder td.q{color:var(--muted);white-space:nowrap;padding-left:10px}
+  .lotal{font-family:var(--mono);display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--green-soft);font-weight:700;font-variant-numeric:tabular-nums}
+  .loanwhere{font-size:14px;color:var(--muted);margin-bottom:8px}
+  .loanrows{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:0}
+  .loanrows dt{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);align-self:center}
+  .loanrows dd{margin:0;text-align:right;overflow-wrap:anywhere}
+  .loanrows dd.amt{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .emi{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--blue-soft)}
+  .emi .big{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .emi .after{font-size:14px;color:var(--muted)}
+  .loannote{margin-top:10px;font-size:14px}
+  .loanfine{margin-top:12px;font-size:12px;color:var(--muted)}
+  a.chip{text-decoration:none}
+  @media (max-width:260px){.lmsg{max-width:100%}.emi .big{font-size:20px}}

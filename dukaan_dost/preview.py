@@ -25,6 +25,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import admin, auth, dashboard, demo_data, shops, store
+from .loan_calculator import quote
 from .knowledge_retriever import CORE_FILENAME, KNOWLEDGE_FILES
 from .transport_websocket import WebSocketTransport
 
@@ -37,10 +38,40 @@ ADMIN_PASSWORD = "admin1111"
 _STARTED = time.monotonic()
 
 
+# One made-up call, said a line every 4 seconds: (who, what is said). Nothing here is a real person or a real call.
+_SCRIPT = [
+    ("agent", "Namaste, Dukaan Dost mein aapka swagat hai. Aap kya lena chahenge?"),
+    ("caller", "Do kilo chawal aur ek litre tel chahiye."),
+    ("agent", "Theek hai. Do kilo chawal aur ek litre sunflower oil. Kuch aur?"),
+    ("caller", "Haan, char Maggi bhi dena."),
+    ("agent", "Char Maggi noodles add kar diye. Payment kaise karenge?"),
+    ("caller", "UPI se kar dunga."),
+    ("agent", "Theek hai, UPI. Aapka order ho gaya. Business loan ke baare mein bhi pooch sakte hain."),
+    ("caller", "Haan, ek lakh margin money hai. Loan kitna milega?"),
+    ("agent", "Yeh figures indicative hain, bank ya sarkar ke nahi."),
+    ("agent", "Aur kuch madad chahiye?"),
+]
+_ORDER_STEPS = [          # (shown from line number, the item)
+    (2, {"name": "Rice", "qty": 2, "unit": "kg", "line_total": 120}),
+    (2, {"name": "Sunflower oil", "qty": 1, "unit": "litre", "line_total": 165}),
+    (4, {"name": "Maggi noodles", "qty": 4, "unit": "pack", "line_total": 56}),
+]
+
+
 def _pretend_calls() -> list:
-    """The preview has no agent, so it shows a made-up call that comes and goes (40 s on, 20 s off)."""
+    """The preview has no agent, so it shows a made-up call that comes and goes (40 s on, 20 s off). While it is on, it
+    carries what the real feed carries: a conversation that grows a line every 4 s, the order so far, and from line 8 a
+    loan quote whose figures are the calculator's (the same fields the dashboard's data feed has for a real call)."""
     t = int(time.monotonic() - _STARTED) % 60
-    return [{"shop": SHOP, "seconds": t}] if t < 40 else []
+    if t >= 40:
+        return []
+    said = max(0, (t - 2) // 4 + 1) if t >= 2 else 0                 # lines said so far
+    lines = [{"who": w, "text": x} for w, x in _SCRIPT[:said]]
+    items = [i for start, i in _ORDER_STEPS if said > start]
+    order = {"total": sum(i["line_total"] for i in items), "items": items} if items else None
+    loan = {"heard_amount": 100000, "kind": "margin_money", "business": "kirana", "place": "Nandyal",
+            **quote(100000).to_dict()} if said > 7 else None
+    return [{"shop": SHOP, "seconds": t, "channel": "phone", "language": "hi-IN", "lines": lines, "order": order, "loan": loan}]
 
 
 def _complete_shop(folder: Path) -> None:

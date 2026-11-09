@@ -77,7 +77,10 @@ def test_the_data_includes_live_calls_for_this_shop_only(running):
     reply = dashboard.handle(f"/s/{preview.SHOP}/dashboard/data", headers, "t",
                              shops_root=Path(running[1]) / "shops", orders_root=Path(running[1]) / "orders",
                              live_calls=calls)
-    assert json.loads(reply.body)["live"] == [{"seconds": 12}]
+    live = json.loads(reply.body)["live"]
+    assert len(live) == 1 and live[0]["seconds"] == 12          # only this shop's call, not "other"
+    assert "who" not in live[0]                                  # unknown fields are not passed through
+    assert live[0]["channel"] == "browser" and live[0]["lines"] == [] and live[0]["order"] is None and live[0]["loan"] is None
 
 
 def test_a_failing_call_source_does_not_break_the_dashboard():

@@ -1,0 +1,23 @@
+    <div data-page="live" hidden>
+      <div class="pagehead"><h2 tabindex="-1">Live</h2><p class="muted" id="liveline"></p></div>
+      <div id="liveempty"></div>
+      <div id="liveon" hidden>
+        <p class="muted livenote">Shown live to you only. Nothing said here is saved.</p>
+        <div class="livegrid">
+          <section class="panel" aria-labelledby="h-liveconv">
+            <div class="ph"><h3 id="h-liveconv"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg>Conversation</h3></div>
+            <div id="livelog" role="log" aria-live="polite" aria-label="The conversation so far" tabindex="0"></div>
+          </section>
+          <div class="stack">
+            <section class="panel" aria-labelledby="h-liveorder">
+              <div class="ph"><h3 id="h-liveorder"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cart"/></svg>Order so far</h3></div>
+              <div id="liveorder"></div>
+            </section>
+            <section class="panel" id="liveloanbox" aria-labelledby="h-liveloan" hidden>
+              <div class="ph"><h3 id="h-liveloan"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bank"/></svg>Loan guidance</h3><span class="tag">indicative</span></div>
+              <div id="liveloan"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
