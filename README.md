@@ -143,7 +143,7 @@ Every figure below comes from a saved run in [evaluation/results/](evaluation/re
 | Simulated phone line, Prisma chooses | 16 | 10 |
 | Simulated phone line, language named | 19 | 3 |
 
-Short turns (up to 1.6 s: "cash", "that's all", a name) were exactly right on 14 of 31 with Prisma choosing and 19 of 31 with the language named; Telugu calls on 5 of 16 and 10 of 16. This is why the agent now names the language.
+Short turns (up to 1.6 s: "cash", "that's all", a name) were exactly right on 14 of 31 with Prisma choosing and 19 of 31 with the language named; Telugu calls, on clean audio, on 5 of 16 and 10 of 16. This is why the agent now names the language.
 
 **Scripted credit and loan calls, the whole pipeline** ([credit_loans_clean_120b](evaluation/results/credit_loans_clean_120b.md), 2026-11-09, gpt-oss-120b, with the loose-atta stock, Builds 1016 and 1019 and the first two changes of Build 1023): 4 of 4 order calls and 4 of 4 loan calls exactly right, every turn answered (18 of 18), first audio 2.2 s at the median and 2.5 s at the 90th percentile after the caller's last word. Only 8 calls, so the 95% interval is wide (51% to 100%). The same calls one change earlier (Hindi also named to Prisma) lost one Telugu loan call (3 of 4 loans; [credit_loans_hindi_named_120b](evaluation/results/credit_loans_hindi_named_120b.md), kept as evidence): the first turn of that call was heard as Hindi, and naming Hindi decoded the rest wrongly.
 
