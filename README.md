@@ -6,14 +6,18 @@ A voice agent for a neighbourhood kirana store. A customer calls and orders in *
 
 Built for Gnani.ai's **Great Indian AI Internship Challenge**, on Gnani's **Prisma** (speech to text) and **Timbre** (text to speech). Gnani has no public language model, so a separate one reads the order (Groq's gpt-oss by default, Gemini as an option).
 
-It is software only: you call it from a browser tab, or from an ordinary phone through a provider's number. The phone transport (Twilio and Exotel media streams) was tested against a stand-in provider and then took two real calls on an Exotel trial number on 2026-11-07; it is a demonstration line, not a production one.
+It is software only, with no phone hardware. A customer dials an ordinary phone number that a provider (Exotel or Twilio) connects to the agent over a streaming WebSocket, and the agent answers. A browser call page does the same on the same pipeline, so you can try it without a phone. The phone line in the demo is an Exotel trial number behind a temporary tunnel, not a production one.
 
 ## Live demo
 
-A call to the agent, with the shopkeeper's dashboard beside it.
+A real phone call to the agent on an Exotel trial number, with the Live call page and the shopkeeper's dashboard side by side. In the call I order sugar and atta in Hinglish, put it on Ramesh's udhaar, and then ask in Hindi to hear the order again in Telugu.
 
-- [Watch the 60-second demo](demo/dukaan_dost_demo_60s.mp4)
-- [Watch the full, unedited take](demo/dukaan_dost_full_take.mp4)
+- [Watch the 60-second demo](demo/dukaan_dost_demo_60s.mp4) (it skips one short turn and a short wait, and both are marked on screen)
+- [Watch the full call, no cuts](demo/dukaan_dost_full_take.mp4)
+
+![Four frames from the real call: the Live call page with the Telugu readback and the total, the dashboard with the new order, the credit book with Ramesh's balance, and the phone's in-call screen](demo/real-call-proof.png)
+
+These are real frames from that call. The number on the phone screen is hidden, and the shop, customers and orders are synthetic.
 
 ## The idea: the model never does the money
 Language models are good at hearing "do kilo cheeni aur ek litre tel" and bad at arithmetic they must get exactly right. So the split is strict:
@@ -25,7 +29,8 @@ What the customer hears is therefore exactly what the dashboard shows, and a mod
 
 ## How a call works
 ```
-Caller (browser microphone, 16 kHz) ──WebSocket──▶ voice-activity detection (webrtcvad)
+Caller audio (a phone call through Exotel or Twilio, or the browser microphone; 16 kHz after the transport)
+   ──WebSocket──▶ voice-activity detection (webrtcvad)
    ▶ Gnani Prisma v3.0, streaming speech to text (language detected per call)
    ▶ language model: one JSON order note (items, quantities, payment, name)
    ▶ order code: stock check, rounding, totals, credit limit, spoken sentences (en / hi / te)
@@ -35,7 +40,9 @@ Caller (browser microphone, 16 kHz) ──WebSocket──▶ voice-activity dete
 - **Barge-in:** the caller can interrupt; the agent stops and listens, and remembers only what was actually heard.
 - **Udhaar:** the caller says a name; code finds the customer, checks the limit and balance, and approves, refuses, or leaves it to the shopkeeper. The model never decides.
 - **Loan guidance:** a keyword check starts loan mode; the model only reads the amount and whether it is the caller's own money or the project cost; code computes the scheme, the loan and the instalment and speaks them, marked as indicative.
-- **Many shops, one agent:** the call link `/s/<shop>/` picks the shop; each shop has a PIN-protected dashboard at `/s/<shop>/dashboard` (orders, credit balances, loan enquiries), and one admin page looks after every shop.
+- **Another language on request:** a caller can ask for the order again in a different language, for example in Hindi: "mera order Telugu mein dobara bolo". Code reads the order back in the language asked, with the same total. The language name is recognised in Latin letters, Devanagari or Telugu script.
+- **Live call page:** the shopkeeper can watch a call as it happens at `/s/<shop>/live`: the conversation, the order with its running total, the language and the length. A phone has no page of its own, so this is how a phone call is watched.
+- **Many shops, one agent:** the browser call link `/s/<shop>/`, or `shop=<shop>` in the phone provider's address, picks the shop; each shop has a PIN-protected dashboard at `/s/<shop>/dashboard` (orders, credit balances, loan enquiries), and one admin page looks after every shop.
 
 How Gnani's models are used:
 - **Prisma v3.0:** streaming WebSocket, the shop's product names sent as boost terms, a commit after the caller stops. The first turn of a call lets Prisma choose the language (`indic-auto`); from the second turn of a Telugu call the language is named (Hindi calls stay automatic: a wrong first guess would be kept for the whole call), and a turn that comes back empty is heard again with the language named, because Prisma's own choice is unreliable on short answers (measured below).
@@ -46,7 +53,7 @@ The full architecture is in [MD/architecture.md](MD/architecture.md).
 ## What it looks like
 These are real screenshots of the pages, taken by `scripts/ui_check/snapshots.mjs` against the preview shop. **Every name, amount and order in them is made up** (the preview's demo data), and the figures in them are not results. The full set (every page and state, light and dark, at phone, tablet and desktop widths) is in [snapshots/latest/INDEX.md](snapshots/latest/INDEX.md); how the pages changed build by build is in [snapshots/CHANGES.md](snapshots/CHANGES.md).
 
-**The call page** is what a caller (or someone trying the demo) opens at the shop's link `/s/<shop>/`. Press Start call and talk; the order and the transcript fill in beside the call card. The order panel shows each line and the total, and the loan panel shows a quote when the caller asks about a loan. Here it is before a call, with its panels filled with made-up data.
+**The browser call page** is what someone trying the demo without a phone opens at the shop's link `/s/<shop>/`. Press Start call and talk; the order and the transcript fill in beside the call card. The order panel shows each line and the total, and the loan panel shows a quote when the caller asks about a loan. Here it is before a call, with its panels filled with made-up data.
 
 ![The call page on a desktop: a Start call button, the current order with its total, a loan quote marked indicative, and an empty live transcript](snapshots/latest/call-page/03-order-and-loan-quote/light-desktop-1280.png)
 
@@ -57,6 +64,8 @@ These are real screenshots of the pages, taken by `scripts/ui_check/snapshots.mj
 <td width="33%" valign="top"><b>Dark theme</b><br>Every page has a light and a dark theme.<br><img src="snapshots/latest/call-page/02-order-in-progress/dark-phone-390.png" alt="The call page at phone width in the dark theme"></td>
 </tr>
 </table>
+
+**The Live call page** (`/s/<shop>/live`, behind the same PIN) puts the call in progress on a page of its own, in large type: the conversation with the caller on one side and the agent on the other, the order with its running total, the language and how long the call has lasted. It shows one call at a time, and tabs appear if several calls are listed. Nothing on it is saved. There is no screenshot of it in the set above; the demo video and the proof image show it on a real call.
 
 **The shopkeeper dashboard** (`/s/<shop>/dashboard`, behind the shop's PIN) shows today's sales and orders, what is owed on credit, recent orders with their status, the things that need the shopkeeper's attention (a credit request to confirm, an incomplete order, a customer near their limit) and the last seven days of sales. While someone is on a call, a green strip says so and for how long.
 
@@ -78,13 +87,13 @@ These are real screenshots of the pages, taken by `scripts/ui_check/snapshots.mj
 ### One call, start to finish
 Take a caller who says, in Hinglish, "do kilo toor dal, ek litre sunflower oil aur char Parle-G, bas" ("two kilos of toor dal, one litre of sunflower oil and four Parle-G, that is all"):
 
-1. **The call opens.** The call page asks for the microphone and opens a WebSocket to the agent. The agent starts a new call, and every item it queues from then on carries that call's number, so nothing from an earlier call can be spoken into this one.
-2. **The agent hears the caller.** The microphone audio (16 kHz) goes through voice-activity detection (`webrtcvad`), which decides when the caller starts and stops talking. While they talk it is streamed to **Gnani Prisma**, which sends back text.
+1. **The call opens.** On a phone call, the provider connects to the agent's public address and opens a WebSocket to it. On the browser call page, the page asks for the microphone and opens the WebSocket itself. The agent starts a new call, and every item it queues from then on carries that call's number, so nothing from an earlier call can be spoken into this one.
+2. **The agent hears the caller.** The caller's audio arrives as 16-bit PCM from Exotel (at the rate set in the provider's applet, 16 kHz in the demo), as 8 kHz mu-law from Twilio, or as 16 kHz audio from the browser. The transport resamples it to 16 kHz, and it goes through voice-activity detection (`webrtcvad`), which decides when the caller starts and stops talking. While they talk it is streamed to **Gnani Prisma**, which sends back text.
 3. **The model reads the order.** The text goes to the language model with the shop's instructions and only the part of the shop's knowledge that matches the sentence. The model must answer with one small JSON note: which items, how many, whether the caller said "that is all", the payment word, a name, and a short reply.
 4. **Code does everything about money.** `order_session.py` checks each item against the shop's `stock.json` (an unknown or out-of-stock item is refused), keeps the order, rounds each line half-up and adds the total. The sentences that state an amount, such as the line added and the running total, are written by code from templates in the caller's language and put into the model's reply where it left a placeholder. The model never writes an amount.
-5. **A last check, then speech.** `validator.py` swaps in a safe fallback if the reply is empty or has drifted off the shop. The sentences go to **Gnani Timbre**, which streams audio back, and the call page plays it.
+5. **A last check, then speech.** `validator.py` swaps in a safe fallback if the reply is empty or has drifted off the shop. The sentences go to **Gnani Timbre**, which streams audio back, and the transport sends it to the caller: down the phone line through the provider, or into the call page.
 6. **The caller can interrupt.** If they talk over the agent, playback stops and the agent listens. `spoken_history.py` records which sentences were actually played, so after an interruption the conversation holds only what the caller heard, and the cart is not changed by words they never heard.
-7. **Payment.** On "that is all" the agent reads the whole order back with the total and asks how the caller will pay: cash, UPI or credit (udhaar). If the answer is not heard it asks again by name.
+7. **Payment.** On "that is all" the agent reads the whole order back with the total and asks how the caller will pay: cash, UPI or credit (udhaar). If the answer is not heard it asks again by name. A caller can also ask for the order again in another language, and the agent reads it back in that language.
 8. **After hang-up** the order is written as a small file, together with a count-only record of the call. The shopkeeper's dashboard reads those files.
 
 ### The pieces
@@ -101,7 +110,7 @@ Take a caller who says, in Hinglish, "do kilo toor dal, ek litre sunflower oil a
 | Text to speech | `tts_gnani.py` (through `tts_provider.py`) | Gnani Timbre over a streaming WebSocket, 16 kHz, one voice for all four languages |
 | Interruptions | `spoken_history.py` | Keeps the history to what was really played |
 | Saved files | `store.py` | The one place that writes and reads the order, loan, call and ledger files |
-| Dashboards | `dashboard.py`, `admin.py`, `auth.py`, `shop_health.py`, `web/` | The shop page, the admin page, the sign-in, and the checks that say what is wrong with a shop |
+| Dashboards | `dashboard.py`, `admin.py`, `auth.py`, `shop_health.py`, `live_feed.py`, `web/` | The shop dashboard, the Live call page (`web/live.html`, fed by `live_feed.py`, which keeps the call in progress in memory), the admin page, the sign-in, and the checks that say what is wrong with a shop |
 
 ### The shop folder
 Each shop is one folder under `shops/<shop>/`, and the call link `/s/<shop>/` picks it:
@@ -121,7 +130,7 @@ Adding a shop is adding a folder, or using the admin page. `shop_health.py` chec
 - `orders/<shop>/loan_<call_id>.json`: one loan enquiry per loan call.
 - `orders/<shop>/ledger.json`: the credit book.
 - A **count-only call record** (`call_stats.py`): how many times the caller spoke, whether they cut in, how many times speech was not caught. No words, no audio, no phone number.
-- **Nothing else is kept.** The live transcript the shopkeeper's dashboard shows during a call (`live_feed.py`) lives in memory for the length of the call, is never written to disk and reaches only the signed-in dashboard, not the public call page. Call recording is off.
+- **Nothing else is kept.** The live transcript the shopkeeper's dashboard shows during a call (`live_feed.py`) lives in memory for the length of the call, is never written to disk and reaches only the signed-in shop pages (the dashboard and the Live call page), not the public call page. Call recording is off.
 
 The `orders/` folder is gitignored (only `orders/samples/` is committed), so data from a run never reaches the repository.
 
@@ -129,7 +138,16 @@ The `orders/` folder is gitignored (only `orders/samples/` is committed), so dat
 There are no accounts and no database. Each shop has a **PIN**, stored hashed with a random salt in `data/auth.json` (gitignored), and a shop with no PIN cannot be signed in to: there is no default. The admin page uses one password from the `ADMIN_PASSWORD` setting. Five wrong guesses from one address lock that shop's sign-in for a while.
 
 ### The phone line and the evaluation use the same pipeline
-`AUDIO_TRANSPORT` changes only where the audio comes from. With `telephony`, a Twilio or Exotel media stream connects to the agent through a public address (`scripts/phone_demo.py` starts the agent and a tunnel together; see [MD/phone_setup.md](MD/phone_setup.md)). With `replay`, a script plays prepared synthetic speech into the real pipeline at real-time pace, with silence or steady noise in between, and the scorer compares the saved order with the expected one. That is how the figures under [Results](#results) were produced.
+The phone line is the main way to use Dukaan Dost. `AUDIO_TRANSPORT` changes only where the audio comes from. With `telephony`, an Exotel or Twilio media stream connects to the agent through a public address. With `replay`, a script plays prepared synthetic speech into the real pipeline at real-time pace, with silence or steady noise in between, and the scorer compares the saved order with the expected one. That is how the figures under [Results](#results) were produced.
+
+To take a real call (the full steps are in [MD/phone_setup.md](MD/phone_setup.md)):
+```bash
+python scripts/phone_demo.py
+# starts the agent in phone mode and a public tunnel, and prints the tunnel address.
+# In the Exotel Voicebot applet, set the address to:
+#   wss://<tunnel host>/telephony/exotel?sample-rate=16000&shop=<shop>&token=<TELEPHONY_TOKEN>
+```
+`TELEPHONY_TOKEN` is a long random secret of at least 16 characters that you keep in `.env`. It is never written in the repository, and with no token every phone call is refused. The tunnel address changes each time it restarts, so the applet address has to be updated each time. The agent takes one call at a time.
 
 ### Try the pages without any keys
 ```bash
@@ -158,14 +176,15 @@ Short turns (up to 1.6 s: "cash", "that's all", a name) were exactly right on 14
 
 **Not scored validly:** two earlier full runs (gpt-oss-20b whole catalogue, and gpt-oss-120b search mode) were marked INVALID because the model's daily token limit ran out near their end, so no figure from them is quoted; they are kept as evidence in `evaluation/results/INVALID_*`.
 
-**Seen, not scored:** on 2026-11-07 two real phone calls to an Exotel trial number connected to the agent and were heard; one saved an order (1 litre of oil, cash, confirmed).
+**Seen, not scored:** on 2026-11-07 two real phone calls to an Exotel trial number connected to the agent and were heard; one saved an order (1 litre of oil, cash, confirmed). On 2026-11-10 more real calls were made to the same number, and one of them is the demo video: 2 kg of sugar and 1 kg of atta (143 rupees), put on Ramesh's udhaar (balance 598 rupees, 741 after the order, within the 2,000 rupee limit), then a Hindi request, "mera order Telugu mein dobara bolo", and the agent read the order back in Telugu. That call was seen and heard, and it is not part of any score.
 <!-- RESULTS:END -->
 
 How it is measured: scripted calls, with synthetic Timbre voices, are played into the **real** agent (voice detection, Prisma, the language model, the order code, Timbre) by a replay transport, with no browser. The scorer compares the saved order with the expected one (items and quantities exactly), and reports word error rate, time to first audio and cut-off counts. Steady synthetic noise can be mixed in at a chosen level. The method, the scripts and the scorer are in [evaluation/](evaluation/README.md).
 
 ## Honest limits
 - All voices, shops, customers and orders are **synthetic**. No real caller has used it.
-- The browser call page has been exercised by automated browser tests, not yet by a person with a microphone on a long call. Two real phone calls have been made by one person, who was also the developer.
+- The browser call page has been exercised by automated browser tests, not yet by a person with a microphone on a long call. The phone line has been used for real calls by one person only, who was also the developer: two calls on 2026-11-07 and more on 2026-11-10, including the one in the demo video.
+- Switching language inside one call (a Hinglish order, a Hindi request, then a Telugu readback) worked on the demo call, but the scored runs use one language per call, so it is lightly tested.
 - One call at a time; a second caller hears "busy". The design for several callers is in [MD/architecture.md](MD/architecture.md).
 - The phone line runs on an Exotel trial number through a temporary tunnel, with no KYC-approved production number; the phone-line figures above use a simulated line, not real operator audio.
 - Prisma still mishears short answers and numbers ("ek litre" was written as "8 litre" even on clean audio); the code asks again or moves the order on, but the first hearing can be wrong.
@@ -179,7 +198,8 @@ Setup, keys and run commands are in **[SETUP.md](SETUP.md)**. In short:
 ```bash
 pip install -r requirements.txt
 cp .env.example .env            # add GNANI_API_KEY and GROQ_API_KEY
-python -m dukaan_dost           # then open the printed address and press Start call
+python -m dukaan_dost           # then open the printed address and press Start call (browser)
+python scripts/phone_demo.py    # or take real phone calls: the agent plus a tunnel (see MD/phone_setup.md)
 python -m pytest                # offline tests
 ```
 
@@ -198,4 +218,4 @@ MD/            architecture, flow, product and phone-line notes, and the build r
 The architecture, call flow, product notes and phone-line set-up are in [MD/](MD/); what has shipped is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Data
-**All data in this project is synthetic.** The stock list, prices, customers, shop details, UPI ID, order scripts and test audio are made up. No real phone numbers, IDs or recordings of real calls are used, and call recording is turned off.
+**All data in this project is synthetic.** The stock list, prices, customers, shop details, UPI ID, order scripts and test audio are made up. No real customer phone numbers or IDs are used, and call recording in the agent is turned off. The demo video is a screen and microphone recording of one call the developer made, with the phone number hidden.

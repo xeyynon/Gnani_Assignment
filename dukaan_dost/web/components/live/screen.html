@@ -1,0 +1,34 @@
+<div class="livescreen">
+  <header class="livebar">
+    <div class="livetitle"><span class="livebrand" id="title">{{SHOP}}</span><span class="livetag">Live call</span></div>
+    <div class="livestatus"><span class="chip on" id="livecount"></span><span class="dot" id="dot" role="status"></span><span class="muted" id="updated"></span></div>
+    <a class="link" id="todash" href="#">Dashboard</a>
+{{include:shared/theme-button.html}}
+  </header>
+  <div id="notices"></div>
+  <main aria-busy="true">
+    <p class="liveheading" id="liveline"></p>
+    <div class="livetabs" id="livetabs" role="tablist" aria-label="The calls that are on right now" hidden></div>
+    <span id="navlive" hidden></span>
+    <div id="liveempty"></div>
+    <div id="liveon" hidden>
+      <p class="muted livenote">Shown live to you only. Nothing said here is saved.</p>
+      <div class="livegrid">
+        <section class="panel" aria-labelledby="h-liveconv">
+          <div class="ph"><h3 id="h-liveconv"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg>Conversation</h3></div>
+          <div id="livelog" role="log" aria-live="polite" aria-label="The conversation so far" tabindex="0"></div>
+        </section>
+        <div class="stack">
+          <section class="panel" aria-labelledby="h-liveorder">
+            <div class="ph"><h3 id="h-liveorder"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-cart"/></svg>Order so far</h3></div>
+            <div id="liveorder"></div>
+          </section>
+          <section class="panel" id="liveloanbox" aria-labelledby="h-liveloan" hidden>
+            <div class="ph"><h3 id="h-liveloan"><svg class="i" aria-hidden="true" focusable="false"><use href="#i-bank"/></svg>Loan guidance</h3><span class="tag">indicative</span></div>
+            <div id="liveloan"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

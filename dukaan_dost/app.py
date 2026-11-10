@@ -51,6 +51,7 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 import wave
 from datetime import datetime
 from pathlib import Path
@@ -1775,15 +1776,23 @@ def _carries_order_words(transcript: str) -> bool:
         return False
 
 
+def _nfd(text: str) -> str:
+    """Decomposed Unicode, so a Devanagari letter with a dot (ढ़, ज़) matches whether the speech service sent it as
+    one character or as a letter plus a dot. Both the patterns and the transcript go through this."""
+    return unicodedata.normalize("NFD", text)
+
+
 # "repeat / read my order", and the same in Hindi and Telugu: an order word together with a repeat or read word.
-_ORDER_WORD_PATTERN = re.compile(r"\b(?:orders?|cart|list|samaan|saman|saaman)\b|ऑर्डर|आर्डर|सामान|ఆర్డర్")
-_READ_WORD_PATTERN = re.compile(
-    r"\b(?:read|recite|recap|padho|padhiye|sunao|dikhao)\b|पढ़ो|पढ़िए|सुनाओ|दोबारा|दुबारा|फिर से|మళ్ళీ|మళ్లీ|చదవండి")
+_ORDER_WORD_PATTERN = re.compile(_nfd(r"\b(?:orders?|cart|list|samaan|saman|saaman)\b|ऑर्डर|आर्डर|सामान|ఆర్డర్"))
+_READ_WORD_PATTERN = re.compile(_nfd(
+    r"\b(?:read|recite|recap|padho|padhiye|sunao|dikhao|bolo|batao|batayiye|bataiye|dohrao|dohraiye)\b"
+    r"|पढ़ो|पढ़िए|सुनाओ|दोबारा|दुबारा|फिर से|बताओ|बताइए|बताइये|बोलो|बोलिए|दोहराओ|दोहराइए|दोहराइये|रिपीट"
+    r"|మళ్ళీ|మళ్లీ|చదవండి"))
 
 
 def _is_order_readback_request(transcript: str) -> bool:
     """True if the caller asks to hear their order again ("repeat my order", "mera order dobara bolo")."""
-    lower = transcript.lower()
+    lower = _nfd(transcript.lower())
     return bool(_ORDER_WORD_PATTERN.search(lower)) and bool(
         _REPEAT_KEYWORD_PATTERN.search(lower) or _READ_WORD_PATTERN.search(lower))
 
@@ -1830,14 +1839,23 @@ def _extract_requested_language(transcript: str) -> str | None:
     the cached audio replayed verbatim, in the wrong language, no
     matter how many times they ask.
     """
-    lower = transcript.lower()
-    if "hindi" in lower:
-        return "hi-in"
-    if "telugu" in lower:
-        return "te-in"
-    if "english" in lower:
-        return "en-in"
-    return None
+    lower = _nfd(transcript.lower())
+    best, best_at = None, -1
+    for code, names in _LANGUAGE_NAMES_SPOKEN.items():
+        for name in names:
+            at = lower.rfind(_nfd(name))
+            if at > best_at:                      # the language named LAST wins: "Hindi mein poocha, Telugu mein batao"
+                best, best_at = code, at
+    return best
+
+
+# How a caller names a language, as the speech service writes it: Latin letters (typed words, code-mixed speech),
+# Devanagari (Hindi speech: Prisma writes "तेलुगु में", not "Telugu mein") and Telugu script, with the spellings heard.
+_LANGUAGE_NAMES_SPOKEN = {
+    "hi-in": ("hindi", "हिंदी", "हिन्दी", "హిందీ"),
+    "te-in": ("telugu", "telegu", "telgu", "तेलुगु", "तेलुगू", "तेलगु", "तेलगू", "తెలుగు"),
+    "en-in": ("english", "अंग्रेज़ी", "अंग्रेजी", "इंग्लिश", "ఇంగ్లీష్", "ఆంగ్లం"),
+}
 
 
 

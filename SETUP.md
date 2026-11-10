@@ -1,7 +1,8 @@
 # Setup and run
 
-Dukaan Dost is software only. It runs on any laptop (Windows, macOS or Linux), and you
-place a test call from a browser tab. No phone, Raspberry Pi or special hardware is used.
+Dukaan Dost is software only. It runs on any laptop (Windows, macOS or Linux), and a browser
+tab is enough for a first test call. A real phone call needs a number from a provider such as
+Exotel or Twilio (see [MD/phone_setup.md](MD/phone_setup.md)). No special hardware is used.
 
 ## 1. Install
 Python 3.10 or newer, then from the project root:
