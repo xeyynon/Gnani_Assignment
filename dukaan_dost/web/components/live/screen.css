@@ -20,4 +20,8 @@
   .livetab.on{background:var(--green-soft);color:var(--green-ink);border-color:var(--green-ink)}
   .livetab:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   #livecount:empty{display:none}
+  .livescreen #navlive{display:none}                 /* the dashboard's menu counter; this page has no menu, and the shared Live code un-hides it */
+  .livestatus .dot{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.5;padding:2px 8px;border-radius:6px;background:var(--green);color:var(--on-ink)}
+  .livestatus .dot.off{background:var(--warn)}
+  .livestatus .dot:empty{display:none}               /* Live or Offline, in words, not by colour alone */
   @media (max-width:640px){.livescreen{padding:12px 16px 24px}}
