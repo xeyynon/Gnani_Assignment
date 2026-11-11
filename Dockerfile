@@ -7,7 +7,7 @@
 # then open http://localhost:8765 and press Start call. Publishing the port on
 # 127.0.0.1 only keeps the agent off your network; browsers also only give
 # microphone access to localhost or https pages.
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
